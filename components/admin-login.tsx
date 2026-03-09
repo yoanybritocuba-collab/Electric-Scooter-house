@@ -2,23 +2,48 @@
 
 import { useState } from 'react'
 import { Zap, Eye, EyeOff, AlertCircle } from 'lucide-react'
-import { useAdminAuth } from '@/lib/admin-auth'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import { useLanguage } from '@/lib/language-context'
+import { useRouter } from 'next/navigation'
 
 export function AdminLogin() {
-  const { login } = useAdminAuth()
   const { t } = useLanguage()
-  const [username, setUsername] = useState('')
+  const router = useRouter()
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
-    if (!login(username, password)) {
-      setError('Invalid username or password')
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      router.push('/admin')
+      router.refresh()
+    } catch (error: any) {
+      console.error('Login error:', error)
+      
+      // Mensajes de error en español
+      if (error.code === 'auth/invalid-credential') {
+        setError('Correo o contraseña incorrectos')
+      } else if (error.code === 'auth/user-not-found') {
+        setError('Usuario no encontrado')
+      } else if (error.code === 'auth/wrong-password') {
+        setError('Contraseña incorrecta')
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Correo electrónico inválido')
+      } else if (error.code === 'auth/too-many-requests') {
+        setError('Demasiados intentos. Intenta más tarde')
+      } else {
+        setError('Error al iniciar sesión. Intenta de nuevo')
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -32,7 +57,7 @@ export function AdminLogin() {
               <Zap className="h-8 w-8 text-primary-foreground" />
             </div>
             <h1 className="mt-4 text-2xl font-bold text-card-foreground">
-              Admin Panel
+              {t.admin?.dashboard || 'Admin Panel'}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Electric Scooter House
@@ -50,18 +75,20 @@ export function AdminLogin() {
 
             <div>
               <label
-                htmlFor="username"
+                htmlFor="email"
                 className="block text-sm font-medium text-card-foreground"
               >
-                {t.admin.username}
+                {t.admin?.email || 'Email'}
               </label>
               <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="admin@electricscooterhouse.gr"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -70,7 +97,7 @@ export function AdminLogin() {
                 htmlFor="password"
                 className="block text-sm font-medium text-card-foreground"
               >
-                {t.admin.password}
+                {t.admin?.password || 'Password'}
               </label>
               <div className="relative mt-1.5">
                 <input
@@ -79,12 +106,15 @@ export function AdminLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-lg border border-input bg-background px-4 py-2.5 pr-10 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="••••••••"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -97,20 +127,17 @@ export function AdminLogin() {
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-accent"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t.admin.login}
+              {isLoading ? 'Iniciando sesión...' : (t.admin?.login || 'Login')}
             </button>
           </form>
 
-          {/* Demo Credentials Hint */}
+          {/* Instrucción (sin credenciales visibles) */}
           <div className="mt-6 rounded-lg bg-muted p-4 text-sm">
-            <p className="font-medium text-foreground">Demo Credentials:</p>
-            <p className="mt-1 text-muted-foreground">
-              Username: <code className="rounded bg-background px-1">admin</code>
-            </p>
-            <p className="text-muted-foreground">
-              Password: <code className="rounded bg-background px-1">electric2024</code>
+            <p className="text-center text-muted-foreground">
+              Usa tu correo y contraseña de Firebase Authentication
             </p>
           </div>
         </div>

@@ -11,6 +11,13 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
 
+  const languages = [
+    { code: 'en', label: 'EN', flag: '🇬🇧' },
+    { code: 'es', label: 'ES', flag: '🇪🇸' },
+    { code: 'it', label: 'IT', flag: '🇮🇹' },
+    { code: 'el', label: 'EL', flag: '🇬🇷' }
+  ]
+
   const categories = [
     { key: 'motorcycles', href: '/products/motorcycles' },
     { key: 'scooters', href: '/products/scooters' },
@@ -85,13 +92,26 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </button>
 
-              {/* Language Toggle */}
-              <button
-                onClick={() => setLanguage(language === 'en' ? 'el' : 'en')}
-                className="flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                {language === 'en' ? 'EL' : 'EN'}
-              </button>
+              {/* Language Selector */}
+              <div className="relative group">
+                <button className="flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground">
+                  <span className="mr-1">{languages.find(l => l.code === language)?.flag}</span>
+                  {languages.find(l => l.code === language)?.label}
+                  <ChevronDown className="ml-1 h-3 w-3" />
+                </button>
+                <div className="invisible absolute right-0 top-full mt-1 w-24 rounded-lg bg-secondary p-1 opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => setLanguage(lang.code as any)}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+                    >
+                      <span>{lang.flag}</span>
+                      <span>{lang.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* Admin Link (hidden on mobile) */}
               <Link

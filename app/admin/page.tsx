@@ -1,6 +1,9 @@
 'use client'
 
-import { useAdminAuth } from '@/lib/admin-auth'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import { AdminLogin } from '@/components/admin-login'
 import { AdminSidebar } from '@/components/admin-sidebar'
 import { useLanguage } from '@/lib/language-context'
@@ -8,29 +11,29 @@ import { products, sliderItems } from '@/lib/data'
 import { Package, ImageIcon, TrendingUp, DollarSign } from 'lucide-react'
 
 function DashboardContent() {
-  const { language } = useLanguage()
+  const { t } = useLanguage()
 
   const stats = [
     {
-      label: language === 'en' ? 'Total Products' : 'Συνολικά Προϊόντα',
+      label: t.admin?.totalProducts || 'Total Products',
       value: products.length,
       icon: Package,
       color: 'bg-primary/20 text-primary',
     },
     {
-      label: language === 'en' ? 'In Stock' : 'Διαθέσιμα',
+      label: t.admin?.inStock || 'In Stock',
       value: products.filter((p) => p.inStock).length,
       icon: TrendingUp,
       color: 'bg-green-500/20 text-green-500',
     },
     {
-      label: language === 'en' ? 'Featured' : 'Προτεινόμενα',
+      label: t.admin?.featured || 'Featured',
       value: products.filter((p) => p.featured).length,
       icon: DollarSign,
       color: 'bg-amber-500/20 text-amber-500',
     },
     {
-      label: language === 'en' ? 'Slider Items' : 'Στοιχεία Slider',
+      label: t.admin?.sliderItems || 'Slider Items',
       value: sliderItems.length,
       icon: ImageIcon,
       color: 'bg-blue-500/20 text-blue-500',
@@ -43,7 +46,7 @@ function DashboardContent() {
     <div className="ml-64 min-h-screen bg-background">
       <header className="flex h-16 items-center border-b border-border bg-card px-6">
         <h1 className="text-xl font-bold text-foreground">
-          {language === 'en' ? 'Dashboard' : 'Πίνακας Ελέγχου'}
+          {t.admin?.dashboard || 'Dashboard'}
         </h1>
       </header>
 
@@ -76,23 +79,23 @@ function DashboardContent() {
         {/* Recent Products */}
         <div className="mt-8 rounded-xl bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-foreground">
-            {language === 'en' ? 'Recent Products' : 'Πρόσφατα Προϊόντα'}
+            {t.admin?.recentProducts || 'Recent Products'}
           </h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border text-left text-sm text-muted-foreground">
                   <th className="pb-3 font-medium">
-                    {language === 'en' ? 'Product' : 'Προϊόν'}
+                    {t.admin?.product || 'Product'}
                   </th>
                   <th className="pb-3 font-medium">
-                    {language === 'en' ? 'Category' : 'Κατηγορία'}
+                    {t.admin?.category || 'Category'}
                   </th>
                   <th className="pb-3 font-medium">
-                    {language === 'en' ? 'Price' : 'Τιμή'}
+                    {t.admin?.price || 'Price'}
                   </th>
                   <th className="pb-3 font-medium">
-                    {language === 'en' ? 'Status' : 'Κατάσταση'}
+                    {t.admin?.status || 'Status'}
                   </th>
                 </tr>
               </thead>
@@ -101,11 +104,11 @@ function DashboardContent() {
                   <tr key={product.id} className="border-b border-border last:border-0">
                     <td className="py-4">
                       <span className="font-medium text-foreground">
-                        {product.name[language]}
+                        {product.name[t.language as keyof typeof product.name] || product.name.en}
                       </span>
                     </td>
                     <td className="py-4 text-muted-foreground capitalize">
-                      {product.category}
+                      {t.categories?.[product.category as keyof typeof t.categories] || product.category}
                     </td>
                     <td className="py-4 font-medium text-foreground">
                       €{product.price.toLocaleString()}
@@ -119,12 +122,8 @@ function DashboardContent() {
                         }`}
                       >
                         {product.inStock
-                          ? language === 'en'
-                            ? 'In Stock'
-                            : 'Διαθέσιμο'
-                          : language === 'en'
-                          ? 'Out of Stock'
-                          : 'Εξαντλημένο'}
+                          ? t.products?.inStock || 'In Stock'
+                          : t.products?.outOfStock || 'Out of Stock'}
                       </span>
                     </td>
                   </tr>
@@ -137,12 +136,10 @@ function DashboardContent() {
         {/* Info Box */}
         <div className="mt-8 rounded-xl bg-primary/10 p-6">
           <h3 className="font-semibold text-foreground">
-            {language === 'en' ? 'Note: Demo Mode' : 'Σημείωση: Λειτουργία Demo'}
+            {t.admin?.demoMode || 'Note: Demo Mode'}
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            {language === 'en'
-              ? 'This admin panel uses mock data. To enable full CRUD functionality, connect a database integration (Supabase, Neon, etc.) from the settings panel.'
-              : 'Αυτό το admin panel χρησιμοποιεί δοκιμαστικά δεδομένα. Για πλήρη λειτουργικότητα CRUD, συνδέστε μια βάση δεδομένων (Supabase, Neon, κ.λπ.) από το πάνελ ρυθμίσεων.'}
+            {t.admin?.demoDescription || 'This admin panel uses mock data. To enable full CRUD functionality, connect a database integration.'}
           </p>
         </div>
       </main>
@@ -151,7 +148,26 @@ function DashboardContent() {
 }
 
 export default function AdminPage() {
-  const { isAuthenticated } = useAdminAuth()
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user)
+      setIsLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
 
   if (!isAuthenticated) {
     return <AdminLogin />

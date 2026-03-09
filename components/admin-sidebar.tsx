@@ -16,7 +16,23 @@ const navItems = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const { logout } = useAdminAuth()
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
+
+  // Textos según idioma
+  const texts = {
+    adminPanel: {
+      en: 'Admin Panel',
+      es: 'Panel Admin',
+      it: 'Pannello Admin',
+      el: 'Πίνακας Διαχείρισης'
+    },
+    viewSite: {
+      en: 'View Site',
+      es: 'Ver Sitio',
+      it: 'Vedi Sito',
+      el: 'Προβολή Ιστότοπου'
+    }
+  }
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar text-sidebar-foreground">
@@ -26,7 +42,7 @@ export function AdminSidebar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
             <Zap className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
-          <span className="font-bold">Admin Panel</span>
+          <span className="font-bold">{texts.adminPanel[language]}</span>
         </div>
 
         {/* Navigation */}
@@ -37,6 +53,14 @@ export function AdminSidebar() {
               item.href === '/admin'
                 ? pathname === '/admin'
                 : pathname.startsWith(item.href)
+            
+            // Obtener el texto traducido según la clave
+            let itemText = ''
+            if (item.key === 'dashboard') itemText = t.admin?.dashboard || 'Dashboard'
+            else if (item.key === 'products') itemText = t.admin?.products || 'Products'
+            else if (item.key === 'sliders') itemText = t.admin?.sliders || 'Sliders'
+            else if (item.key === 'settings') itemText = t.admin?.settings || 'Settings'
+            
             return (
               <Link
                 key={item.key}
@@ -48,7 +72,7 @@ export function AdminSidebar() {
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                {t.admin[item.key as keyof typeof t.admin]}
+                {itemText}
               </Link>
             )
           })}
@@ -61,14 +85,14 @@ export function AdminSidebar() {
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <Home className="h-5 w-5" />
-            View Site
+            {texts.viewSite[language]}
           </Link>
           <button
             onClick={logout}
             className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
           >
             <LogOut className="h-5 w-5" />
-            {t.admin.logout}
+            {t.admin?.logout || 'Logout'}
           </button>
         </div>
       </div>

@@ -9,10 +9,6 @@ const Footer = () => {
     window.location.href = 'tel:+302102799443';
   };
 
-  const handleMobileClick = () => {
-    window.location.href = 'tel:+30693185757';
-  };
-
   const handleEmailClick = () => {
     window.location.href = 'mailto:electrichousescooters@gmail.com';
   };
@@ -22,7 +18,7 @@ const Footer = () => {
   };
 
   const handleWhatsAppClick = () => {
-    window.open('https://wa.me/30693185757', '_blank');
+    window.open('https://wa.me/306993185757', '_blank');
   };
 
   return (
@@ -47,6 +43,7 @@ const Footer = () => {
           <div>
             <h3 className="font-display font-bold text-primary mb-4">{t("footer.contact")}</h3>
             <ul className="space-y-3">
+              {/* Dirección */}
               <li>
                 <button
                   onClick={handleAddressClick}
@@ -56,6 +53,8 @@ const Footer = () => {
                   <span>Καρολίδου 10, Νέα Ιωνία 14231</span>
                 </button>
               </li>
+              
+              {/* Teléfono fijo */}
               <li>
                 <button
                   onClick={handlePhoneClick}
@@ -65,15 +64,8 @@ const Footer = () => {
                   <span>21 0279 9443</span>
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={handleMobileClick}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left"
-                >
-                  <Phone size={16} className="flex-shrink-0" />
-                  <span>693 185 757</span>
-                </button>
-              </li>
+              
+              {/* Email */}
               <li>
                 <button
                   onClick={handleEmailClick}
@@ -83,13 +75,25 @@ const Footer = () => {
                   <span>electrichousescooters@gmail.com</span>
                 </button>
               </li>
+              
+              {/* WhatsApp - NUEVO NÚMERO + ONDAS DE RADIO */}
               <li>
                 <button
                   onClick={handleWhatsAppClick}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left group"
                 >
-                  <Phone size={16} className="flex-shrink-0" />
-                  <span>WhatsApp: 693 185 757</span>
+                  <div className="relative">
+                    {/* Icono de WhatsApp */}
+                    <Phone size={16} className="flex-shrink-0 relative z-10 text-[#25D366]" />
+                    
+                    {/* ONDAS DE RADIO alrededor del icono */}
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="absolute inline-flex h-8 w-8 rounded-full bg-[#25D366]/20 opacity-75 animate-ping"></span>
+                      <span className="absolute inline-flex h-6 w-6 rounded-full bg-[#25D366]/10 opacity-50 animate-ping animation-delay-300"></span>
+                      <span className="absolute inline-flex h-4 w-4 rounded-full bg-[#25D366]/5 opacity-25 animate-ping animation-delay-600"></span>
+                    </span>
+                  </div>
+                  <span>WhatsApp: +30 6993 185 757</span>
                 </button>
               </li>
             </ul>

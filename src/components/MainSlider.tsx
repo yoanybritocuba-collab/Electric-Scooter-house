@@ -26,23 +26,23 @@ const MainSlider = () => {
 
   return (
     <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[calc(100vh-90px)] overflow-hidden mt-[90px]">
-      {/* Imagen de fondo - CORREGIDA para móviles */}
+      {/* Imagen de fondo - MÁS BRILLANTE */}
       <img
         src="/images/hero/hero.png"
         alt={t("hero.future")}
-        className="w-full h-full object-cover object-center"
+        className="w-full h-full object-cover object-center brightness-110 contrast-105"
         onError={(e) => {
-          // Si la imagen no carga, usar un color de fondo
           e.currentTarget.style.display = 'none';
         }}
       />
+      
       {/* Fallback si la imagen no carga */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background" />
       
-      {/* Overlay oscuro para mejor legibilidad del texto */}
-      <div className="absolute inset-0 bg-black/40" />
+      {/* Overlay MÁS SUAVE para mejor visibilidad de la imagen */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10" />
       
-      {/* Contenido centrado */}
+      {/* Contenido centrado con sombra MEJORADA */}
       <div className="absolute inset-0 flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
           <motion.h1
@@ -54,7 +54,7 @@ const MainSlider = () => {
             className="font-display font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-center max-w-4xl"
             style={{
               color: '#2ecc71',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+              textShadow: '0 4px 8px rgba(0,0,0,0.7)'
             }}
           >
             {texts[index]}
@@ -62,7 +62,7 @@ const MainSlider = () => {
         </AnimatePresence>
       </div>
       
-      {/* Indicadores */}
+      {/* Indicadores MÁS VISIBLES */}
       <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
         {texts.map((_, i) => (
           <button
@@ -71,7 +71,7 @@ const MainSlider = () => {
             className={`h-1.5 sm:h-2 rounded-full transition-all ${
               i === index 
                 ? 'w-6 sm:w-8 bg-[#2ecc71]' 
-                : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/80'
+                : 'w-1.5 sm:w-2 bg-white/70 hover:bg-white'
             }`}
             aria-label={`Ir al slide ${i + 1}`}
           />

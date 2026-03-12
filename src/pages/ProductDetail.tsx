@@ -74,7 +74,6 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Función para obtener texto según el idioma
   const getText = (es: string, en?: string, gr?: string): string => {
     if (lang === 'en' && en) return en;
     if (lang === 'gr' && gr) return gr;
@@ -151,7 +150,6 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        {/* Botón volver */}
         <button
           onClick={goBack}
           className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 group"
@@ -169,7 +167,6 @@ const ProductDetail = () => {
                 alt={getText(product.nombre, product.nombre_en, product.nombre_gr)}
               />
 
-              {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {product.nuevo && (
                   <span className="bg-primary text-primary-foreground text-xs font-display tracking-widest px-3 py-1.5 rounded-full">
@@ -188,7 +185,6 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* Contador de imágenes */}
               {images.length > 1 && (
                 <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-display tracking-widest text-foreground">
                   {selectedImageIndex + 1} / {images.length}
@@ -196,7 +192,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Miniaturas */}
             {images.length > 1 && (
               <div className="grid grid-cols-5 gap-2">
                 {images.map((img, index) => (
@@ -251,13 +246,22 @@ const ProductDetail = () => {
               <button className="flex-1 bg-primary text-primary-foreground font-display font-bold tracking-widest text-sm py-4 rounded-lg hover:bg-glow transition-all duration-300">
                 {t("product.acquire")}
               </button>
+              
+              {/* WhatsApp con número CORREGIDO: 306993185757 */}
               <a
-                href={`https://wa.me/34666939396?text=Hola,%20me%20interesa%20el%20producto:%20${getText(product.nombre, product.nombre_en, product.nombre_gr)}%20(${precioFinal.toFixed(2)}€)%20https://electricscooterhouse.com/producto/${product.id}`}
+                href={`https://wa.me/306993185757?text=Hola,%20me%20interesa%20el%20producto:%20${getText(product.nombre, product.nombre_en, product.nombre_gr)}%20(${precioFinal.toFixed(2)}€)%20https://electricscooterhouse.com/producto/${product.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 bg-[#25D366] text-white font-display font-bold tracking-widest text-sm py-4 rounded-lg hover:bg-[#20BA5C] transition-all duration-300 text-center"
+                className="relative flex-1 bg-[#25D366] text-white font-display font-bold tracking-widest text-sm py-4 rounded-lg hover:bg-[#20BA5C] transition-all duration-300 text-center overflow-hidden group"
               >
-                {t("product.whatsapp")}
+                {/* Efecto de ondas */}
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/30 opacity-75 group-hover:animate-none"></span>
+                  <span className="absolute inline-flex h-3/4 w-3/4 animate-ping rounded-full bg-white/20 opacity-50 animation-delay-200 group-hover:animate-none"></span>
+                  <span className="absolute inline-flex h-1/2 w-1/2 animate-ping rounded-full bg-white/10 opacity-25 animation-delay-400 group-hover:animate-none"></span>
+                </span>
+                {/* Texto */}
+                <span className="relative z-10">{t("product.whatsapp")}</span>
               </a>
             </div>
 

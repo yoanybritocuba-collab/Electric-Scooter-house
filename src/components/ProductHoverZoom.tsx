@@ -16,12 +16,25 @@ const ProductHoverZoom = ({ src, alt }: ProductHoverZoomProps) => {
     setPosition({ x, y });
   };
 
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((touch.clientX - left) / width) * 100;
+    const y = ((touch.clientY - top) / height) * 100;
+    setPosition({ x, y });
+  };
+
   return (
     <div
       className="relative w-full h-full"
       onMouseEnter={() => setShowZoom(true)}
       onMouseLeave={() => setShowZoom(false)}
       onMouseMove={handleMouseMove}
+      onTouchStart={() => setShowZoom(true)}
+      onTouchEnd={() => setShowZoom(false)}
+      onTouchMove={handleTouchMove}
+      onTouchCancel={() => setShowZoom(false)}
     >
       {/* Imagen principal */}
       <img
@@ -30,7 +43,7 @@ const ProductHoverZoom = ({ src, alt }: ProductHoverZoomProps) => {
         className="w-full h-full object-cover"
       />
 
-      {/* Lupa de zoom (igual que Temu) */}
+      {/* Lupa de zoom - visible en móvil al tocar */}
       {showZoom && (
         <div
           className="absolute inset-0 pointer-events-none"

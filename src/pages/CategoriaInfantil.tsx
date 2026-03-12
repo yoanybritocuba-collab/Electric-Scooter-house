@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // AÑADIDO Link
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -28,13 +28,13 @@ interface Producto {
   };
 }
 
-// Componente de tarjeta para productos infantiles
+// Componente de tarjeta para productos infantiles - CORREGIDO con Link
 const InfantilCard = ({ producto }: { producto: Producto }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const imagenUrl = !imageError && producto.imagenes && producto.imagenes.length > 0 
-    ? producto.imagenes[0] 
+  const imagenUrl = !imageError && producto.imagenes && producto.imagenes.length > 0        
+    ? producto.imagenes[0]
     : null;
 
   const placeholderUrl = `https://placehold.co/600x400/2a2a2a/2ecc71?text=${encodeURIComponent(producto.nombre)}`;
@@ -46,7 +46,11 @@ const InfantilCard = ({ producto }: { producto: Producto }) => {
       viewport={{ once: true }}
       transition={{ duration: 0.4 }}
     >
-      <div className="group block glow-border rounded-lg overflow-hidden bg-card hover-lift">
+      {/* CAMBIADO: div por Link */}
+      <Link
+        to={`/producto/${producto.id}`}
+        className="group block glow-border rounded-lg overflow-hidden bg-card hover-lift"
+      >
         <div className="relative aspect-square overflow-hidden bg-secondary">
           {/* Loader mientras carga */}
           {!imageLoaded && imagenUrl && (
@@ -54,7 +58,7 @@ const InfantilCard = ({ producto }: { producto: Producto }) => {
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-          
+
           <img
             src={imagenUrl || placeholderUrl}
             alt={producto.nombre}
@@ -69,7 +73,7 @@ const InfantilCard = ({ producto }: { producto: Producto }) => {
               e.currentTarget.src = placeholderUrl;
             }}
           />
-          
+
           {/* Badge de nuevo si aplica */}
           {producto.nuevo && (
             <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -79,11 +83,11 @@ const InfantilCard = ({ producto }: { producto: Producto }) => {
             </div>
           )}
         </div>
-        
+
         <div className="p-4">
           <h3 className="font-display text-sm tracking-wide text-foreground truncate">{producto.nombre}</h3>
-          <p className="text-primary font-bold text-lg mt-1">{producto.precio}€</p>
-          
+          <p className="text-primary font-bold text-lg mt-1">{producto.precio}€</p>       
+
           {/* Especificaciones rápidas */}
           <div className="mt-2 text-xs text-muted-foreground space-y-1">
             {producto.especificaciones?.edadRecomendada && (
@@ -94,7 +98,7 @@ const InfantilCard = ({ producto }: { producto: Producto }) => {
             )}
           </div>
         </div>
-      </div>
+      </Link>
     </motion.div>
   );
 };
@@ -112,8 +116,8 @@ const CategoriaInfantil = () => {
   const cargarProductos = async () => {
     setLoading(true);
     try {
-      // ✅ AHORA LEE DE LA COLECCIÓN "productos" CON CATEGORÍA "infantiles"
-      const q = query(collection(db, "productos"), where("categoria", "==", "infantiles"));
+      // ✅ LEE DE LA COLECCIÓN "productos" CON CATEGORÍA "infantiles"
+      const q = query(collection(db, "productos"), where("categoria", "==", "infantiles")); 
       const snap = await getDocs(q);
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as Producto));
       setProductos(items);
@@ -162,11 +166,11 @@ const CategoriaInfantil = () => {
 
         {productos.length === 0 ? (
           <div className="text-center py-20">
-            <Baby size={48} className="text-muted-foreground mx-auto mb-4 opacity-50" />
+            <Baby size={48} className="text-muted-foreground mx-auto mb-4 opacity-50" />    
             <p className="text-muted-foreground text-lg">Próximamente productos infantiles</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">   
             {productos.map((producto) => (
               <InfantilCard key={producto.id} producto={producto} />
             ))}

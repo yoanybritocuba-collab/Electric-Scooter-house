@@ -10,9 +10,13 @@ import { ArrowLeft } from "lucide-react";
 interface Product {
   id: string;
   nombre: string;
+  nombre_en?: string;
+  nombre_gr?: string;
+  descripcion: string;
+  descripcion_en?: string;
+  descripcion_gr?: string;
   precio: number;
   categoria: string;
-  descripcion: string;
   imagenes: string[];
   masVendido?: boolean;
   nuevo?: boolean;
@@ -20,18 +24,40 @@ interface Product {
   descuento?: number;
   especificaciones: {
     autonomia?: string;
+    autonomia_en?: string;
+    autonomia_gr?: string;
     peso?: string;
+    peso_en?: string;
+    peso_gr?: string;
     plegable?: boolean;
     velocidad_max?: string;
+    velocidad_max_en?: string;
+    velocidad_max_gr?: string;
     motor?: string;
+    motor_en?: string;
+    motor_gr?: string;
     bateria?: string;
+    bateria_en?: string;
+    bateria_gr?: string;
     tiempo_carga?: string;
+    tiempo_carga_en?: string;
+    tiempo_carga_gr?: string;
     ruedas?: string;
+    ruedas_en?: string;
+    ruedas_gr?: string;
     cambios?: string;
+    cambios_en?: string;
+    cambios_gr?: string;
     suspension?: boolean;
     frenos?: string;
+    frenos_en?: string;
+    frenos_gr?: string;
     iluminacion?: string;
+    iluminacion_en?: string;
+    iluminacion_gr?: string;
     edad_recomendada?: string;
+    edad_recomendada_en?: string;
+    edad_recomendada_gr?: string;
     colores?: string[];
     luces?: boolean;
     sonidos?: boolean;
@@ -40,7 +66,7 @@ interface Product {
 }
 
 const ProductDetail = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -48,8 +74,14 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+  // Función para obtener texto según el idioma
+  const getText = (es: string, en?: string, gr?: string): string => {
+    if (lang === 'en' && en) return en;
+    if (lang === 'gr' && gr) return gr;
+    return es;
+  };
+
   useEffect(() => {
-    // Guardar la categoría para volver
     if (product?.categoria) {
       sessionStorage.setItem('lastCategory', product.categoria);
     }
@@ -66,7 +98,6 @@ const ProductDetail = () => {
           const productData = { id: docSnap.id, ...docSnap.data() } as Product;
           setProduct(productData);
 
-          // Cargar productos relacionados de la misma categoría
           const q = query(
             collection(db, "productos"),
             where("categoria", "==", productData.categoria),
@@ -86,7 +117,6 @@ const ProductDetail = () => {
   }, [id]);
 
   const goBack = () => {
-    // Guardar la categoría actual para restaurar scroll
     const lastCategory = sessionStorage.getItem('lastCategory');
     if (lastCategory) {
       sessionStorage.setItem(`scroll_${lastCategory}`, window.scrollY.toString());
@@ -136,7 +166,7 @@ const ProductDetail = () => {
             <div className="relative aspect-square rounded-lg overflow-hidden bg-secondary">
               <ProductHoverZoom
                 src={images[selectedImageIndex]}
-                alt={product.nombre}
+                alt={getText(product.nombre, product.nombre_en, product.nombre_gr)}
               />
 
               {/* Badges */}
@@ -181,7 +211,7 @@ const ProductDetail = () => {
                   >
                     <img
                       src={img}
-                      alt={`${product.nombre} ${index + 1}`}
+                      alt={`${getText(product.nombre, product.nombre_en, product.nombre_gr)} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -194,7 +224,7 @@ const ProductDetail = () => {
           <div className="space-y-6">
             <div>
               <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight text-foreground">
-                {product.nombre}
+                {getText(product.nombre, product.nombre_en, product.nombre_gr)}
               </h1>
               <div className="flex items-center gap-2 mt-4">
                 {product.descuento ? (
@@ -222,7 +252,7 @@ const ProductDetail = () => {
                 {t("product.acquire")}
               </button>
               <a
-                href={`https://wa.me/34666939396?text=Hola,%20me%20interesa%20el%20producto:%20${product.nombre}%20(${precioFinal.toFixed(2)}€)%20https://electricscooterhouse.com/producto/${product.id}`}
+                href={`https://wa.me/34666939396?text=Hola,%20me%20interesa%20el%20producto:%20${getText(product.nombre, product.nombre_en, product.nombre_gr)}%20(${precioFinal.toFixed(2)}€)%20https://electricscooterhouse.com/producto/${product.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-[#25D366] text-white font-display font-bold tracking-widest text-sm py-4 rounded-lg hover:bg-[#20BA5C] transition-all duration-300 text-center"
@@ -237,7 +267,11 @@ const ProductDetail = () => {
                 {t("product.description")}
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                {product.descripcion || "Sin descripción"}
+                {getText(
+                  product.descripcion || "Sin descripción",
+                  product.descripcion_en,
+                  product.descripcion_gr
+                )}
               </p>
             </div>
 
@@ -252,56 +286,104 @@ const ProductDetail = () => {
                   {product.especificaciones?.autonomia && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Autonomía</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.autonomia}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.autonomia,
+                          product.especificaciones.autonomia_en,
+                          product.especificaciones.autonomia_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.peso && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Peso</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.peso}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.peso,
+                          product.especificaciones.peso_en,
+                          product.especificaciones.peso_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.velocidad_max && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Velocidad máxima</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.velocidad_max}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.velocidad_max,
+                          product.especificaciones.velocidad_max_en,
+                          product.especificaciones.velocidad_max_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.motor && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Motor</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.motor}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.motor,
+                          product.especificaciones.motor_en,
+                          product.especificaciones.motor_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.bateria && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Batería</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.bateria}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.bateria,
+                          product.especificaciones.bateria_en,
+                          product.especificaciones.bateria_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.tiempo_carga && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Tiempo de carga</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.tiempo_carga}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.tiempo_carga,
+                          product.especificaciones.tiempo_carga_en,
+                          product.especificaciones.tiempo_carga_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.ruedas && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Ruedas</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.ruedas}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.ruedas,
+                          product.especificaciones.ruedas_en,
+                          product.especificaciones.ruedas_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.cambios && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Cambios</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.cambios}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.cambios,
+                          product.especificaciones.cambios_en,
+                          product.especificaciones.cambios_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
@@ -326,21 +408,39 @@ const ProductDetail = () => {
                   {product.especificaciones?.frenos && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Frenos</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.frenos}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.frenos,
+                          product.especificaciones.frenos_en,
+                          product.especificaciones.frenos_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.iluminacion && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Iluminación</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.iluminacion}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.iluminacion,
+                          product.especificaciones.iluminacion_en,
+                          product.especificaciones.iluminacion_gr
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {product.especificaciones?.edad_recomendada && (
                     <div className="bg-secondary rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Edad recomendada</p>
-                      <p className="font-bold text-foreground">{product.especificaciones.edad_recomendada}</p>
+                      <p className="font-bold text-foreground">
+                        {getText(
+                          product.especificaciones.edad_recomendada,
+                          product.especificaciones.edad_recomendada_en,
+                          product.especificaciones.edad_recomendada_gr
+                        )}
+                      </p>
                     </div>
                   )}
 

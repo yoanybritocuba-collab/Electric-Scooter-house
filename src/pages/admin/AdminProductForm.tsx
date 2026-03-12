@@ -7,6 +7,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/firebase/config";
 import { Upload, X, Baby } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { translateToAllLanguages } from "@/services/translationService";
 
 // Categorías unificadas (incluye infantiles y movilidad reducida)
 const categories = [
@@ -27,44 +28,86 @@ const AdminProductForm = () => {
   const isNew = id === "nuevo";
 
   const [form, setForm] = useState({
+    // Campos en 3 idiomas
     nombre: "",
+    nombre_en: "",
+    nombre_gr: "",
+    descripcion: "",
+    descripcion_en: "",
+    descripcion_gr: "",
+    
     precio: 0,
     categoria: "patinetes",
-    descripcion: "",
     imagenes: [] as string[],
     masVendido: false,
     nuevo: false,
     rebaja: false,
     descuento: 0,
+    
     especificaciones: {
+      // Campos comunes en 3 idiomas
       autonomia: "",
+      autonomia_en: "",
+      autonomia_gr: "",
       peso: "",
+      peso_en: "",
+      peso_gr: "",
       plegable: false,
+      
       // Campos específicos por categoría
       velocidad_max: "",
+      velocidad_max_en: "",
+      velocidad_max_gr: "",
       motor: "",
+      motor_en: "",
+      motor_gr: "",
       bateria: "",
+      bateria_en: "",
+      bateria_gr: "",
       tiempo_carga: "",
+      tiempo_carga_en: "",
+      tiempo_carga_gr: "",
       ruedas: "",
+      ruedas_en: "",
+      ruedas_gr: "",
       cambios: "",
+      cambios_en: "",
+      cambios_gr: "",
       suspension: false,
       frenos: "",
+      frenos_en: "",
+      frenos_gr: "",
       iluminacion: "",
+      iluminacion_en: "",
+      iluminacion_gr: "",
+      
       // Campos infantiles
       edad_recomendada: "",
+      edad_recomendada_en: "",
+      edad_recomendada_gr: "",
       colores: [] as string[],
       luces: false,
       sonidos: false,
+      
       // Campos movilidad reducida
       autonomia_bateria: "",
+      autonomia_bateria_en: "",
+      autonomia_bateria_gr: "",
       max_peso: "",
+      max_peso_en: "",
+      max_peso_gr: "",
       inclinacion_max: "",
+      inclinacion_max_en: "",
+      inclinacion_max_gr: "",
       giro: "",
+      giro_en: "",
+      giro_gr: "",
     },
   });
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [colorInput, setColorInput] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -159,12 +202,46 @@ const AdminProductForm = () => {
     });
   };
 
+  const handleAutoTranslate = async () => {
+    if (!form.nombre.trim()) {
+      toast({
+        title: "Error",
+        description: "Primero escribe el nombre en español",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTranslating(true);
+    try {
+      const translations = await translateToAllLanguages(form.nombre);
+      
+      setForm(prev => ({
+        ...prev,
+        nombre_en: translations.en || prev.nombre_en,
+        nombre_gr: translations.el || prev.nombre_gr
+      }));
+      
+      toast({
+        title: "Éxito",
+        description: "Nombre traducido automáticamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo traducir automáticamente",
+        variant: "destructive",
+      });
+    }
+    setTranslating(false);
+  };
+
   const handleSave = async () => {
     // Validaciones
     if (!form.nombre.trim()) {
       toast({
         title: "Error",
-        description: "El nombre es obligatorio",
+        description: "El nombre en español es obligatorio",
         variant: "destructive",
       });
       return;
@@ -222,15 +299,67 @@ const AdminProductForm = () => {
         </h1>
 
         <div className="space-y-6">
-          {/* Nombre */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Nombre *</label>
-            <input
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
-              required
-            />
+          {/* ===== NOMBRE EN 3 IDIOMAS ===== */}
+          <div className="border-b border-border pb-4">
+            <h3 className="font-display font-bold text-lg text-foreground mb-4">Nombre del producto</h3>
+            
+            {/* Nombre Español */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">
+                Español <span className="text-primary">*</span>
+              </label>
+              <input
+                value={form.nombre}
+                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
+                placeholder="Nombre en español"
+                required
+              />
+            </div>
+
+            {/* Botón de traducción automática */}
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={handleAutoTranslate}
+                disabled={translating || !form.nombre.trim()}
+                className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded hover:bg-primary/10 transition-colors disabled:opacity-50"
+              >
+                {translating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span>Traduciendo...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🌐</span>
+                    <span>Traducir nombre automáticamente</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Nombre Inglés */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">English</label>
+              <input
+                value={form.nombre_en || ""}
+                onChange={(e) => setForm({ ...form, nombre_en: e.target.value })}
+                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
+                placeholder="Name in English"
+              />
+            </div>
+
+            {/* Nombre Griego */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Ελληνικά</label>
+              <input
+                value={form.nombre_gr || ""}
+                onChange={(e) => setForm({ ...form, nombre_gr: e.target.value })}
+                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
+                placeholder="Όνομα στα Ελληνικά"
+              />
+            </div>
           </div>
 
           {/* Precio */}
@@ -276,15 +405,45 @@ const AdminProductForm = () => {
             </select>
           </div>
 
-          {/* Descripción */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Descripción</label>
-            <textarea
-              value={form.descripcion}
-              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-              rows={4}
-              className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors resize-none"
-            />
+          {/* ===== DESCRIPCIÓN EN 3 IDIOMAS ===== */}
+          <div className="border-b border-border pb-4">
+            <h3 className="font-display font-bold text-lg text-foreground mb-4">Descripción</h3>
+            
+            {/* Descripción Español */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Español</label>
+              <textarea
+                value={form.descripcion}
+                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                rows={3}
+                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors resize-none"
+                placeholder="Descripción en español"
+              />
+            </div>
+
+            {/* Descripción Inglés */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">English</label>
+              <textarea
+                value={form.descripcion_en || ""}
+                onChange={(e) => setForm({ ...form, descripcion_en: e.target.value })}
+                rows={3}
+                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors resize-none"
+                placeholder="Description in English"
+              />
+            </div>
+
+            {/* Descripción Griego */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Ελληνικά</label>
+              <textarea
+                value={form.descripcion_gr || ""}
+                onChange={(e) => setForm({ ...form, descripcion_gr: e.target.value })}
+                rows={3}
+                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors resize-none"
+                placeholder="Περιγραφή στα Ελληνικά"
+              />
+            </div>
           </div>
 
           {/* Imágenes */}
@@ -318,49 +477,255 @@ const AdminProductForm = () => {
             </label>
           </div>
 
-          {/* Especificaciones generales */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-muted-foreground mb-1">Autonomía</label>
-              <input
-                value={form.especificaciones.autonomia}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    especificaciones: { ...form.especificaciones, autonomia: e.target.value },
-                  })
-                }
-                placeholder="Ej: 25 km"
-                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-muted-foreground mb-1">Peso</label>
-              <input
-                value={form.especificaciones.peso}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    especificaciones: { ...form.especificaciones, peso: e.target.value },
-                  })
-                }
-                placeholder="Ej: 15 kg"
-                className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Campos específicos para infantiles */}
-          {isInfantil && (
-            <div className="border-t border-border pt-4 mt-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Baby size={20} className="text-primary" />
-                <h3 className="font-display font-bold text-foreground">Especificaciones Infantiles</h3>
+          {/* ===== ESPECIFICACIONES EN 3 IDIOMAS ===== */}
+          <div className="border-b border-border pb-4">
+            <h3 className="font-display font-bold text-lg text-foreground mb-4">Especificaciones</h3>
+            
+            {/* Autonomía - 3 idiomas */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Autonomía / Range / Αυτονομία</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  value={form.especificaciones.autonomia}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, autonomia: e.target.value },
+                    })
+                  }
+                  placeholder="Español"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.autonomia_en || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, autonomia_en: e.target.value },
+                    })
+                  }
+                  placeholder="English"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.autonomia_gr || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, autonomia_gr: e.target.value },
+                    })
+                  }
+                  placeholder="Ελληνικά"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Edad recomendada</label>
+            {/* Peso - 3 idiomas */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Peso / Weight / Βάρος</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  value={form.especificaciones.peso}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, peso: e.target.value },
+                    })
+                  }
+                  placeholder="Español"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.peso_en || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, peso_en: e.target.value },
+                    })
+                  }
+                  placeholder="English"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.peso_gr || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, peso_gr: e.target.value },
+                    })
+                  }
+                  placeholder="Ελληνικά"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Velocidad máxima - 3 idiomas */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Velocidad máx / Max speed / Μέγιστη ταχύτητα</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  value={form.especificaciones.velocidad_max || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, velocidad_max: e.target.value },
+                    })
+                  }
+                  placeholder="Español"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.velocidad_max_en || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, velocidad_max_en: e.target.value },
+                    })
+                  }
+                  placeholder="English"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.velocidad_max_gr || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, velocidad_max_gr: e.target.value },
+                    })
+                  }
+                  placeholder="Ελληνικά"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Motor - 3 idiomas */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Motor / Motor / Κινητήρας</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  value={form.especificaciones.motor || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, motor: e.target.value },
+                    })
+                  }
+                  placeholder="Español"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.motor_en || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, motor_en: e.target.value },
+                    })
+                  }
+                  placeholder="English"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.motor_gr || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, motor_gr: e.target.value },
+                    })
+                  }
+                  placeholder="Ελληνικά"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Batería - 3 idiomas */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Batería / Battery / Μπαταρία</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  value={form.especificaciones.bateria || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, bateria: e.target.value },
+                    })
+                  }
+                  placeholder="Español"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.bateria_en || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, bateria_en: e.target.value },
+                    })
+                  }
+                  placeholder="English"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.bateria_gr || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, bateria_gr: e.target.value },
+                    })
+                  }
+                  placeholder="Ελληνικά"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Tiempo de carga - 3 idiomas */}
+            <div className="mb-4">
+              <label className="block text-sm text-muted-foreground mb-1">Tiempo carga / Charging time / Χρόνος φόρτισης</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  value={form.especificaciones.tiempo_carga || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, tiempo_carga: e.target.value },
+                    })
+                  }
+                  placeholder="Español"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.tiempo_carga_en || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, tiempo_carga_en: e.target.value },
+                    })
+                  }
+                  placeholder="English"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+                <input
+                  value={form.especificaciones.tiempo_carga_gr || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      especificaciones: { ...form.especificaciones, tiempo_carga_gr: e.target.value },
+                    })
+                  }
+                  placeholder="Ελληνικά"
+                  className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Edad recomendada - solo para infantiles */}
+            {isInfantil && (
+              <div className="mb-4">
+                <label className="block text-sm text-muted-foreground mb-1">Edad recomendada / Recommended age / Συνιστώμενη ηλικία</label>
+                <div className="grid grid-cols-3 gap-2">
                   <input
                     value={form.especificaciones.edad_recomendada || ""}
                     onChange={(e) =>
@@ -370,54 +735,36 @@ const AdminProductForm = () => {
                       })
                     }
                     placeholder="Ej: 3-5 años"
-                    className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
+                    className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Velocidad máxima</label>
                   <input
-                    value={form.especificaciones.velocidad_max || ""}
+                    value={form.especificaciones.edad_recomendada_en || ""}
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        especificaciones: { ...form.especificaciones, velocidad_max: e.target.value },
+                        especificaciones: { ...form.especificaciones, edad_recomendada_en: e.target.value },
                       })
                     }
-                    placeholder="Ej: 5 km/h"
-                    className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
+                    placeholder="E.g: 3-5 years"
+                    className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Batería</label>
                   <input
-                    value={form.especificaciones.bateria || ""}
+                    value={form.especificaciones.edad_recomendada_gr || ""}
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        especificaciones: { ...form.especificaciones, bateria: e.target.value },
+                        especificaciones: { ...form.especificaciones, edad_recomendada_gr: e.target.value },
                       })
                     }
-                    placeholder="Ej: 12V 4.5Ah"
-                    className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Tiempo de carga</label>
-                  <input
-                    value={form.especificaciones.tiempo_carga || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, tiempo_carga: e.target.value },
-                      })
-                    }
-                    placeholder="Ej: 4-6 horas"
-                    className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground outline-none focus:border-primary transition-colors"
+                    placeholder="Π.χ: 3-5 χρόνια"
+                    className="bg-secondary border border-border rounded px-3 py-2 text-foreground"
                   />
                 </div>
               </div>
+            )}
 
-              {/* Colores */}
+            {/* Colores (solo para infantiles) */}
+            {isInfantil && (
               <div className="mt-4">
                 <label className="block text-sm text-muted-foreground mb-1">Colores disponibles</label>
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -452,39 +799,8 @@ const AdminProductForm = () => {
                   </button>
                 </div>
               </div>
-
-              <div className="flex gap-6 mt-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.especificaciones.luces || false}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, luces: e.target.checked },
-                      })
-                    }
-                    className="accent-primary"
-                  />
-                  <span className="text-foreground text-sm">Luces</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.especificaciones.sonidos || false}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, sonidos: e.target.checked },
-                      })
-                    }
-                    className="accent-primary"
-                  />
-                  <span className="text-foreground text-sm">Sonidos</span>
-                </label>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Checkboxes generales */}
           <div className="flex flex-wrap gap-6">

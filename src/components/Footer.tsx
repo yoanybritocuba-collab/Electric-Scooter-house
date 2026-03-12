@@ -32,20 +32,20 @@ const Footer = () => {
           {/* Logo y descripción */}
           <div>
             <Link to="/" className="inline-block mb-4">
-              <img 
-                src="/images/logo/logo.png" 
-                alt="Electric Scooter House" 
+              <img
+                src="/images/logo/logo.png"
+                alt="Electric Scooter House"
                 className="h-16 w-auto"
               />
             </Link>
             <p className="text-muted-foreground text-sm">
-              Τι εξειδικευμένο κατάστημα ηλεκτρικής κινητικότητας. Ποιότητα και εμπιστοσύνη από το 2020.
+              {t("footer.description")}
             </p>
           </div>
 
-          {/* Contacto clickeable con datos reales */}
+          {/* Contacto */}
           <div>
-            <h3 className="font-display font-bold text-primary mb-4">Επικοινωνία</h3>
+            <h3 className="font-display font-bold text-primary mb-4">{t("footer.contact")}</h3>
             <ul className="space-y-3">
               <li>
                 <button
@@ -97,14 +97,14 @@ const Footer = () => {
 
           {/* Horario */}
           <div>
-            <h3 className="font-display font-bold text-primary mb-4">Ώρες Λειτουργίας</h3>
+            <h3 className="font-display font-bold text-primary mb-4">{t("footer.hours")}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Clock size={16} className="flex-shrink-0 mt-0.5" />
                 <div>
-                  <p>Δευτέρα - Παρασκευή: 10:00 - 20:00</p>
-                  <p>Σάββατο: 10:00 - 14:00</p>
-                  <p>Κυριακή: Κλειστά</p>
+                  <p>{t("contact.weekdays")}: 10:00 - 20:00</p>
+                  <p>{t("contact.saturday")}: 10:00 - 14:00</p>
+                  <p>{t("contact.sunday")}: {t("contact.closed")}</p>
                 </div>
               </li>
             </ul>
@@ -112,7 +112,7 @@ const Footer = () => {
 
           {/* Redes Sociales */}
           <div>
-            <h3 className="font-display font-bold text-primary mb-4">Ακολουθήστε μας</h3>
+            <h3 className="font-display font-bold text-primary mb-4">{t("footer.follow_us")}</h3>
             <div className="flex gap-4">
               <a
                 href="https://facebook.com"
@@ -152,7 +152,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground text-sm">
-          <p>© 2024 Electric Scooter House. Με επιφύλαξη παντός δικαιώματος.</p>
+          <p>© 2024 Electric Scooter House. {t("footer.rights")}</p>
         </div>
       </div>
     </footer>

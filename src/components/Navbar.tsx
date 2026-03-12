@@ -45,8 +45,8 @@ const Navbar = () => {
         style={{ height: "80px" }}
       >
         <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-2 sm:px-4 lg:px-8">
-          {/* Logo y nombre - MARGEN IZQUIERDO MÍNIMO */}
-          <div className="flex items-center ml-[-5px] sm:ml-[-80px] md:ml-[-150px]">
+          {/* Logo y nombre */}
+          <div className="flex items-center ml-[-5px] sm:ml-[-80px] lg:ml-0">
             <Link to="/" className="flex items-center gap-1 sm:gap-2 md:gap-4 h-full py-1 sm:py-2 flex-shrink-0">
               <img
                 src="/images/logo/logo.png"
@@ -60,11 +60,11 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Espaciador - +1cm (40px) más */}
-          <div className="w-52 sm:w-12 md:w-24" />
+          {/* Espaciador */}
+          <div className="w-52 sm:w-12 lg:w-0" />
 
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* Desktop nav - 3cm MÁS A LA DERECHA */}
+          <div className="hidden lg:flex items-center gap-4 ml-24">
             {navLinks.map((link) => (
               <Link
                 key={link.key}
@@ -85,10 +85,11 @@ const Navbar = () => {
           <div className="hidden lg:block flex-1" />
 
           {/* Iconos de la derecha */}
-          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 ml-[-75px] sm:ml-0">
             <button
               onClick={() => setSearchOpen(true)}
               className="p-1 sm:p-1.5 md:p-2 text-muted-foreground hover:text-primary transition-colors"
+              aria-label={t("nav.search")}
             >
               <Search size={14} className="sm:hidden" />
               <Search size={16} className="hidden sm:block md:hidden" />

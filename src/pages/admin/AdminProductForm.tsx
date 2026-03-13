@@ -7,9 +7,9 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/firebase/config";
 import { Upload, X, Baby } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { translateToAllLanguages } from "@/services/translationService";
+import { translateFullProduct } from "@/services/translationService";
 
-// Categorías unificadas (incluye infantiles y movilidad reducida)
+// Categorías unificadas
 const categories = [
   { value: "patinetes", label: "Patinetes Eléctricos", icon: "🛴" },
   { value: "bicicletas", label: "Bicicletas Eléctricas", icon: "🚲" },
@@ -28,7 +28,6 @@ const AdminProductForm = () => {
   const isNew = id === "nuevo";
 
   const [form, setForm] = useState({
-    // Campos en 3 idiomas
     nombre: "",
     nombre_en: "",
     nombre_gr: "",
@@ -45,7 +44,6 @@ const AdminProductForm = () => {
     descuento: 0,
     
     especificaciones: {
-      // Campos comunes en 3 idiomas
       autonomia: "",
       autonomia_en: "",
       autonomia_gr: "",
@@ -53,8 +51,6 @@ const AdminProductForm = () => {
       peso_en: "",
       peso_gr: "",
       plegable: false,
-      
-      // Campos específicos por categoría
       velocidad_max: "",
       velocidad_max_en: "",
       velocidad_max_gr: "",
@@ -80,16 +76,12 @@ const AdminProductForm = () => {
       iluminacion: "",
       iluminacion_en: "",
       iluminacion_gr: "",
-      
-      // Campos infantiles
       edad_recomendada: "",
       edad_recomendada_en: "",
       edad_recomendada_gr: "",
       colores: [] as string[],
       luces: false,
       sonidos: false,
-      
-      // Campos movilidad reducida
       autonomia_bateria: "",
       autonomia_bateria_en: "",
       autonomia_bateria_gr: "",
@@ -202,7 +194,7 @@ const AdminProductForm = () => {
     });
   };
 
-  const handleAutoTranslate = async () => {
+  const handleAutoTranslateFull = async () => {
     if (!form.nombre.trim()) {
       toast({
         title: "Error",
@@ -214,19 +206,26 @@ const AdminProductForm = () => {
 
     setTranslating(true);
     try {
-      const translations = await translateToAllLanguages(form.nombre);
+      const translations = await translateFullProduct(form);
       
       setForm(prev => ({
         ...prev,
-        nombre_en: translations.en || prev.nombre_en,
-        nombre_gr: translations.el || prev.nombre_gr
+        nombre_en: translations.nombre_en || prev.nombre_en,
+        nombre_gr: translations.nombre_gr || prev.nombre_gr,
+        descripcion_en: translations.descripcion_en || prev.descripcion_en,
+        descripcion_gr: translations.descripcion_gr || prev.descripcion_gr,
+        especificaciones: {
+          ...prev.especificaciones,
+          ...translations.especificaciones
+        }
       }));
       
       toast({
         title: "Éxito",
-        description: "Nombre traducido automáticamente",
+        description: "✅ Producto traducido completamente a inglés y griego",
       });
     } catch (error) {
+      console.error("Error en traducción:", error);
       toast({
         title: "Error",
         description: "No se pudo traducir automáticamente",
@@ -237,7 +236,6 @@ const AdminProductForm = () => {
   };
 
   const handleSave = async () => {
-    // Validaciones
     if (!form.nombre.trim()) {
       toast({
         title: "Error",
@@ -257,17 +255,42 @@ const AdminProductForm = () => {
 
     setSaving(true);
     try {
-      const productData = {
-        ...form,
-        updatedAt: new Date(),
-        createdAt: isNew ? new Date() : form.createdAt,
-      };
+      let productData = { ...form };
+      
+      // Traducción automática al guardar si faltan campos
+      if (!form.nombre_en || !form.nombre_gr || 
+          !form.descripcion_en || !form.descripcion_gr) {
+        
+        toast({
+          title: "Traduciendo",
+          description: "Generando traducciones automáticas...",
+        });
+        
+        const translations = await translateFullProduct(form);
+        
+        productData = {
+          ...productData,
+          nombre_en: translations.nombre_en || form.nombre_en,
+          nombre_gr: translations.nombre_gr || form.nombre_gr,
+          descripcion_en: translations.descripcion_en || form.descripcion_en,
+          descripcion_gr: translations.descripcion_gr || form.descripcion_gr,
+          especificaciones: {
+            ...form.especificaciones,
+            ...translations.especificaciones
+          }
+        };
+      }
+      
+      productData.updatedAt = new Date();
+      if (isNew) {
+        productData.createdAt = new Date();
+      }
 
       if (isNew) {
         await addDoc(collection(db, "productos"), productData);
         toast({
           title: "Éxito",
-          description: "Producto creado correctamente",
+          description: "Producto creado correctamente con todas las traducciones",
         });
       } else if (id) {
         await setDoc(doc(db, "productos", id), productData);
@@ -289,7 +312,6 @@ const AdminProductForm = () => {
   };
 
   const isInfantil = form.categoria === "infantiles";
-  const isMovilidad = form.categoria === "movilidad-reducida";
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -303,7 +325,6 @@ const AdminProductForm = () => {
           <div className="border-b border-border pb-4">
             <h3 className="font-display font-bold text-lg text-foreground mb-4">Nombre del producto</h3>
             
-            {/* Nombre Español */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">
                 Español <span className="text-primary">*</span>
@@ -317,29 +338,28 @@ const AdminProductForm = () => {
               />
             </div>
 
-            {/* Botón de traducción automática */}
-            <div className="mb-4">
+            {/* Botón de traducción COMPLETA */}
+            <div className="mb-6">
               <button
                 type="button"
-                onClick={handleAutoTranslate}
+                onClick={handleAutoTranslateFull}
                 disabled={translating || !form.nombre.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded hover:bg-primary/10 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-[#E83C8C] to-[#C084FC] text-white font-bold rounded-lg hover:opacity-90 transition-all duration-300 disabled:opacity-50"
               >
                 {translating ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    <span>Traduciendo...</span>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Traduciendo todo el producto...</span>
                   </>
                 ) : (
                   <>
                     <span>🌐</span>
-                    <span>Traducir nombre automáticamente</span>
+                    <span>TRADUCIR PRODUCTO COMPLETO (Nombre + Descripción + Especificaciones)</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* Nombre Inglés */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">English</label>
               <input
@@ -350,7 +370,6 @@ const AdminProductForm = () => {
               />
             </div>
 
-            {/* Nombre Griego */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Ελληνικά</label>
               <input
@@ -409,7 +428,6 @@ const AdminProductForm = () => {
           <div className="border-b border-border pb-4">
             <h3 className="font-display font-bold text-lg text-foreground mb-4">Descripción</h3>
             
-            {/* Descripción Español */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Español</label>
               <textarea
@@ -421,7 +439,6 @@ const AdminProductForm = () => {
               />
             </div>
 
-            {/* Descripción Inglés */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">English</label>
               <textarea
@@ -433,7 +450,6 @@ const AdminProductForm = () => {
               />
             </div>
 
-            {/* Descripción Griego */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Ελληνικά</label>
               <textarea
@@ -480,8 +496,8 @@ const AdminProductForm = () => {
           {/* ===== ESPECIFICACIONES EN 3 IDIOMAS ===== */}
           <div className="border-b border-border pb-4">
             <h3 className="font-display font-bold text-lg text-foreground mb-4">Especificaciones</h3>
-            
-            {/* Autonomía - 3 idiomas */}
+
+            {/* Autonomía */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Autonomía / Range / Αυτονομία</label>
               <div className="grid grid-cols-3 gap-2">
@@ -521,7 +537,7 @@ const AdminProductForm = () => {
               </div>
             </div>
 
-            {/* Peso - 3 idiomas */}
+            {/* Peso */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Peso / Weight / Βάρος</label>
               <div className="grid grid-cols-3 gap-2">
@@ -561,7 +577,7 @@ const AdminProductForm = () => {
               </div>
             </div>
 
-            {/* Velocidad máxima - 3 idiomas */}
+            {/* Velocidad máxima */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Velocidad máx / Max speed / Μέγιστη ταχύτητα</label>
               <div className="grid grid-cols-3 gap-2">
@@ -601,7 +617,7 @@ const AdminProductForm = () => {
               </div>
             </div>
 
-            {/* Motor - 3 idiomas */}
+            {/* Motor */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Motor / Motor / Κινητήρας</label>
               <div className="grid grid-cols-3 gap-2">
@@ -641,7 +657,7 @@ const AdminProductForm = () => {
               </div>
             </div>
 
-            {/* Batería - 3 idiomas */}
+            {/* Batería */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Batería / Battery / Μπαταρία</label>
               <div className="grid grid-cols-3 gap-2">
@@ -681,7 +697,7 @@ const AdminProductForm = () => {
               </div>
             </div>
 
-            {/* Tiempo de carga - 3 idiomas */}
+            {/* Tiempo de carga */}
             <div className="mb-4">
               <label className="block text-sm text-muted-foreground mb-1">Tiempo carga / Charging time / Χρόνος φόρτισης</label>
               <div className="grid grid-cols-3 gap-2">
@@ -763,7 +779,7 @@ const AdminProductForm = () => {
               </div>
             )}
 
-            {/* Colores (solo para infantiles) */}
+            {/* Colores */}
             {isInfantil && (
               <div className="mt-4">
                 <label className="block text-sm text-muted-foreground mb-1">Colores disponibles</label>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, X, Shield } from "lucide-react";
+import { Search, X, Shield, ShoppingCart, Menu } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCart } from "@/contexts/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 import LanguageSelector from "./LanguageSelector";
@@ -21,6 +22,7 @@ const navLinks = [
 
 const Navbar = () => {
   const { t } = useLanguage();
+  const { totalItems } = useCart();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -46,7 +48,7 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-2 sm:px-4 lg:px-8">
           {/* Logo y nombre */}
-          <div className="flex items-center ml-[-5px] sm:ml-[-80px] lg:ml-0">
+          <div className="flex items-center ml-[-5px] sm:ml-[-80px] lg:ml-[-120px]">
             <Link to="/" className="flex items-center gap-1 sm:gap-2 md:gap-4 h-full py-1 sm:py-2 flex-shrink-0">
               <img
                 src="/images/logo/logo.png"
@@ -60,10 +62,10 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Espaciador */}
-          <div className="w-52 sm:w-12 lg:w-0" />
+          {/* Espaciador flexible */}
+          <div className="flex-1" />
 
-          {/* Desktop nav - 3cm MÁS A LA DERECHA */}
+          {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-4 ml-24">
             {navLinks.map((link) => (
               <Link
@@ -81,35 +83,55 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Espaciador flexible */}
-          <div className="hidden lg:block flex-1" />
-
           {/* Iconos de la derecha */}
-          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 ml-[-75px] sm:ml-0">
+          <div className="hidden lg:flex items-center gap-4 ml-4">
             <button
               onClick={() => setSearchOpen(true)}
               className="p-1 sm:p-1.5 md:p-2 text-muted-foreground hover:text-primary transition-colors"
               aria-label={t("nav.search")}
             >
-              <Search size={14} className="sm:hidden" />
-              <Search size={16} className="hidden sm:block md:hidden" />
-              <Search size={18} className="hidden md:block" />
+              <Search size={16} />
             </button>
+            
+            {/* CARRITO - NÚMERO TOTALMENTE PEGADO */}
+            <Link
+              to="/carrito"
+              className="p-1 sm:p-1.5 md:p-2 text-muted-foreground hover:text-primary transition-colors relative"
+              aria-label="Carrito"
+            >
+              <ShoppingCart size={18} />
+              {totalItems > 0 && (
+                <span className="absolute -top-[2px] -right-[2px] bg-[#2ecc71] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-md border border-white">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+            
             <LanguageSelector />
+          </div>
+
+          {/* MÓVIL - Iconos para móvil */}
+          <div className="flex lg:hidden items-center gap-4 sm:gap-6 ml-[-75px] sm:ml-0">
             <Link
               to="/admin"
-              className="lg:hidden p-1 sm:p-1.5 md:p-2 text-primary hover:text-glow transition-colors"
+              className="p-2 text-primary hover:text-glow transition-colors"
               title="Admin"
             >
-              <Shield size={14} className="sm:hidden" />
-              <Shield size={16} className="hidden sm:block md:hidden" />
-              <Shield size={18} className="hidden md:block" />
+              <Shield size={22} />
             </Link>
+            
+            <LanguageSelector />
+            
             <button
-              className="lg:hidden font-display text-xs sm:text-sm tracking-widest text-foreground px-1 sm:px-2"
-              onClick={() => setMenuOpen(true)}
+              className="p-2 text-foreground hover:text-primary transition-colors w-10 h-10 flex items-center justify-center"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Menú"
             >
-              {t("nav.menu")}
+              {menuOpen ? (
+                <X size={24} className="text-[#2ecc71]" />
+              ) : (
+                <Menu size={24} />
+              )}
             </button>
           </div>
         </div>
@@ -122,35 +144,42 @@ const Navbar = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-background flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[60] bg-black lg:hidden"
+            style={{ top: '80px' }}
           >
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
-            >
-              <X size={24} />
-            </button>
-            <div className="flex flex-col items-center gap-8">
-              {navLinks.map((link, i) => (
-                <motion.div
+            <div className="flex flex-col items-center justify-start pt-8">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setSearchOpen(true);
+                }}
+                className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors border-b border-gray-800"
+              >
+                Buscar
+              </button>
+              
+              {navLinks.map((link) => (
+                <Link
                   key={link.key}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  to={link.path}
+                  onClick={() => setMenuOpen(false)}
+                  className={`w-full py-4 text-center text-lg transition-colors border-b border-gray-800 ${
+                    location.pathname === link.path
+                      ? "text-[#2ecc71]"
+                      : "text-white hover:text-[#2ecc71]"
+                  }`}
                 >
-                  <Link
-                    to={link.path}
-                    className={`font-display text-2xl tracking-widest uppercase flex items-center gap-2 ${
-                      location.pathname === link.path
-                        ? "text-primary"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {link.key === 'admin' && <Shield size={20} className="text-primary" />}
-                    {t(`nav.${link.key}`)}
-                  </Link>
-                </motion.div>
+                  {t(`nav.${link.key}`)}
+                </Link>
               ))}
+              
+              <Link
+                to="/carrito"
+                onClick={() => setMenuOpen(false)}
+                className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors border-b border-gray-800"
+              >
+                Carrito {totalItems > 0 && `(${totalItems})`}
+              </Link>
             </div>
           </motion.div>
         )}

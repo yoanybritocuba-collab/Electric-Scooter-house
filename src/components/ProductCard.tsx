@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCart } from "@/contexts/CartContext";
+import { ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
   id: string;
-  nombre: string;      // Español (obligatorio)
-  nombre_en?: string;  // Inglés (opcional)
-  nombre_gr?: string;  // Griego (opcional)
+  nombre: string;
+  nombre_en?: string;
+  nombre_gr?: string;
   precio: number;
   imagenes: string[];
   masVendido?: boolean;
@@ -18,51 +19,67 @@ interface ProductCardProps {
 
 const ProductCard = (props: ProductCardProps) => {
   const { lang } = useLanguage();
+  const { addItem } = useCart();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  
+  const [showAdded, setShowAdded] = useState(false);
+
   const precioFinal = props.descuento ? props.precio * (1 - props.descuento / 100) : props.precio;
-  
-  // Función para obtener el nombre según el idioma
+
   const getNombre = (): string => {
-    // Si el idioma es inglés y existe nombre_en, úsalo
-    if (lang === 'en' && props.nombre_en) {
-      return props.nombre_en;
-    }
-    // Si el idioma es griego y existe nombre_gr, úsalo
-    if (lang === 'gr' && props.nombre_gr) {
-      return props.nombre_gr;
-    }
-    // Por defecto, usar español
+    if (lang === 'en' && props.nombre_en) return props.nombre_en;
+    if (lang === 'gr' && props.nombre_gr) return props.nombre_gr;
     return props.nombre;
   };
-  
-  // Determinar la URL de la imagen
-  const imagenUrl = !imageError && props.imagenes && props.imagenes.length > 0 
-    ? props.imagenes[0] 
+
+  const imagenUrl = !imageError && props.imagenes && props.imagenes.length > 0
+    ? props.imagenes[0]
     : null;
 
   const placeholderUrl = `https://placehold.co/600x400/2a2a2a/2ecc71?text=${encodeURIComponent(getNombre())}`;
 
+  // Guardar scroll antes de navegar
+  const handleClick = () => {
+    const currentScroll = window.scrollY;
+    const pathParts = window.location.pathname.split('/');
+    const lastSegment = pathParts[pathParts.length - 1];
+
+    if (lastSegment && lastSegment !== 'productos' && lastSegment !== 'categoria') {
+      sessionStorage.setItem(`scroll_${lastSegment}`, currentScroll.toString());
+      sessionStorage.setItem('lastCategory', lastSegment);
+    }
+  };
+
+  // Añadir al carrito
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addItem({
+      id: props.id,
+      nombre: props.nombre,
+      precio: precioFinal,
+      imagen: props.imagenes?.[0] || placeholderUrl
+    });
+
+    setShowAdded(true);
+    setTimeout(() => setShowAdded(false), 2000);
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-    >
+    <div className="relative">
       <Link
         to={`/producto/${props.id}`}
-        className="group block glow-border rounded-lg overflow-hidden bg-card hover-lift"
+        onClick={handleClick}
+        className="group block glow-border rounded-lg overflow-hidden bg-card hover-lift cursor-pointer"
       >
         <div className="relative aspect-square overflow-hidden bg-secondary">
-          {/* Loader mientras carga */}
           {!imageLoaded && imagenUrl && (
             <div className="absolute inset-0 flex items-center justify-center bg-secondary">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-          
+
           <img
             src={imagenUrl || placeholderUrl}
             alt={getNombre()}
@@ -70,18 +87,14 @@ const ProductCard = (props: ProductCardProps) => {
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             loading="lazy"
-            onLoad={() => {
-              console.log(`✅ Imagen cargada: ${getNombre()}`);
-              setImageLoaded(true);
-            }}
+            onLoad={() => setImageLoaded(true)}
             onError={(e) => {
-              console.error(`❌ Error cargando imagen: ${getNombre()}`);
               setImageError(true);
               setImageLoaded(true);
               e.currentTarget.src = placeholderUrl;
             }}
           />
-          
+
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {props.nuevo && (
@@ -105,24 +118,42 @@ const ProductCard = (props: ProductCardProps) => {
             )}
           </div>
         </div>
-        
+
         <div className="p-4">
           <h3 className="font-display text-sm tracking-wide text-foreground truncate">
             {getNombre()}
           </h3>
-          <div className="flex items-center gap-2 mt-1">
-            {props.descuento ? (
-              <>
-                <p className="text-primary font-bold text-lg">{precioFinal.toFixed(0)}€</p>
-                <p className="text-muted-foreground line-through text-sm">{props.precio}€</p>
-              </>
-            ) : (
-              <p className="text-primary font-bold text-lg">{props.precio}€</p>
-            )}
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-2">
+              {props.descuento ? (
+                <>
+                  <p className="text-primary font-bold text-lg">{precioFinal.toFixed(0)}€</p>
+                  <p className="text-muted-foreground line-through text-sm">{props.precio}€</p>
+                </>
+              ) : (
+                <p className="text-primary font-bold text-lg">{props.precio}€</p>
+              )}
+            </div>
           </div>
         </div>
       </Link>
-    </motion.div>
+
+      {/* Botón de carrito flotante */}
+      <button
+        onClick={handleAddToCart}
+        className="absolute bottom-4 right-4 w-10 h-10 bg-[#2ecc71] hover:bg-[#27ae60] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 z-10"
+        aria-label="Añadir al carrito"
+      >
+        <ShoppingCart size={18} />
+      </button>
+
+      {/* Feedback de añadido */}
+      {showAdded && (
+        <div className="absolute top-2 right-2 bg-[#2ecc71] text-white text-xs px-2 py-1 rounded-full animate-pulse z-10">
+          ✓ Añadido
+        </div>
+      )}
+    </div>
   );
 };
 

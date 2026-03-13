@@ -25,6 +25,8 @@ interface Product {
 interface Categoria {
   id: string;
   nombre: string;
+  nombre_en?: string;
+  nombre_gr?: string;
   descripcion: string;
   imagen: string;
   orden: number;
@@ -49,12 +51,19 @@ const categoryIcons: Record<string, any> = {
 };
 
 const Index = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [masVendidos, setMasVendidos] = useState<string[]>([]);
   const [ofertas, setOfertas] = useState<OfertaConfig>({});
   const [loading, setLoading] = useState(true);
+
+  // Función para obtener el nombre según el idioma
+  const getNombreCategoria = (cat: Categoria): string => {
+    if (lang === 'en' && cat.nombre_en) return cat.nombre_en;
+    if (lang === 'gr' && cat.nombre_gr) return cat.nombre_gr;
+    return cat.nombre;
+  };
 
   useEffect(() => {
     loadData();
@@ -63,13 +72,10 @@ const Index = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar productos
       const productSnap = await getDocs(collection(db, "productos"));
       const productos = productSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
       setProducts(productos);
-      console.log("Productos cargados:", productos.length);
 
-      // Cargar categorías
       const catSnap = await getDocs(collection(db, "categorias"));
       const cats = catSnap.docs.map(d => ({ id: d.id, ...d.data() } as Categoria));
 
@@ -88,14 +94,12 @@ const Index = () => {
         setCategorias(cats.sort((a, b) => a.orden - b.orden));
       }
 
-      // Cargar configuración de más vendidos
       const configSnap = await getDocs(collection(db, "configuracion"));
       const masVendidosConfig = configSnap.docs.find(d => d.id === "masVendidos");
       if (masVendidosConfig?.exists()) {
         setMasVendidos(masVendidosConfig.data().productos || []);
       }
 
-      // Cargar configuración de ofertas
       const ofertasConfig = configSnap.docs.find(d => d.id === "ofertas");
       if (ofertasConfig?.exists()) {
         setOfertas(ofertasConfig.data().productos || {});
@@ -110,29 +114,6 @@ const Index = () => {
   const categories = categorias.filter(c => c.activo);
   const masVendidosList = products.filter(p => masVendidos.includes(p.id));
   const ofertasList = products.filter(p => ofertas[p.id]?.activo);
-
-  const Section = ({ title, icon: Icon, items }: { title: string; icon?: any; items: Product[] }) => {
-    if (items.length === 0) return null;
-    return (
-      <section className="py-16">
-        <div className="flex items-center gap-3 mb-8">
-          {Icon && <Icon size={24} className="text-primary" />}
-          <h2 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-foreground">
-            {title}
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {items.slice(0, 4).map((p) => (
-            <ProductCard
-              key={p.id}
-              {...p}
-              descuento={ofertas[p.id]?.descuento}
-            />
-          ))}
-        </div>
-      </section>
-    );
-  };
 
   if (loading) {
     return (
@@ -158,8 +139,8 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categories.map((cat, i) => {
               const Icon = categoryIcons[cat.id];
+              const nombreCategoria = getNombreCategoria(cat);
 
-              // Buscar el ÚLTIMO producto de esta categoría que tenga imagen
               const ultimoProducto = products
                 .filter(p => p.categoria === cat.id && p.imagenes && p.imagenes.length > 0)
                 .sort((a, b) => (b.id > a.id ? 1 : -1))
@@ -178,18 +159,17 @@ const Index = () => {
                   <Link
                     to={`/categoria/${cat.id}`}
                     onClick={() => {
-                      // Limpiar scroll guardado al entrar a una nueva categoría
                       sessionStorage.removeItem(`scroll_${cat.id}`);
                     }}
                     className="group block relative rounded-xl overflow-hidden aspect-[4/3] glow-border"
                   >
                     <img
-                      src={imageUrl || `https://placehold.co/600x400/2a2a2a/2ecc71?text=${cat.nombre}`}
-                      alt={cat.nombre}
+                      src={imageUrl || `https://placehold.co/600x400/2a2a2a/2ecc71?text=${nombreCategoria}`}
+                      alt={nombreCategoria}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       loading="lazy"
                       onError={(e) => {
-                        e.currentTarget.src = `https://placehold.co/600x400/2a2a2a/2ecc71?text=${cat.nombre}`;
+                        e.currentTarget.src = `https://placehold.co/600x400/2a2a2a/2ecc71?text=${nombreCategoria}`;
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
@@ -199,7 +179,7 @@ const Index = () => {
                           {Icon && <Icon size={16} className="text-primary" />}
                         </div>
                         <span className="font-display text-sm tracking-widest uppercase text-foreground">
-                          {cat.nombre}
+                          {nombreCategoria}
                         </span>
                       </div>
                     </div>
@@ -209,12 +189,6 @@ const Index = () => {
             })}
           </div>
         </section>
-
-        {/* Productos Más Vendidos */}
-        <Section title={t("home.best_sellers")} icon={Star} items={masVendidosList} />
-
-        {/* Productos en Oferta */}
-        <Section title={t("home.on_sale")} icon={Percent} items={ofertasList} />
       </div>
     </div>
   );

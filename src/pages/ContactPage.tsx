@@ -1,104 +1,121 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
-import ProductCard from "@/components/ProductCard";
-import { ArrowLeft } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react"; // Añadido MessageCircle
 
-interface Product {
-  id: string;
-  nombre: string;
-  precio: number;
-  categoria: string;
-  imagenes: string[];
-  masVendido?: boolean;
-  nuevo?: boolean;
-  rebaja?: boolean;
-}
-
-const CategoryPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+const ContactPage = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    console.log("🔵 CategoryPage montada - slug:", slug);
-    
-    if (!slug) return;
+  const handlePhoneClick = () => {
+    window.location.href = 'tel:+302102799443';
+  };
 
-    // Cargar productos
-    const q = query(collection(db, "productos"), where("categoria", "==", slug));
-    getDocs(q).then((snap) => {
-      console.log("🟢 Productos cargados:", snap.size);
-      setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product)));
-      setLoading(false);
-    }).catch((error) => {
-      console.error("🔴 Error cargando productos:", error);
-      setLoading(false);
-    });
+  const handleEmailClick = () => {
+    window.location.href = 'mailto:electrichousescooters@gmail.com';
+  };
 
-    // RESTAURAR SCROLL
-    const savedPosition = sessionStorage.getItem('test_scroll');
-    console.log("🟡 Posición guardada encontrada:", savedPosition);
-    
-    if (savedPosition) {
-      setTimeout(() => {
-        window.scrollTo(0, parseInt(savedPosition));
-        console.log("✅ Intentando restaurar scroll a:", savedPosition);
-        setTimeout(() => {
-          console.log("📌 Scroll actual después de restaurar:", window.scrollY);
-        }, 100);
-      }, 500);
-    }
-  }, [slug]);
+  const handleAddressClick = () => {
+    window.open('https://maps.google.com/?q=Καρολίδου+10+Νέα+Ιωνία+14231', '_blank');
+  };
 
-  const categoryName = slug ? t(`categories.${slug}`) : "";
-
-  const goBack = () => {
-    const pos = window.scrollY;
-    console.log("💾 Guardando posición:", pos);
-    sessionStorage.setItem('test_scroll', pos.toString());
-    navigate(-1);
+  const handleWhatsAppClick = () => {
+    window.open('https://wa.me/306993185757', '_blank');
   };
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <button
-          onClick={goBack}
-          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 group"
-        >
-          <ArrowLeft size={20} />
-          <span>VOLVER</span>
-        </button>
-
-        <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight text-foreground mb-8">
-          {categoryName}
+      <div className="max-w-4xl mx-auto px-4 lg:px-8">
+        <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight text-white mb-8">
+          {t("contact.title")}
         </h1>
 
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-square bg-secondary rounded-lg animate-pulse" />
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Información de contacto */}
+          <div className="space-y-6">
+            <div className="bg-gray-900 rounded-lg p-6">
+              <h2 className="font-display font-bold text-xl text-white mb-4">Información de contacto</h2>
+              
+              {/* Dirección */}
+              <button
+                onClick={handleAddressClick}
+                className="w-full flex items-start gap-3 text-left mb-4 group hover:bg-gray-800 p-3 rounded-lg transition-colors"
+              >
+                <MapPin size={20} className="text-[#2ecc71] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">Dirección</p>
+                  <p className="text-gray-400 text-sm">Καρολίδου 10, Νέα Ιωνία 14231</p>
+                </div>
+              </button>
+
+              {/* Teléfono fijo (se mantiene) */}
+              <button
+                onClick={handlePhoneClick}
+                className="w-full flex items-start gap-3 text-left mb-4 group hover:bg-gray-800 p-3 rounded-lg transition-colors"
+              >
+                <Phone size={20} className="text-[#2ecc71] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">Teléfono fijo</p>
+                  <p className="text-gray-400 text-sm">21 0279 9443</p>
+                </div>
+              </button>
+
+              {/* MÓVIL ELIMINADO */}
+
+              {/* Email */}
+              <button
+                onClick={handleEmailClick}
+                className="w-full flex items-start gap-3 text-left mb-4 group hover:bg-gray-800 p-3 rounded-lg transition-colors"
+              >
+                <Mail size={20} className="text-[#2ecc71] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">Email</p>
+                  <p className="text-gray-400 text-sm">electrichousescooters@gmail.com</p>
+                </div>
+              </button>
+
+              {/* WhatsApp - con icono de MessageCircle */}
+              <button
+                onClick={handleWhatsAppClick}
+                className="w-full flex items-start gap-3 text-left group hover:bg-gray-800 p-3 rounded-lg transition-colors"
+              >
+                <MessageCircle size={20} className="text-[#25D366] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">WhatsApp</p>
+                  <p className="text-gray-400 text-sm">+30 6993 185 757</p>
+                </div>
+              </button>
+            </div>
           </div>
-        ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((p) => (
-              <ProductCard key={p.id} {...p} />
-            ))}
+
+          {/* Horario */}
+          <div className="bg-gray-900 rounded-lg p-6">
+            <h2 className="font-display font-bold text-xl text-white mb-4">Horario de atención</h2>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Clock size={20} className="text-[#2ecc71] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">Lunes a Viernes</p>
+                  <p className="text-gray-400">10:00 - 20:00</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Clock size={20} className="text-[#2ecc71] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">Sábados</p>
+                  <p className="text-gray-400">10:00 - 14:00</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Clock size={20} className="text-[#2ecc71] flex-shrink-0 mt-1" />
+                <div>
+                  <p className="text-white font-medium">Domingos</p>
+                  <p className="text-gray-400">Cerrado</p>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground text-lg">{t("messages.no_products")}</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default CategoryPage;
+export default ContactPage;

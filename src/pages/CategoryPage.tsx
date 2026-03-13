@@ -27,48 +27,34 @@ const CategoryPage = () => {
   useEffect(() => {
     if (!slug) return;
 
-    // Guardar la URL actual para cuando volvamos
-    sessionStorage.setItem('lastCategory', slug);
-
-    const q = query(collection(db, "productos"), where("categoria", "==", slug));
-    getDocs(q).then((snap) => {
-      setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product)));
-      setLoading(false);
-
-      // Restaurar scroll DESPUÉS de que los productos se hayan cargado
-      const savedPosition = sessionStorage.getItem(`scroll_${slug}`);
-      if (savedPosition) {
-        // Múltiples intentos para asegurar que el DOM está listo
-        setTimeout(() => {
-          window.scrollTo({
-            top: parseInt(savedPosition),
-            behavior: 'instant' as ScrollBehavior
-          });
-          sessionStorage.removeItem(`scroll_${slug}`);
-        }, 100);
-        
-        setTimeout(() => {
-          const currentPos = window.scrollY;
-          const targetPos = parseInt(savedPosition);
-          if (Math.abs(currentPos - targetPos) > 10) {
-            window.scrollTo({
-              top: targetPos,
-              behavior: 'instant' as ScrollBehavior
-            });
-          }
-        }, 300);
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const q = query(collection(db, "productos"), where("categoria", "==", slug));
+        const snap = await getDocs(q);
+        const productsData = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
+        setProducts(productsData);
+      } catch (error) {
+        console.error("Error cargando productos:", error);
+      } finally {
+        setLoading(false);
       }
-    }).catch(() => setLoading(false));
+    };
+    loadProducts();
   }, [slug]);
 
-  const goBack = () => {
-    // Guardar la posición actual ANTES de salir
-    const currentSlug = slug || sessionStorage.getItem('lastCategory');
-    if (currentSlug) {
-      sessionStorage.setItem(`scroll_${currentSlug}`, window.scrollY.toString());
+  // Restaurar scroll cuando se cargan los productos
+  useEffect(() => {
+    if (!loading && products.length > 0) {
+      const savedPosition = sessionStorage.getItem(`scroll_${slug}`);
+      if (savedPosition && savedPosition !== "0") {
+        setTimeout(() => {
+          window.scrollTo({ top: parseInt(savedPosition), behavior: 'auto' });
+          sessionStorage.removeItem(`scroll_${slug}`);
+        }, 100);
+      }
     }
-    navigate(-1);
-  };
+  }, [loading, products, slug]);
 
   const categoryName = slug ? t(`categories.${slug}`) : "";
 
@@ -77,21 +63,21 @@ const CategoryPage = () => {
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         {/* Botón Volver */}
         <button
-          onClick={goBack}
-          className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 group"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-400 hover:text-[#2ecc71] transition-colors mb-6 group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-display tracking-widest">VOLVER</span>
         </button>
 
-        <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight text-foreground mb-8">
+        <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight text-white mb-8">
           {categoryName}
         </h1>
 
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-square bg-secondary rounded-lg animate-pulse" />
+              <div key={i} className="aspect-square bg-gray-900 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : products.length > 0 ? (
@@ -102,7 +88,7 @@ const CategoryPage = () => {
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-muted-foreground text-lg">{t("messages.no_products")}</p>
+            <p className="text-gray-400 text-lg">{t("messages.no_products")}</p>
           </div>
         )}
       </div>

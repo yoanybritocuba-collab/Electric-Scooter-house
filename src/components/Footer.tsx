@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube, MessageCircle } from "lucide-react"; // AÑADIDO MessageCircle
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -22,7 +22,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-secondary border-t border-border mt-16">
+    <footer className="bg-black border-t border-border mt-16">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Logo y descripción */}
@@ -34,7 +34,7 @@ const Footer = () => {
                 className="h-16 w-auto"
               />
             </Link>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-gray-400 text-sm">
               {t("footer.description")}
             </p>
           </div>
@@ -47,9 +47,9 @@ const Footer = () => {
               <li>
                 <button
                   onClick={handleAddressClick}
-                  className="flex items-start gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left"
+                  className="flex items-start gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left"
                 >
-                  <MapPin size={16} className="flex-shrink-0 mt-0.5" />
+                  <MapPin size={16} className="flex-shrink-0 mt-0.5 text-primary" />
                   <span>Καρολίδου 10, Νέα Ιωνία 14231</span>
                 </button>
               </li>
@@ -58,9 +58,9 @@ const Footer = () => {
               <li>
                 <button
                   onClick={handlePhoneClick}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left"
+                  className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left"
                 >
-                  <Phone size={16} className="flex-shrink-0" />
+                  <Phone size={16} className="flex-shrink-0 text-primary" />
                   <span>21 0279 9443</span>
                 </button>
               </li>
@@ -69,22 +69,22 @@ const Footer = () => {
               <li>
                 <button
                   onClick={handleEmailClick}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left"
+                  className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left"
                 >
-                  <Mail size={16} className="flex-shrink-0" />
+                  <Mail size={16} className="flex-shrink-0 text-primary" />
                   <span>electrichousescooters@gmail.com</span>
                 </button>
               </li>
               
-              {/* WhatsApp - NUEVO NÚMERO + ONDAS DE RADIO */}
+              {/* WhatsApp - CORREGIDO: ahora usa MessageCircle en lugar de Phone */}
               <li>
                 <button
                   onClick={handleWhatsAppClick}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm w-full text-left group"
+                  className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left group"
                 >
                   <div className="relative">
-                    {/* Icono de WhatsApp */}
-                    <Phone size={16} className="flex-shrink-0 relative z-10 text-[#25D366]" />
+                    {/* Icono de WhatsApp (MessageCircle) en lugar de Phone */}
+                    <MessageCircle size={16} className="flex-shrink-0 relative z-10 text-[#25D366]" />
                     
                     {/* ONDAS DE RADIO alrededor del icono */}
                     <span className="absolute inset-0 flex items-center justify-center">
@@ -102,9 +102,9 @@ const Footer = () => {
           {/* Horario */}
           <div>
             <h3 className="font-display font-bold text-primary mb-4">{t("footer.hours")}</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex items-start gap-2">
-                <Clock size={16} className="flex-shrink-0 mt-0.5" />
+                <Clock size={16} className="flex-shrink-0 mt-0.5 text-primary" />
                 <div>
                   <p>{t("contact.weekdays")}: 10:00 - 20:00</p>
                   <p>{t("contact.saturday")}: 10:00 - 14:00</p>
@@ -122,7 +122,7 @@ const Footer = () => {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors"
               >
                 <Facebook size={18} />
               </a>
@@ -130,7 +130,7 @@ const Footer = () => {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors"
               >
                 <Instagram size={18} />
               </a>
@@ -138,7 +138,7 @@ const Footer = () => {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors"
               >
                 <Twitter size={18} />
               </a>
@@ -146,7 +146,7 @@ const Footer = () => {
                 href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-background rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors"
               >
                 <Youtube size={18} />
               </a>
@@ -155,8 +155,17 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground text-sm">
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
           <p>© 2024 Electric Scooter House. {t("footer.rights")}</p>
+        </div>
+
+        {/* Código QR */}
+        <div className="flex justify-center mt-6">
+          <img
+            src="/images/qr/qr.png"
+            alt="Código QR"
+            className="w-16 h-16 object-contain opacity-90 hover:opacity-100 transition-opacity duration-300"
+          />
         </div>
       </div>
     </footer>

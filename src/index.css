@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Fuente futurista Orbitron */
+@import '@fontsource/orbitron/400.css';
+@import '@fontsource/orbitron/700.css';
+@import '@fontsource/orbitron/900.css';
+
+/* ===== RESET TOTAL - ELIMINAR TODOS LOS MÁRGENES Y PADDINGS POR DEFECTO ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#root {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 2%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 2%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 160 84% 39%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 0 0% 2%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 160 84% 39%;
+    --glow-green: 160 64% 50%;
+    --nocturne: 0 0% 4%;
+    --asphalt: 0 0% 53%;
+
+    /* Variables para la línea informativa */
+    --infoline-height: 40px;
+    --navbar-height: 80px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+  .glow-border {
+    @apply border border-primary/20 transition-all duration-300;
+  }
+  .glow-border:hover {
+    @apply border-primary/50;
+    box-shadow: 0 0 20px hsl(160 84% 39% / 0.15);
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-[hsl(var(--glow-green))];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--nocturne));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--asphalt));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* ===== FIX PARA NAVBAR SIEMPRE ARRIBA ===== */
+
+/* Eliminar cualquier estilo de App.css que pueda afectar */
+#root {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+/* Navbar siempre pegado arriba */
+nav.fixed.top-0 {
+  top: 0 !important;
+  z-index: 50 !important;
+}
+
+/* Forzar que el primer elemento después del navbar no tenga margen */
+nav.fixed.top-0 + * {
+  margin-top: 0 !important;
+}
+
+/* La línea informativa - POSICIÓN CORRECTA */
+.fixed[style*="top: 80px"] {
+  top: 80px !important; /* Debajo del navbar */
+  z-index: 45 !important;
+}
+
+.fixed[style*="bottom: 56px"] {
+  bottom: 56px !important; /* Encima de la barra inferior */
+  z-index: 45 !important;
+}
+
+/* Asegurar que el slider empiece justo debajo del navbar */
+.relative.w-full[style*="calc(100vh - 80px)"] {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  top: 0 !important;
+}
+
+/* Ajustar padding del contenido principal */
+.pt-24 {
+  padding-top: calc(80px + 1rem) !important;
+}
+
+/* Si hay línea arriba, aumentar padding */
+body:has(.fixed[style*="top: 80px"]) .pt-24 {
+  padding-top: calc(80px + var(--infoline-height, 40px) + 1rem) !important;
+}
+
+/* Barra inferior siempre visible */
+.fixed.bottom-0 {
+  bottom: 0 !important;
+  z-index: 40 !important;
+}
+
+/* Ajustes móvil */
+@media (max-width: 768px) {
+  :root {
+    --infoline-height: 35px;
+    --navbar-height: 70px;
+  }
+  
+  .fixed[style*="bottom: 56px"] {
+    bottom: 56px !important;
+  }
+  
+  .fixed[style*="top: 80px"] {
+    top: 70px !important; /* Altura navbar móvil */
+  }
+  
+  .pt-24 {
+    padding-top: calc(70px + var(--infoline-height, 35px) + 1rem) !important;
+  }
+}
+
+/* ===== SOLUCIÓN DEFINITIVA PARA EL SLIDER ===== */
+
+/* Eliminar cualquier margen o padding del slider */
+.relative.w-full[style*="calc(100vh - 80px)"] {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Cualquier contenedor que envuelva al slider no debe tener padding */
+div:has(> .relative.w-full[style*="calc(100vh - 80px)"]) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Debug visual temporal (actívalo si necesitas ver los elementos) */
+/* 
+* {
+  outline: 1px solid red !important;
+} 
+*/

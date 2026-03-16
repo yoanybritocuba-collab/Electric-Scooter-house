@@ -1,0 +1,35 @@
+/* src/styles/fixes.css */
+
+/* ===== FIX PARA LÍNEA INFORMATIVA ===== */
+
+/* La línea siempre visible */
+.infoline-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+/* Navbar se desplaza hacia abajo */
+.navbar-with-infoline {
+  top: var(--infoline-height, 40px) !important;
+}
+
+/* Ajuste para el contenido principal */
+.main-content {
+  padding-top: calc(80px + var(--infoline-height, 40px));
+}
+
+/* Variables CSS para altura dinámica */
+:root {
+  --infoline-height: 40px;
+  --navbar-height: 80px;
+}
+
+/* Media queries para móvil */
+@media (max-width: 640px) {
+  :root {
+    --infoline-height: 35px;
+    --navbar-height: 70px;
+  }
+}

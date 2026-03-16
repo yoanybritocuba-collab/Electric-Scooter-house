@@ -53,6 +53,66 @@ export const translateToAllLanguages = async (text: string) => {
 };
 
 /**
+ * Traduce un texto a TODOS los idiomas (español, inglés, griego)
+ * @param text Texto a traducir
+ * @param sourceLang Idioma de origen ('es', 'en', 'gr')
+ */
+export const translateToAll = async (
+  text: string,
+  sourceLang: string
+): Promise<{ es: string; en: string; gr: string }> => {
+  const result = {
+    es: sourceLang === 'es' ? text : '',
+    en: sourceLang === 'en' ? text : '',
+    gr: sourceLang === 'gr' ? text : ''
+  };
+
+  try {
+    // Si el origen es español, traducir a inglés y griego
+    if (sourceLang === 'es') {
+      const [en, gr] = await Promise.all([
+        translateText(text, 'en'),
+        translateText(text, 'el')
+      ]);
+      result.en = en.texto;
+      result.gr = gr.texto;
+    }
+    
+    // Si el origen es inglés, traducir a español y griego
+    else if (sourceLang === 'en') {
+      // Para traducir de inglés a español
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`;
+      const response = await fetch(url);
+      const data = await response.json();
+      result.es = data.responseData?.translatedText || '';
+      
+      const gr = await translateText(text, 'el');
+      result.gr = gr.texto;
+    }
+    
+    // Si el origen es griego, traducir a español e inglés
+    else if (sourceLang === 'gr') {
+      // Para griego a español
+      const urlEs = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=el|es`;
+      const responseEs = await fetch(urlEs);
+      const dataEs = await responseEs.json();
+      result.es = dataEs.responseData?.translatedText || '';
+      
+      // Para griego a inglés
+      const urlEn = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=el|en`;
+      const responseEn = await fetch(urlEn);
+      const dataEn = await responseEn.json();
+      result.en = dataEn.responseData?.translatedText || '';
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error en traducción múltiple:', error);
+    return result;
+  }
+};
+
+/**
  * Traduce un objeto completo de especificaciones
  * @param specs Objeto de especificaciones a traducir
  */

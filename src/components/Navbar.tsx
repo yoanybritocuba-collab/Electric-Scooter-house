@@ -21,12 +21,17 @@ const navLinks = [
 ];
 
 const Navbar = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage(); // 👈 AÑADIDO 'lang' para debugging
   const { totalItems } = useCart();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Debug: Verificar cambios de idioma
+  useEffect(() => {
+    console.log("🌐 Idioma actual en Navbar:", lang);
+  }, [lang]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -67,20 +72,24 @@ const Navbar = () => {
 
           {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-4 ml-24">
-            {navLinks.map((link) => (
-              <Link
-                key={link.key}
-                to={link.path}
-                className={`font-display text-xs tracking-widest uppercase transition-colors duration-200 flex items-center gap-1 px-2 ${
-                  location.pathname === link.path
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                } ${link.key === 'admin' ? 'text-primary border border-primary/30 px-3 py-1 rounded-full hover:bg-primary/10' : ''}`}
-              >
-                {link.key === 'admin' && <Shield size={14} />}
-                {t(`nav.${link.key}`)}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              // Debug para cada link
+              console.log(`🔤 ${link.key}: ${t(`nav.${link.key}`)}`);
+              return (
+                <Link
+                  key={link.key}
+                  to={link.path}
+                  className={`font-display text-xs tracking-widest uppercase transition-colors duration-200 flex items-center gap-1 px-2 ${
+                    location.pathname === link.path
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  } ${link.key === 'admin' ? 'text-primary border border-primary/30 px-3 py-1 rounded-full hover:bg-primary/10' : ''}`}
+                >
+                  {link.key === 'admin' && <Shield size={14} />}
+                  {t(`nav.${link.key}`)}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Iconos de la derecha */}
@@ -93,7 +102,6 @@ const Navbar = () => {
               <Search size={16} />
             </button>
             
-            {/* CARRITO - NÚMERO TOTALMENTE PEGADO */}
             <Link
               to="/carrito"
               className="p-1 sm:p-1.5 md:p-2 text-muted-foreground hover:text-primary transition-colors relative"
@@ -101,7 +109,7 @@ const Navbar = () => {
             >
               <ShoppingCart size={18} />
               {totalItems > 0 && (
-                <span className="absolute -top-[2px] -right-[2px] bg-[#2ecc71] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-md border border-white">
+                <span className="absolute -top-1 -right-1 bg-[#2ecc71] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-md">
                   {totalItems}
                 </span>
               )}

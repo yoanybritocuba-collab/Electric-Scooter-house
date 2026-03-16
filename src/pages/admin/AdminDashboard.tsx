@@ -7,7 +7,7 @@ import { db } from "@/firebase/config";
 import { 
   LayoutDashboard, Package, Plus, Pencil, Trash2, LogOut,
   TrendingUp, Sparkles, Tag, Star, Percent, FolderOpen,
-  Settings, Search, Baby, Bike, Car, Zap, Wrench, X
+  Settings, Search, Baby, Bike, Car, Zap, Wrench, X, Truck
 } from "lucide-react";
 
 interface Product {
@@ -123,6 +123,12 @@ const AdminDashboard = () => {
       title: "CATEGORÍAS",
       items: [
         { to: "/admin/categorias", icon: FolderOpen, label: "Gestionar Categorías", desc: "Editar nombres y orden" },
+      ]
+    },
+    {
+      title: "CONFIGURACIÓN",
+      items: [
+        { to: "/admin/shipping", icon: Truck, label: "Envíos", desc: "Configurar envío gratis" },
       ]
     }
   ];

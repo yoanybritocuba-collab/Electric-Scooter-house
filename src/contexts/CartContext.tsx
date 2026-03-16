@@ -2,7 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface CartItem {
   id: string;
-  nombre: string;
+  nombre: string;      // Español
+  nombre_en?: string;  // Inglés
+  nombre_gr?: string;  // Griego
   precio: number;
   cantidad: number;
   imagen: string;
@@ -29,7 +31,6 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  // Cargar carrito de localStorage al iniciar
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -37,7 +38,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Guardar en localStorage cuando cambie
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(items));
   }, [items]);

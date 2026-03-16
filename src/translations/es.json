@@ -175,5 +175,18 @@
     "financing": "Financiación",
     "trade_in": "Entrega tu usado",
     "repair": "Servicio técnico"
+  },
+  "cart": {
+    "title": "Carrito",
+    "empty_title": "Carrito vacío",
+    "empty_message": "Añade algunos productos para comenzar",
+    "back_to_shop": "Volver a la tienda",
+    "clear": "Vaciar carrito",
+    "subtotal": "Subtotal",
+    "shipping": "Envío",
+    "free": "Gratis",
+    "total": "Total",
+    "whatsapp_message": "Hola, quiero comprar estos productos",
+    "complete_purchase": "Completar compra por WhatsApp"
   }
 }

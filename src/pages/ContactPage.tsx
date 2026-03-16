@@ -1,5 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react"; // Añadido MessageCircle
+import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 
 const ContactPage = () => {
   const { t } = useLanguage();
@@ -16,8 +16,8 @@ const ContactPage = () => {
     window.open('https://maps.google.com/?q=Καρολίδου+10+Νέα+Ιωνία+14231', '_blank');
   };
 
-  const handleWhatsAppClick = () => {
-    window.open('https://wa.me/306993185757', '_blank');
+  const handleViberClick = () => {
+    window.open('viber://chat?number=+306993185757', '_blank');
   };
 
   return (
@@ -45,7 +45,7 @@ const ContactPage = () => {
                 </div>
               </button>
 
-              {/* Teléfono fijo (se mantiene) */}
+              {/* Teléfono fijo */}
               <button
                 onClick={handlePhoneClick}
                 className="w-full flex items-start gap-3 text-left mb-4 group hover:bg-gray-800 p-3 rounded-lg transition-colors"
@@ -56,8 +56,6 @@ const ContactPage = () => {
                   <p className="text-gray-400 text-sm">21 0279 9443</p>
                 </div>
               </button>
-
-              {/* MÓVIL ELIMINADO */}
 
               {/* Email */}
               <button
@@ -71,14 +69,21 @@ const ContactPage = () => {
                 </div>
               </button>
 
-              {/* WhatsApp - con icono de MessageCircle */}
+              {/* VIBER - NUEVO BOTÓN */}
               <button
-                onClick={handleWhatsAppClick}
-                className="w-full flex items-start gap-3 text-left group hover:bg-gray-800 p-3 rounded-lg transition-colors"
+                onClick={handleViberClick}
+                className="w-full flex items-start gap-3 text-left group hover:bg-gray-800 p-3 rounded-lg transition-colors relative overflow-hidden"
               >
-                <MessageCircle size={20} className="text-[#25D366] flex-shrink-0 mt-1" />
-                <div>
-                  <p className="text-white font-medium">WhatsApp</p>
+                {/* Efecto de ondas moradas */}
+                <span className="absolute inset-0 flex items-center justify-start ml-12">
+                  <span className="absolute inline-flex h-8 w-8 rounded-full bg-[#7360F2]/40 opacity-75 animate-ping"></span>
+                  <span className="absolute inline-flex h-6 w-6 rounded-full bg-[#7360F2]/30 opacity-50 animate-ping animation-delay-300"></span>
+                  <span className="absolute inline-flex h-4 w-4 rounded-full bg-[#7360F2]/20 opacity-25 animate-ping animation-delay-600"></span>
+                </span>
+                
+                <MessageCircle size={20} className="text-[#7360F2] flex-shrink-0 mt-1 relative z-10" />
+                <div className="relative z-10">
+                  <p className="text-white font-medium">Viber</p>
                   <p className="text-gray-400 text-sm">+30 6993 185 757</p>
                 </div>
               </button>

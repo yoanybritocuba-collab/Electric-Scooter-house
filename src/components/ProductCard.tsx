@@ -50,7 +50,7 @@ const ProductCard = (props: ProductCardProps) => {
     }
   };
 
-  // Añadir al carrito
+  // Añadir al carrito - AHORA GUARDA LOS NOMBRES TRADUCIDOS
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -58,6 +58,8 @@ const ProductCard = (props: ProductCardProps) => {
     addItem({
       id: props.id,
       nombre: props.nombre,
+      nombre_en: props.nombre_en,  // 👈 AÑADIDO
+      nombre_gr: props.nombre_gr,  // 👈 AÑADIDO
       precio: precioFinal,
       imagen: props.imagenes?.[0] || placeholderUrl
     });

@@ -175,5 +175,18 @@
     "financing": "Financing",
     "trade_in": "Trade-in",
     "repair": "Repair service"
+  },
+  "cart": {
+    "title": "Cart",
+    "empty_title": "Empty cart",
+    "empty_message": "Add some products to start",
+    "back_to_shop": "Back to shop",
+    "clear": "Clear cart",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "free": "Free",
+    "total": "Total",
+    "whatsapp_message": "Hello, I want to buy these products",
+    "complete_purchase": "Complete purchase via WhatsApp"
   }
 }

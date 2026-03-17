@@ -1,213 +1,186 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useCart } from "@/contexts/CartContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Minus, Plus, Trash2, ArrowLeft, ShoppingBag } from "lucide-react";
-import { motion } from "framer-motion";
-import { doc, getDoc } from "firebase/firestore";
+import { useParams, Link } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { useLanguage } from "@/contexts/LanguageContext";
+import ProductCard from "@/components/ProductCard";
+import { motion } from "framer-motion";
+import { ArrowLeft, Package } from "lucide-react";
 
-interface ShippingConfig {
-  freeShippingEnabled: boolean;
-  freeShippingMinAmount: number;
-  shippingCost: number;
+interface Product {
+  id: string;
+  nombre: string;
+  precio: number;
+  categoria: string;
+  imagenes: string[];
+  masVendido?: boolean;
+  nuevo?: boolean;
+  rebaja?: boolean;
+  descuento?: number;
 }
 
-const CartPage = () => {
+interface Categoria {
+  id: string;
+  nombre: string;
+  nombre_en?: string;
+  nombre_gr?: string;
+  descripcion: string;
+  imagen: string;
+  activo: boolean;
+}
+
+const CategoryPage = () => {
+  const { slug } = useParams<{ slug: string }>();
   const { t, lang } = useLanguage();
-  const { items, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
-  const [shippingConfig, setShippingConfig] = useState<ShippingConfig>({
-    freeShippingEnabled: true,
-    freeShippingMinAmount: 50,
-    shippingCost: 5
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categoria, setCategoria] = useState<Categoria | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ofertas, setOfertas] = useState<Record<string, { activo: boolean; descuento: number }>>({});
 
-  // Cargar configuración de envío
-  useEffect(() => {
-    const loadShippingConfig = async () => {
-      try {
-        const docRef = doc(db, "configuracion", "shipping");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setShippingConfig({
-            freeShippingEnabled: data.freeShippingEnabled ?? true,
-            freeShippingMinAmount: data.freeShippingMinAmount ?? 50,
-            shippingCost: data.shippingCost ?? 5
-          });
-          console.log("✅ Configuración cargada:", data);
-        } else {
-          console.log("⚠️ Usando valores por defecto");
-        }
-      } catch (error) {
-        console.error("Error cargando configuración de envío:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadShippingConfig();
-  }, []);
-
-  // Calcular costo de envío
-  const shippingCost = shippingConfig.freeShippingEnabled && totalPrice >= shippingConfig.freeShippingMinAmount
-    ? 0
-    : shippingConfig.shippingCost;
-
-  const finalTotal = totalPrice + shippingCost;
-
-  // Función para obtener el nombre según el idioma
-  const getNombre = (item: typeof items[0]): string => {
-    if (lang === 'en' && item.nombre_en) return item.nombre_en;
-    if (lang === 'gr' && item.nombre_gr) return item.nombre_gr;
-    return item.nombre;
+  // ===== ÚNICA FUNCIÓN DE SCROLL =====
+  const handleProductClick = () => {
+    if (!slug) return;
+    // Guardar scroll y categoría
+    sessionStorage.setItem(`scroll_${slug}`, window.scrollY.toString());
+    sessionStorage.setItem('lastCategory', slug);
   };
 
-  if (items.length === 0) {
+  // ===== ÚNICO EFECTO DE SCROLL =====
+  useEffect(() => {
+    if (!slug) return;
+    const savedScroll = sessionStorage.getItem(`scroll_${slug}`);
+    
+    if (savedScroll && products.length > 0) {
+      // Pequeño retraso para asegurar que el DOM cargó
+      setTimeout(() => {
+        window.scrollTo({
+          top: parseInt(savedScroll),
+          behavior: 'auto'
+        });
+        sessionStorage.removeItem(`scroll_${slug}`);
+      }, 100);
+    }
+  }, [slug, products]);
+
+  useEffect(() => {
+    loadData();
+  }, [slug]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      if (!slug) return;
+      
+      const catQuery = query(collection(db, "categorias"), where("id", "==", slug));
+      const catSnap = await getDocs(catQuery);
+      if (!catSnap.empty) {
+        setCategoria(catSnap.docs[0].data() as Categoria);
+      }
+
+      const productsQuery = query(collection(db, "productos"), where("categoria", "==", slug));
+      const productsSnap = await getDocs(productsQuery);
+      const loadedProducts = productsSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          nombre: data.nombre || "",
+          precio: data.precio || 0,
+          categoria: data.categoria || "",
+          imagenes: data.imagenes || [],
+          masVendido: data.masVendido === true,
+          nuevo: data.nuevo === true,
+          rebaja: data.rebaja === true,
+          descuento: data.descuento || 0
+        } as Product;
+      });
+      setProducts(loadedProducts);
+
+      const configSnap = await getDocs(collection(db, "configuracion"));
+      const ofertasConfig = configSnap.docs.find(d => d.id === "ofertas");
+      if (ofertasConfig?.exists()) {
+        setOfertas(ofertasConfig.data().productos || {});
+      }
+    } catch (error) {
+      console.error("Error cargando datos:", error);
+    }
+    setLoading(false);
+  };
+
+  const getNombreCategoria = (): string => {
+    if (!categoria) return slug || "";
+    if (lang === 'en' && categoria.nombre_en) return categoria.nombre_en;
+    if (lang === 'gr' && categoria.nombre_gr) return categoria.nombre_gr;
+    return categoria.nombre;
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
+      <div className="min-h-screen pt-24 flex items-center justify-center">
         <div className="text-center">
-          <ShoppingBag size={64} className="mx-auto mb-4 text-gray-600" />
-          <h2 className="text-xl font-display font-bold text-white mb-2">
-            {t("cart.empty_title") || "Carrito vacío"}
-          </h2>
-          <p className="text-gray-400 mb-6">
-            {t("cart.empty_message") || "Añade algunos productos para comenzar"}
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 bg-[#2ecc71] text-white px-6 py-3 rounded-lg hover:bg-[#27ae60] transition-colors"
-          >
-            <ArrowLeft size={18} />
-            {t("cart.back_to_shop") || "Volver a la tienda"}
-          </Link>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{t("messages.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-32 lg:pb-16">
-      <div className="max-w-4xl mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-display font-bold text-2xl text-white">
-            {t("cart.title") || "Carrito"} ({totalItems})
-          </h1>
-          <button
-            onClick={clearCart}
-            className="text-sm text-gray-400 hover:text-red-500 transition-colors"
-          >
-            {t("cart.clear") || "Vaciar carrito"}
-          </button>
-        </div>
+    <div className="min-h-screen pt-24 pb-16">
+      <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
+        <img src="/images/hero/hero.avif" alt="Fondo" className="w-full h-full object-cover opacity-20" />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
 
-        {loading ? (
-          <div className="text-center py-8">Cargando...</div>
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
+        <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors mb-6">
+          <ArrowLeft size={18} />
+          <span>{t("category.back") || "Volver"}</span>
+        </Link>
+
+        <h1 className="font-display font-bold text-3xl md:text-4xl text-white mb-8">
+          {getNombreCategoria()}
+        </h1>
+
+        {categoria?.descripcion && (
+          <p className="text-gray-400 max-w-3xl mb-8">
+            {lang === 'en' && categoria.descripcion}
+            {lang === 'gr' && categoria.descripcion}
+            {lang === 'es' && categoria.descripcion}
+          </p>
+        )}
+
+        {products.length === 0 ? (
+          <div className="text-center py-16">
+            <Package size={64} className="text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">
+              {t("category.no_products") || "No hay productos en esta categoría"}
+            </p>
+          </div>
         ) : (
-          <>
-            <div className="space-y-4">
-              {items.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="flex gap-4 bg-gray-900 rounded-lg p-4"
-                >
-                  <img
-                    src={item.imagen}
-                    alt={getNombre(item)}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
-                  
-                  <div className="flex-1">
-                    <h3 className="font-display font-bold text-white mb-1">
-                      {getNombre(item)}
-                    </h3>
-                    <p className="text-[#2ecc71] font-bold">{item.precio}€</p>
-                    
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.cantidad - 1)}
-                          className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="w-8 text-center text-white">{item.cantidad}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.cantidad + 1)}
-                          className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                      
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-gray-500 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Resumen - CON ENVÍO DINÁMICO */}
-            <div className="mt-8 bg-gray-900 rounded-lg p-6">
-              <div className="flex justify-between text-lg mb-2">
-                <span className="text-gray-400">{t("cart.subtotal") || "Subtotal"}:</span>
-                <span className="text-white font-bold">{totalPrice.toFixed(2)}€</span>
-              </div>
-              
-              <div className="flex justify-between text-lg mb-2">
-                <span className="text-gray-400">{t("cart.shipping") || "Envío"}:</span>
-                <span className={shippingCost === 0 ? "text-[#2ecc71] font-bold" : "text-white font-bold"}>
-                  {shippingCost === 0 ? (t("cart.free") || "Gratis") : `${shippingCost.toFixed(2)}€`}
-                </span>
-              </div>
-
-              {shippingConfig.freeShippingEnabled && shippingCost > 0 && (
-                <div className="text-sm text-gray-500 mb-2">
-                  {t("cart.free_shipping_note") || "Envío gratis a partir de"} {shippingConfig.freeShippingMinAmount}€
-                </div>
-              )}
-
-              {shippingConfig.freeShippingEnabled && totalPrice < shippingConfig.freeShippingMinAmount && (
-                <div className="text-sm text-yellow-500 mb-2">
-                  ¡Te faltan {(shippingConfig.freeShippingMinAmount - totalPrice).toFixed(2)}€ para envío gratis!
-                </div>
-              )}
-
-              <div className="border-t border-gray-700 pt-4 mb-6">
-                <div className="flex justify-between text-xl">
-                  <span className="text-white font-bold">{t("cart.total") || "Total"}:</span>
-                  <span className="text-[#2ecc71] font-bold">{finalTotal.toFixed(2)}€</span>
-                </div>
-              </div>
-              
-              <button
-                onClick={() => window.open(`https://wa.me/306993185757?text=${encodeURIComponent(
-                  `${t("cart.whatsapp_message") || "Hola, quiero comprar estos productos"}:\\n${
-                    items.map(i => `- ${getNombre(i)} x${i.cantidad} = ${i.precio * i.cantidad}€`).join('\\n')
-                  }\\n${t("cart.subtotal") || "Subtotal"}: ${totalPrice}€\\n${
-                    t("cart.shipping") || "Envío"
-                  }: ${shippingCost === 0 ? (t("cart.free") || "Gratis") : shippingCost + '€'}\\n${
-                    t("cart.total") || "Total"
-                  }: ${finalTotal}€`
-                )}`, '_blank')}
-                className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.map((product) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <span>{t("cart.complete_purchase") || "Completar compra por WhatsApp"}</span>
-              </button>
-            </div>
-          </>
+                <Link
+                  to={`/producto/${product.id}`}
+                  onClick={handleProductClick}
+                >
+                  <ProductCard
+                    {...product}
+                    descuento={ofertas[product.id]?.descuento}
+                  />
+                </Link>
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-export default CartPage;
+export default CategoryPage;

@@ -8,7 +8,7 @@ import { db, storage } from "@/firebase/config";
 import AdminNavBack from "@/components/AdminNavBack";
 import { Upload, X, Baby, Save, Globe, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { translateFullProduct } from "@/services/translationService";
+import { translateToAll } from "@/services/translationService";
 
 // Categorías unificadas
 const categories = [
@@ -207,6 +207,13 @@ const AdminProductForm = () => {
     });
   };
 
+  // Función para traducir un campo específico
+  const translateField = async (text: string, sourceLang: string) => {
+    if (!text) return { es: "", en: "", gr: "" };
+    return await translateToAll(text, sourceLang);
+  };
+
+  // Función para traducir todo el producto
   const handleAutoTranslateFull = async () => {
     if (!form.nombre.trim()) {
       toast({
@@ -219,18 +226,38 @@ const AdminProductForm = () => {
 
     setTranslating(true);
     try {
-      const translations = await translateFullProduct(form);
+      // Traducir nombre
+      const nombreTrans = await translateToAll(form.nombre, 'es');
+      
+      // Traducir descripción
+      const descTrans = await translateToAll(form.descripcion || form.nombre, 'es');
+      
+      // Traducir especificaciones una por una
+      const especificacionesTrans = { ...form.especificaciones };
+      
+      // Lista de campos de especificaciones a traducir
+      const camposTexto = [
+        'autonomia', 'peso', 'velocidad_max', 'motor', 'bateria',
+        'tiempo_carga', 'ruedas', 'cambios', 'frenos', 'iluminacion',
+        'edad_recomendada', 'autonomia_bateria', 'max_peso', 'inclinacion_max', 'giro'
+      ];
+
+      for (const campo of camposTexto) {
+        const valor = (form.especificaciones as any)[campo];
+        if (valor) {
+          const trans = await translateToAll(valor, 'es');
+          (especificacionesTrans as any)[`${campo}_en`] = trans.en;
+          (especificacionesTrans as any)[`${campo}_gr`] = trans.gr;
+        }
+      }
       
       setForm(prev => ({
         ...prev,
-        nombre_en: translations.nombre_en || prev.nombre_en,
-        nombre_gr: translations.nombre_gr || prev.nombre_gr,
-        descripcion_en: translations.descripcion_en || prev.descripcion_en,
-        descripcion_gr: translations.descripcion_gr || prev.descripcion_gr,
-        especificaciones: {
-          ...prev.especificaciones,
-          ...translations.especificaciones
-        }
+        nombre_en: nombreTrans.en,
+        nombre_gr: nombreTrans.gr,
+        descripcion_en: descTrans.en,
+        descripcion_gr: descTrans.gr,
+        especificaciones: especificacionesTrans
       }));
       
       toast({
@@ -271,27 +298,17 @@ const AdminProductForm = () => {
     try {
       let productData = { ...form };
       
-      if (!form.nombre_en || !form.nombre_gr || 
-          !form.descripcion_en || !form.descripcion_gr) {
-        
-        toast({
-          title: "Traduciendo",
-          description: "Generando traducciones automáticas...",
-        });
-        
-        const translations = await translateFullProduct(form);
-        
-        productData = {
-          ...productData,
-          nombre_en: translations.nombre_en || form.nombre_en,
-          nombre_gr: translations.nombre_gr || form.nombre_gr,
-          descripcion_en: translations.descripcion_en || form.descripcion_en,
-          descripcion_gr: translations.descripcion_gr || form.descripcion_gr,
-          especificaciones: {
-            ...form.especificaciones,
-            ...translations.especificaciones
-          }
-        };
+      // Si faltan traducciones, generarlas automáticamente
+      if (!form.nombre_en || !form.nombre_gr) {
+        const nombreTrans = await translateToAll(form.nombre, 'es');
+        productData.nombre_en = nombreTrans.en;
+        productData.nombre_gr = nombreTrans.gr;
+      }
+      
+      if (!form.descripcion_en || !form.descripcion_gr) {
+        const descTrans = await translateToAll(form.descripcion || form.nombre, 'es');
+        productData.descripcion_en = descTrans.en;
+        productData.descripcion_gr = descTrans.gr;
       }
       
       productData.updatedAt = new Date();
@@ -812,6 +829,9 @@ const AdminProductForm = () => {
                 { key: "nuevo", label: "Nuevo" },
                 { key: "rebaja", label: "Rebaja" },
                 { key: "especificaciones.plegable", label: "Plegable" },
+                { key: "especificaciones.suspension", label: "Suspensión" },
+                { key: "especificaciones.luces", label: "Luces" },
+                { key: "especificaciones.sonidos", label: "Sonidos" },
               ].map(({ key, label }) => {
                 const isSpec = key.startsWith("especificaciones.");
                 const specKey = key.split(".")[1];

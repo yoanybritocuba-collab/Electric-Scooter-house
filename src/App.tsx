@@ -1,11 +1,12 @@
+import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
-import { UserProfileProvider } from "@/contexts/UserProfileContext"; // 👈 NUEVO
+import { UserProfileProvider } from "@/contexts/UserProfileContext";
 import { AdminRoute } from "@/components/AdminRoute";
 import Navbar from "@/components/Navbar";
 import InfoLine from "@/components/InfoLine";
@@ -14,6 +15,7 @@ import MobileBottomBar from "@/components/MobileBottomBar";
 import ViberButton from "@/components/ViberAppButton";
 import ScrollToTop from "@/components/ScrollToTop";
 import MainSlider from "@/components/MainSlider";
+import MobileHero from "@/components/MobileHero"; // 👈 NUEVO: Hero para móviles
 import LoginPage from "./pages/LoginPage";
 import PuntosPage from "./pages/PuntosPage";
 import Index from "./pages/Index";
@@ -22,7 +24,7 @@ import ProductDetail from "./pages/ProductDetail";
 import ContactPage from "./pages/ContactPage";
 import CategoriaInfantil from "./pages/CategoriaInfantil";
 import CartPage from "./pages/CartPage";
-import PerfilPage from "./pages/PerfilPage"; // 👈 NUEVA RUTA
+import PerfilPage from "./pages/PerfilPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProductForm from "./pages/admin/AdminProductForm";
@@ -52,15 +54,14 @@ const AppContent = () => {
       )}
       
       <Routes>
-        {/* Ruta principal */}
+        {/* Ruta principal - AHORA CON DETECCIÓN DE MÓVIL */}
         <Route path="/" element={
           <>
-            <MainSlider />
+            <MainSliderForDevice />
             <Index />
           </>
         } />
         
-        {/* Rutas públicas */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/puntos" element={<PuntosPage />} />
         <Route path="/categoria/:slug" element={<CategoryPage />} />
@@ -68,9 +69,8 @@ const AppContent = () => {
         <Route path="/contacto" element={<ContactPage />} />
         <Route path="/categoria/infantiles" element={<CategoriaInfantil />} />
         <Route path="/carrito" element={<CartPage />} />
-        <Route path="/perfil" element={<PerfilPage />} /> {/* 👈 NUEVA RUTA */}
+        <Route path="/perfil" element={<PerfilPage />} />
         
-        {/* Admin routes */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
           <AdminRoute><AdminDashboard /></AdminRoute>
@@ -103,7 +103,6 @@ const AppContent = () => {
           </AdminRoute>
         } />
         
-        {/* Ruta 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       
@@ -121,14 +120,36 @@ const AppContent = () => {
   );
 };
 
+// Componente para elegir entre hero de móvil o PC
+const MainSliderForDevice = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Detectar si es móvil
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Comprobar al cargar
+    checkMobile();
+    
+    // Comprobar al cambiar tamaño de ventana
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Mostrar diferente según el dispositivo
+  return isMobile ? <MobileHero /> : <MainSlider />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
         <CartProvider>
-          <UserProfileProvider> {/* 👈 NUEVO PROVIDER */}
+          <UserProfileProvider>
             <TooltipProvider>
-              <Sonner />
+              <Toaster />
               <BrowserRouter>
                 <AppContent />
               </BrowserRouter>

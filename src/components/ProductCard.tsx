@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
@@ -35,53 +34,33 @@ const ProductCard = (props: ProductCardProps) => {
   const imagenUrl = !imageError && props.imagenes && props.imagenes.length > 0
     ? props.imagenes[0]
     : null;
-
   const placeholderUrl = `https://placehold.co/600x400/2a2a2a/2ecc71?text=${encodeURIComponent(getNombre())}`;
 
-  // Guardar scroll antes de navegar
-  const handleClick = () => {
-    const currentScroll = window.scrollY;
-    const pathParts = window.location.pathname.split('/');
-    const lastSegment = pathParts[pathParts.length - 1];
-
-    if (lastSegment && lastSegment !== 'productos' && lastSegment !== 'categoria') {
-      sessionStorage.setItem(`scroll_${lastSegment}`, currentScroll.toString());
-      sessionStorage.setItem('lastCategory', lastSegment);
-    }
-  };
-
-  // Añadir al carrito - AHORA GUARDA LOS NOMBRES TRADUCIDOS
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     addItem({
       id: props.id,
       nombre: props.nombre,
-      nombre_en: props.nombre_en,  // 👈 AÑADIDO
-      nombre_gr: props.nombre_gr,  // 👈 AÑADIDO
+      nombre_en: props.nombre_en,
+      nombre_gr: props.nombre_gr,
       precio: precioFinal,
       imagen: props.imagenes?.[0] || placeholderUrl
     });
-
     setShowAdded(true);
     setTimeout(() => setShowAdded(false), 2000);
   };
 
   return (
-    <div className="relative">
-      <Link
-        to={`/producto/${props.id}`}
-        onClick={handleClick}
-        className="group block glow-border rounded-lg overflow-hidden bg-card hover-lift cursor-pointer"
-      >
+    <div className="relative group cursor-pointer">
+      {/* 👇 EL COMPONENTE YA NO ES UN <Link>, solo un contenedor */} 
+      <div className="block glow-border rounded-lg overflow-hidden bg-card hover-lift">
         <div className="relative aspect-square overflow-hidden bg-secondary">
           {!imageLoaded && imagenUrl && (
             <div className="absolute inset-0 flex items-center justify-center bg-secondary">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-
           <img
             src={imagenUrl || placeholderUrl}
             alt={getNombre()}
@@ -96,35 +75,15 @@ const ProductCard = (props: ProductCardProps) => {
               e.currentTarget.src = placeholderUrl;
             }}
           />
-
-          {/* Badges */}
+          {/* ... (Badges sin cambios) ... */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {props.nuevo && (
-              <span className="bg-primary text-primary-foreground text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">
-                NEW
-              </span>
-            )}
-            {props.descuento ? (
-              <span className="bg-destructive text-destructive-foreground text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">
-                -{props.descuento}%
-              </span>
-            ) : props.rebaja && (
-              <span className="bg-destructive text-destructive-foreground text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">
-                SALE
-              </span>
-            )}
-            {props.masVendido && (
-              <span className="bg-foreground text-background text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">
-                TOP
-              </span>
-            )}
+            {props.nuevo && (<span className="bg-primary text-primary-foreground text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">NEW</span>)}
+            {props.descuento ? (<span className="bg-destructive text-destructive-foreground text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">-{props.descuento}%</span>) : props.rebaja && (<span className="bg-destructive text-destructive-foreground text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">SALE</span>)}
+            {props.masVendido && (<span className="bg-foreground text-background text-[10px] font-display tracking-widest px-2 py-1 rounded-sm uppercase">TOP</span>)}
           </div>
         </div>
-
         <div className="p-4">
-          <h3 className="font-display text-sm tracking-wide text-foreground truncate">
-            {getNombre()}
-          </h3>
+          <h3 className="font-display text-sm tracking-wide text-foreground truncate">{getNombre()}</h3>
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2">
               {props.descuento ? (
@@ -138,18 +97,16 @@ const ProductCard = (props: ProductCardProps) => {
             </div>
           </div>
         </div>
-      </Link>
+      </div>
 
-      {/* Botón de carrito flotante */}
+      {/* Botón de carrito flotante (sin cambios) */}
       <button
         onClick={handleAddToCart}
-        className="absolute bottom-4 right-4 w-10 h-10 bg-[#2ecc71] hover:bg-[#27ae60] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 z-10"
+        className="absolute bottom-4 right-4 w-10 h-10 bg-[#2ecc71] hover:bg-[#27ae60] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 z-10 opacity-0 group-hover:opacity-100 focus:opacity-100"
         aria-label="Añadir al carrito"
       >
         <ShoppingCart size={18} />
       </button>
-
-      {/* Feedback de añadido */}
       {showAdded && (
         <div className="absolute top-2 right-2 bg-[#2ecc71] text-white text-xs px-2 py-1 rounded-full animate-pulse z-10">
           ✓ Añadido
@@ -158,5 +115,4 @@ const ProductCard = (props: ProductCardProps) => {
     </div>
   );
 };
-
 export default ProductCard;

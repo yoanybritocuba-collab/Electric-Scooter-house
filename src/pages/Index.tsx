@@ -129,7 +129,7 @@ const Index = () => {
             {title}
           </h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">     
           {items.slice(0, 4).map((p) => (
             <ProductCard
               key={p.id}
@@ -155,7 +155,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* IMAGEN DE FONDO PARA TODA LA PÁGINA - CORREGIDA A .avif */}
+      {/* IMAGEN DE FONDO */}
       <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
         <img
           src="/images/hero/hero.avif"
@@ -194,9 +194,6 @@ const Index = () => {
                   >
                     <Link
                       to={`/categoria/${cat.id}`}
-                      onClick={() => {
-                        sessionStorage.removeItem(`scroll_${cat.id}`);
-                      }}
                       className="group block relative rounded-xl overflow-hidden aspect-[4/3] glow-border"
                     >
                       <img
@@ -228,11 +225,11 @@ const Index = () => {
 
           {/* Secciones de productos */}
           {masVendidosList.length > 0 && (
-            <Section title={t("home.best_sellers")} icon={Star} items={masVendidosList} />
+            <Section title={t("home.best_sellers")} icon={Star} items={masVendidosList} />  
           )}
 
           {ofertasList.length > 0 && (
-            <Section title={t("home.on_sale")} icon={Percent} items={ofertasList} />
+            <Section title={t("home.on_sale")} icon={Percent} items={ofertasList} />        
           )}
         </div>
       </div>

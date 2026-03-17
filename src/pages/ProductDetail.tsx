@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCart } from "@/contexts/CartContext"; // IMPORTAR
+import { useCart } from "@/contexts/CartContext";
 import ProductCard from "@/components/ProductCard";
 import ProductImageGallery from "@/components/ProductImageGallery";
-import { ArrowLeft, ShoppingCart } from "lucide-react"; // AÑADIR ShoppingCart
+import { ArrowLeft, ShoppingCart } from "lucide-react";
 
 interface Product {
   id: string;
@@ -30,11 +30,11 @@ const ProductDetail = () => {
   const { t, lang } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addItem } = useCart(); // USAR CARRITO
+  const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [addedToCart, setAddedToCart] = useState(false); // PARA FEEDBACK
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const getText = (es: string, en?: string, gr?: string): string => {
     if (lang === 'en' && en) return en;
@@ -71,15 +71,21 @@ const ProductDetail = () => {
     loadProduct();
   }, [id]);
 
+  // ===== VOLVER A LA CATEGORÍA GUARDADA CON LOGS =====
   const goBack = () => {
     const lastCategory = sessionStorage.getItem('lastCategory');
+    console.log("🚀 ANTES de navegar - lastCategory:", lastCategory);
+    console.log("📦 Todo sessionStorage:", {...sessionStorage});
+    
     if (lastCategory) {
-      sessionStorage.setItem(`scroll_${lastCategory}`, window.scrollY.toString());
+      console.log("➡️ Navegando a categoría:", lastCategory);
+      navigate(`/categoria/${lastCategory}`);
+    } else {
+      console.log("➡️ No hay categoría, yendo a inicio");
+      navigate('/');
     }
-    navigate(-1);
   };
 
-  // FUNCIÓN PARA AÑADIR AL CARRITO
   const handleAddToCart = () => {
     if (!product) return;
     
@@ -89,7 +95,7 @@ const ProductDetail = () => {
       precio: product.descuento 
         ? product.precio * (1 - product.descuento / 100) 
         : product.precio,
-      imagen: product.imagenes?.[0] || "/placeholder-image.jpg"
+      imagen: product.imagenes?.[0] || "https://placehold.co/600x400/2a2a2a/2ecc71?text=Sin+imagen"
     });
     
     setAddedToCart(true);
@@ -115,22 +121,27 @@ const ProductDetail = () => {
     );
   }
 
-  const images = product.imagenes?.length ? product.imagenes : ["/placeholder-image.jpg"];
+  const images = product.imagenes?.length > 0 
+    ? product.imagenes 
+    : ["https://placehold.co/600x400/2a2a2a/2ecc71?text=Sin+imagen"];
+    
   const precioFinal = product.descuento
     ? product.precio * (1 - product.descuento / 100)
     : product.precio;
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen pt-32 pb-16">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         {/* Botón Volver */}
-        <button
-          onClick={goBack}
-          className="flex items-center gap-2 text-gray-400 hover:text-[#2ecc71] transition-colors mb-6 group"
-        >
-          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-display tracking-widest">VOLVER</span>
-        </button>
+        <div className="mb-8">
+          <button
+            onClick={goBack}
+            className="flex items-center gap-2 text-gray-400 hover:text-[#2ecc71] transition-colors group"
+          >
+            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="text-sm font-display tracking-widest">VOLVER</span>
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Galería de imágenes */}
@@ -172,7 +183,7 @@ const ProductDetail = () => {
               </p>
             </div>
 
-            {/* Especificaciones - AQUÍ TAMBIÉN VA EL CARRITO */}
+            {/* Especificaciones */}
             {product.especificaciones && Object.keys(product.especificaciones).length > 0 && (
               <div className="pt-6 border-t border-gray-800">
                 <h2 className="font-display font-bold text-lg tracking-tight text-white mb-4">
@@ -194,14 +205,12 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* BOTONES DE ACCIÓN - CON CARRITO */}
+            {/* Botones de acción */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              {/* Botón Comprar */}
               <button className="flex-1 bg-primary text-primary-foreground font-display font-bold tracking-widest text-sm py-4 rounded-lg hover:bg-glow transition-all duration-300">
                 COMPRAR AHORA
               </button>
               
-              {/* Botón WhatsApp */}
               <a
                 href={`https://wa.me/306993185757?text=${encodeURIComponent(`Hola, me interesa el producto: ${getText(product.nombre, product.nombre_en, product.nombre_gr)} - ${precioFinal.toFixed(2)}€`)}`}
                 target="_blank"
@@ -211,7 +220,6 @@ const ProductDetail = () => {
                 CONSULTAR POR WHATSAPP
               </a>
               
-              {/* BOTÓN DE CARRITO - AHORA TAMBIÉN EN ESPECIFICACIONES */}
               <button
                 onClick={handleAddToCart}
                 className="relative flex-1 bg-[#2ecc71] hover:bg-[#27ae60] text-white font-display font-bold tracking-widest text-sm py-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"

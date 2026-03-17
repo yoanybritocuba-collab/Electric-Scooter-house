@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ProductCard from "@/components/ProductCard";
-import { ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Package } from "lucide-react";
 
 interface Product {
   id: string;
@@ -15,79 +16,151 @@ interface Product {
   masVendido?: boolean;
   nuevo?: boolean;
   rebaja?: boolean;
+  descuento?: number;
+}
+
+interface Categoria {
+  id: string;
+  nombre: string;
+  nombre_en?: string;
+  nombre_gr?: string;
+  descripcion: string;
+  imagen: string;
+  activo: boolean;
 }
 
 const CategoryPage = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const { t } = useLanguage();
-  const navigate = useNavigate();
+  const { slug } = useParams();
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categoria, setCategoria] = useState<Categoria | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ofertas, setOfertas] = useState<Record<string, { activo: boolean; descuento: number }>>({});
 
   useEffect(() => {
-    if (!slug) return;
-
-    const loadProducts = async () => {
-      const q = query(collection(db, "productos"), where("categoria", "==", slug));
-      const snap = await getDocs(q);
-      setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product)));
-      setLoading(false);
-    };
-
-    loadProducts();
+    loadData();
   }, [slug]);
 
-  const goBack = () => {
-    if (slug) {
-      sessionStorage.setItem(`scroll_${slug}`, window.scrollY.toString());
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Cargar categoría
+      const catQuery = query(collection(db, "categorias"), where("id", "==", slug));
+      const catSnap = await getDocs(catQuery);
+      
+      if (!catSnap.empty) {
+        setCategoria(catSnap.docs[0].data() as Categoria);
+      }
+
+      // Cargar productos de esta categoría
+      const productsQuery = query(collection(db, "productos"), where("categoria", "==", slug));
+      const productsSnap = await getDocs(productsQuery);
+      const loadedProducts = productsSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          nombre: data.nombre || "",
+          precio: data.precio || 0,
+          categoria: data.categoria || "",
+          imagenes: data.imagenes || [],
+          masVendido: data.masVendido === true,
+          nuevo: data.nuevo === true,
+          rebaja: data.rebaja === true,
+          descuento: data.descuento || 0
+        } as Product;
+      });
+      setProducts(loadedProducts);
+
+      // Cargar ofertas
+      const configSnap = await getDocs(collection(db, "configuracion"));
+      const ofertasConfig = configSnap.docs.find(d => d.id === "ofertas");
+      if (ofertasConfig?.exists()) {
+        setOfertas(ofertasConfig.data().productos || {});
+      }
+
+    } catch (error) {
+      console.error("Error cargando datos:", error);
     }
-    navigate(-1);
+    setLoading(false);
   };
 
-  const categoryName = slug ? t(`categories.${slug}`) : "";
+  const getNombreCategoria = (): string => {
+    if (!categoria) return slug || "";
+    if (lang === 'en' && categoria.nombre_en) return categoria.nombre_en;
+    if (lang === 'gr' && categoria.nombre_gr) return categoria.nombre_gr;
+    return categoria.nombre;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{t("messages.loading")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen pt-24 pb-16 relative">
-      {/* Imagen de fondo visible */}
-      <div className="fixed inset-0 -z-10">
+    <div className="min-h-screen pt-24 pb-16">
+      {/* IMAGEN DE FONDO - CORREGIDA A .avif */}
+      <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
         <img
-          src="/images/hero/hero.png"
-          alt="Fondo categoría"
-          className="w-full h-full object-cover opacity-30"
+          src="/images/hero/hero.avif"
+          alt="Fondo"
+          className="w-full h-full object-cover opacity-20"
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
-        <button
-          onClick={goBack}
-          className="flex items-center gap-2 text-gray-300 hover:text-[#2ecc71] transition-colors mb-6 group bg-black/30 backdrop-blur-sm px-4 py-2 rounded-lg"
+        {/* Botón volver */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors mb-6"
         >
-          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-display tracking-widest">VOLVER</span>
-        </button>
+          <ArrowLeft size={18} />
+          <span>{t("category.back") || "Volver"}</span>
+        </Link>
 
-        <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight text-white mb-8 drop-shadow-lg">
-          {categoryName}
+        {/* Título de la categoría */}
+        <h1 className="font-display font-bold text-3xl md:text-4xl text-white mb-8">
+          {getNombreCategoria()}
         </h1>
 
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-square bg-gray-800/50 backdrop-blur-sm rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((p) => (
-              <div key={p.id} className="backdrop-blur-sm bg-black/20 rounded-lg p-2">
-                <ProductCard {...p} />
-              </div>
-            ))}
+        {/* Descripción de la categoría (si existe) */}
+        {categoria?.descripcion && (
+          <p className="text-gray-400 max-w-3xl mb-8">
+            {lang === 'en' && categoria.descripcion}
+            {lang === 'gr' && categoria.descripcion}
+            {lang === 'es' && categoria.descripcion}
+          </p>
+        )}
+
+        {/* Grid de productos */}
+        {products.length === 0 ? (
+          <div className="text-center py-16">
+            <Package size={64} className="text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">
+              {t("category.no_products") || "No hay productos en esta categoría"}
+            </p>
           </div>
         ) : (
-          <div className="text-center py-20 bg-black/30 backdrop-blur-sm rounded-lg">
-            <p className="text-gray-300 text-lg">{t("messages.no_products")}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.map((product) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ProductCard
+                  {...product}
+                  descuento={ofertas[product.id]?.descuento}
+                />
+              </motion.div>
+            ))}
           </div>
         )}
       </div>

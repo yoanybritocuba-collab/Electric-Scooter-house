@@ -155,10 +155,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* IMAGEN DE FONDO PARA TODA LA PÁGINA */}
+      {/* IMAGEN DE FONDO PARA TODA LA PÁGINA - CORREGIDA A .avif */}
       <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
         <img
-          src="/images/hero/hero.png"
+          src="/images/hero/hero.avif"
           alt="Fondo"
           className="w-full h-full object-cover opacity-20"
         />

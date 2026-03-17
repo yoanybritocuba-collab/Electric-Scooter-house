@@ -47,58 +47,54 @@ const MainSlider = () => {
     animate: { width: 128, opacity: 1, transition: { delay: 0.7, duration: 0.6 } }
   };
 
+  // Para depuración
+  useEffect(() => {
+    console.log("🖼️ MainSlider montado");
+  }, []);
+
+  const handleImageLoad = () => {
+    console.log("✅ Imagen cargada correctamente");
+    setImageLoaded(true);
+  };
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.error("❌ Error cargando imagen:", e.currentTarget.src);
+    setImageLoaded(true); // Para que desaparezca el loader aunque falle
+  };
+
   return (
-    <div className="relative w-full" style={{ height: 'calc(100vh - 80px)' }}>
-      
-      {/* MÓVIL - DOS IMÁGENES COMPLETAS JUNTAS (SIN EXPANDIRSE) */}
-      <div className="sm:hidden absolute inset-0 flex flex-col">
-        {/* Primera imagen - SIN EXPANDIRSE */}
-        <div className="h-1/2 w-full flex items-center justify-center bg-black">
-          <img
-            src="/images/hero/hero.avif"
-            alt={t("hero.future")}
-            className="h-full w-auto max-w-full object-contain"
-            style={{ filter: 'brightness(1.2) contrast(1.1)' }}
-            onLoad={() => setImageLoaded(true)}
-            onError={(e) => e.currentTarget.style.display = 'none'}
-          />
-        </div>
-
-        {/* Segunda imagen - SIN EXPANDIRSE */}
-        <div className="h-1/2 w-full flex items-center justify-center bg-black">
-          <img
-            src="/images/hero/hero.avif"
-            alt={t("hero.future")}
-            className="h-full w-auto max-w-full object-contain"
-            style={{ 
-              filter: 'brightness(1.2) contrast(1.1)',
-              transform: 'scaleX(-1)'
-            }}
-            onError={(e) => e.currentTarget.style.display = 'none'}
-          />
-        </div>
-      </div>
-
-      {/* DESKTOP - UNA SOLA IMAGEN */}
-      <div className="hidden sm:block absolute inset-0">
+    <div 
+      className="relative w-full overflow-hidden bg-black"
+      style={{ 
+        height: 'calc(100vh - 80px)',
+        marginTop: 0,
+        top: 0
+      }}
+    >
+      {/* IMAGEN DE FONDO - CORREGIDA A .avif */}
+      <div className="absolute inset-0">
         <img
           src="/images/hero/hero.avif"
-          alt={t("hero.future")}
+          alt="Electric Scooter House"
           className="w-full h-full object-cover"
-          style={{ filter: 'brightness(1.2) contrast(1.1)' }}
-          onError={(e) => e.currentTarget.style.display = 'none'}
+          style={{ 
+            filter: 'brightness(1.2) contrast(1.1)',
+            objectPosition: 'center'
+          }}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       </div>
       
       {/* Loader mientras carga */}
       {!imageLoaded && (
         <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       
       {/* Overlay degradado */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-5" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-5" />
       
       {/* Contenido con animación */}
       <div className="absolute inset-0 flex items-center justify-center px-4 overflow-hidden z-10">
@@ -160,6 +156,7 @@ const MainSlider = () => {
                 ? 'w-5 sm:w-6 md:w-7 lg:w-8 h-1.5 sm:h-2 bg-primary' 
                 : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/50 hover:bg-white/70'
             }`}
+            aria-label={`Slide ${i + 1}`}
           />
         ))}
       </div>

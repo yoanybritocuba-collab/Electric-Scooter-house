@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const MobileHero = () => {
   const { t } = useLanguage();
   const [currentImage, setCurrentImage] = useState(0);
-  const [textIndex, setTextIndex] = useState(0);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [error, setError] = useState(false);
   
   const images = [
     '/images/heromobil/hero0.avif',
@@ -27,100 +26,26 @@ const MobileHero = () => {
     t("hero.smart")
   ];
 
+  // Cambiar imagen cada 12 segundos
   useEffect(() => {
-    const imageInterval = setInterval(() => {
+    const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 6000);
-    return () => clearInterval(imageInterval);
+    }, 12000); // 12 segundos
+    return () => clearInterval(interval);
   }, []);
 
+  // Cambiar texto cada 6 segundos
+  const [textIndex, setTextIndex] = useState(0);
   useEffect(() => {
     const textInterval = setInterval(() => {
       setTextIndex((prev) => (prev + 1) % texts.length);
     }, 6000);
     return () => clearInterval(textInterval);
-  }, [texts.length]);
+  }, []);
 
-  const textVariants = {
-    initial: { 
-      x: '-100vw', 
-      opacity: 0,
-      scale: 0.8,
-      filter: 'blur(10px)'
-    },
-    animate: { 
-      x: 0, 
-      opacity: 1, 
-      scale: 1,
-      filter: 'blur(0px)',
-      transition: { 
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-        duration: 1.2
-      }
-    },
-    exit: { 
-      x: '100vw', 
-      opacity: 0, 
-      scale: 0.8,
-      filter: 'blur(10px)',
-      transition: { 
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-        duration: 1.2
-      }
-    }
-  };
-
-  const subTextVariants = {
-    initial: { 
-      opacity: 0, 
-      y: 30,
-      filter: 'blur(5px)'
-    },
-    animate: { 
-      opacity: 1, 
-      y: 0,
-      filter: 'blur(0px)',
-      transition: { 
-        delay: 0.3, 
-        duration: 0.8,
-        ease: "easeOut"
-      }
-    },
-    exit: { 
-      opacity: 0, 
-      y: -30,
-      filter: 'blur(5px)',
-      transition: { 
-        duration: 0.5 
-      }
-    }
-  };
-
-  const imageVariants = {
-    initial: { 
-      opacity: 0,
-      scale: 1.1
-    },
-    animate: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { 
-        duration: 1.2,
-        ease: "easeInOut"
-      }
-    },
-    exit: { 
-      opacity: 0,
-      scale: 0.9,
-      transition: { 
-        duration: 1.2,
-        ease: "easeInOut"
-      }
-    }
+  const handleImageError = () => {
+    console.error("❌ Error cargando imagen:", images[currentImage]);
+    setError(true);
   };
 
   return (
@@ -131,59 +56,23 @@ const MobileHero = () => {
       backgroundColor: '#000000',
       overflow: 'hidden',
     }}>
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={currentImage}
-          variants={imageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-          }}
-        >
-          <img
-            src={images[currentImage]}
-            alt={`Hero ${currentImage + 1}`}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-            onLoad={() => setImageLoaded(true)}
-          />
-        </motion.div>
-      </AnimatePresence>
+      {/* IMAGEN ACTUAL */}
+      <img
+        key={currentImage}
+        src={images[currentImage]}
+        alt={`Hero ${currentImage + 1}`}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          display: 'block',
+          transition: 'opacity 1s ease-in-out'
+        }}
+        onLoad={() => setImagesLoaded(true)}
+        onError={handleImageError}
+      />
 
-      {!imageLoaded && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: '#000000',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 30
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid #2ecc71',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-        </div>
-      )}
-
+      {/* Overlay degradado */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -195,6 +84,7 @@ const MobileHero = () => {
         pointerEvents: 'none'
       }} />
 
+      {/* TEXTO */}
       <div style={{
         position: 'absolute',
         top: '35%',
@@ -207,54 +97,33 @@ const MobileHero = () => {
         color: 'white',
         pointerEvents: 'none'
       }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={textIndex}
-            variants={textVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <motion.div
-              variants={subTextVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              style={{
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                marginBottom: '8px',
-                color: '#2ecc71',
-                fontFamily: "'Orbitron', 'Poppins', 'Montserrat', sans-serif",
-                textShadow: '0 0 20px rgba(46, 204, 113, 0.5)'
-              }}
-            >
-              ELECTRIC SCOOTER HOUSE
-            </motion.div>
-            
-            <motion.h1
-              variants={subTextVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              style={{
-                fontSize: '28px',
-                fontWeight: 900,
-                lineHeight: 1.2,
-                fontFamily: "'Orbitron', 'Poppins', 'Montserrat', sans-serif",
-                color: '#FF6B35',
-                textShadow: '0 4px 8px rgba(0,0,0,0.8), 0 0 30px rgba(255, 107, 53, 0.5)',
-                margin: 0,
-                padding: '0 10px'
-              }}
-            >
-              {texts[textIndex]}
-            </motion.h1>
-          </motion.div>
-        </AnimatePresence>
+        <div style={{
+          fontSize: '12px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.2em',
+          marginBottom: '8px',
+          color: '#2ecc71',
+          textShadow: '0 0 20px rgba(46, 204, 113, 0.5)',
+          transition: 'opacity 0.5s ease-in-out'
+        }}>
+          ELECTRIC SCOOTER HOUSE
+        </div>
+        
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: 900,
+          lineHeight: 1.2,
+          color: '#FF6B35',
+          textShadow: '0 4px 8px rgba(0,0,0,0.8), 0 0 30px rgba(255, 107, 53, 0.5)',
+          margin: 0,
+          padding: '0 10px',
+          transition: 'opacity 0.5s ease-in-out'
+        }}>
+          {texts[textIndex]}
+        </h1>
       </div>
 
+      {/* INDICADORES */}
       <div style={{
         position: 'absolute',
         bottom: '16px',
@@ -265,30 +134,35 @@ const MobileHero = () => {
         zIndex: 20
       }}>
         {images.map((_, i) => (
-          <button
+          <div
             key={i}
-            onClick={() => setCurrentImage(i)}
             style={{
               width: i === currentImage ? '24px' : '6px',
               height: '6px',
               borderRadius: '999px',
               backgroundColor: i === currentImage ? '#FF6B35' : 'rgba(255,255,255,0.5)',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
               transition: 'width 0.3s ease'
             }}
-            aria-label={`Imagen ${i + 1}`}
           />
         ))}
       </div>
 
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+      {/* MENSAJE DE ERROR SI FALLA */}
+      {error && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          color: 'red',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          padding: '20px',
+          borderRadius: '10px',
+          zIndex: 100
+        }}>
+          Error cargando imágenes
+        </div>
+      )}
     </div>
   );
 };

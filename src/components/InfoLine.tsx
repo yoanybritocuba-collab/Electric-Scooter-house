@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getInfoLine, InfoLineData } from '@/services/infoLineService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,10 +8,24 @@ const InfoLine = () => {
   const { lang } = useLanguage();
   const [info, setInfo] = useState<InfoLineData | null>(null);
   const [visible, setVisible] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const marqueeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadInfo();
   }, []);
+
+  useEffect(() => {
+    if (info?.activo && visible) {
+      document.documentElement.style.setProperty('--infoline-height', `${info.altoLinea}px`);
+    } else {
+      document.documentElement.style.setProperty('--infoline-height', '0px');
+    }
+    
+    return () => {
+      document.documentElement.style.setProperty('--infoline-height', '0px');
+    };
+  }, [info?.activo, visible, info?.altoLinea]);
 
   const loadInfo = async () => {
     const data = await getInfoLine();
@@ -27,37 +41,99 @@ const InfoLine = () => {
 
   if (!info?.activo || !visible) return null;
 
+  const textContent = getTexto();
+  const direction = info.direccion === 'right' ? 'marquee-right' : 'marquee-left';
+
+  const getPosition = () => {
+    if (info.posicion === 'top') {
+      return { top: '80px' };
+    } else {
+      return { bottom: '56px' };
+    }
+  };
+
+  const lineStyle = {
+    backgroundColor: info.color,
+    color: info.colorTexto,
+    height: `${info.altoLinea}px`,
+    fontSize: `${info.tamanoTexto}px`,
+    fontFamily: info.tipoLetra,
+    position: 'fixed' as const,
+    left: 0,
+    right: 0,
+    zIndex: 45,
+    ...getPosition(),
+  };
+
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ y: -50, opacity: 0 }}
+        initial={{
+          y: info.posicion === 'top' ? -50 : 50,
+          opacity: 0
+        }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -50, opacity: 0 }}
-        className="relative w-full py-2 px-4 text-center z-40"
-        style={{ backgroundColor: info.color || '#2ecc71' }}
+        exit={{
+          y: info.posicion === 'top' ? -50 : 50,
+          opacity: 0
+        }}
+        style={lineStyle}
+        className="overflow-hidden"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-4">
-          <span className="text-white font-medium text-xs sm:text-sm md:text-base">
-            {getTexto()}
-          </span>
+        <div className="relative w-full h-full flex items-center">
+          <div
+            ref={marqueeRef}
+            className="whitespace-nowrap absolute"
+            style={{
+              animation: `${direction} ${info.velocidad}s linear infinite`,
+              animationPlayState: isPaused ? 'paused' : 'running',
+              paddingLeft: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
+              width: 'max-content',
+            }}
+          >
+            <span className="inline-block px-4">{textContent}</span>
+            <span className="inline-block px-4">{textContent}</span>
+            <span className="inline-block px-4">{textContent}</span>
+            <span className="inline-block px-4">{textContent}</span>
+          </div>
+
+          <button
+            onClick={() => setVisible(false)}
+            className="absolute right-4 z-10 text-white/80 hover:text-white transition-colors"
+            style={{ color: info.colorTexto }}
+            aria-label="Cerrar"
+          >
+            <X size={18} />
+          </button>
+
           {info.link && (
             <a
               href={info.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white/20 hover:bg-white/30 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs transition-colors"
+              className="absolute left-4 z-10 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs transition-colors"
+              style={{ color: info.colorTexto }}
             >
-              Saber más
+              {lang === 'es' ? 'Saber más' : lang === 'en' ? 'Learn more' : 'Μάθετε περισσότερα'}
             </a>
           )}
-          <button
-            onClick={() => setVisible(false)}
-            className="absolute right-2 sm:right-4 text-white/80 hover:text-white transition-colors"
-            aria-label="Cerrar"
-          >
-            <X size={14} className="sm:w-4 sm:h-4" />
-          </button>
         </div>
+
+        <style>{`
+          @keyframes marquee-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-400%); }
+          }
+          @keyframes marquee-right {
+            0% { transform: translateX(-400%); }
+            100% { transform: translateX(0); }
+          }
+        `}</style>
       </motion.div>
     </AnimatePresence>
   );

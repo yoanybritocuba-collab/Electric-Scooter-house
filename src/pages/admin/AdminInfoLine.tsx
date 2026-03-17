@@ -36,7 +36,7 @@ const AdminInfoLine = () => {
     tamanoTexto: 16,
     altoLinea: 28,
     tipoLetra: 'inherit',
-    velocidad: 60,
+    velocidad: 200, // 👈 CAMBIADO a 200 por defecto (dentro del nuevo rango)
     direccion: 'left',
     posicion: 'top',
     activo: true,
@@ -174,13 +174,13 @@ const AdminInfoLine = () => {
     return es;
   };
 
-  const MiniPreview = ({ 
-    height = 28, 
+  const MiniPreview = ({
+    height = 28,
     showText = true,
     customText,
     backgroundColor,
     textColor
-  }: { 
+  }: {
     height?: number;
     showText?: boolean;
     customText?: string;
@@ -188,9 +188,9 @@ const AdminInfoLine = () => {
     textColor?: string;
   }) => {
     const previewText = customText || getText(formData.texto, formData.texto_en, formData.texto_gr);
-    
+
     return (
-      <div 
+      <div
         className="w-full overflow-hidden rounded-lg border border-green-900/30 shadow-lg"
         style={{
           backgroundColor: backgroundColor || formData.color,
@@ -198,7 +198,7 @@ const AdminInfoLine = () => {
         }}
       >
         {showText && (
-          <div 
+          <div
             className="whitespace-nowrap h-full flex items-center"
             style={{
               animation: `${formData.direccion === 'right' ? 'marquee-right' : 'marquee-left'} ${formData.velocidad}s linear infinite`,
@@ -219,17 +219,17 @@ const AdminInfoLine = () => {
     );
   };
 
-  const ProSlider = ({ 
-    label, 
-    value, 
-    onChange, 
-    min, 
-    max, 
+  const ProSlider = ({
+    label,
+    value,
+    onChange,
+    min,
+    max,
     step = 1,
     unit = 'px',
     icon: Icon,
     previewHeight
-  }: { 
+  }: {
     label: string;
     value: number;
     onChange: (val: number) => void;
@@ -240,9 +240,9 @@ const AdminInfoLine = () => {
     icon?: any;
     previewHeight?: number;
   }) => (
-    <div className="space-y-3 p-4 bg-black/30 rounded-xl border border-green-900/30">
+    <div className="space-y-3 p-4 bg-black/30 rounded-xl border border-green-900/30">       
       <MiniPreview height={previewHeight || value} />
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {Icon && <Icon size={14} className="text-green-500" />}
@@ -260,7 +260,7 @@ const AdminInfoLine = () => {
         >
           <Minus size={14} />
         </button>
-        
+
         <div className="flex-1 relative">
           <input
             type="range"
@@ -269,7 +269,7 @@ const AdminInfoLine = () => {
             step={step}
             value={value}
             onChange={(e) => onChange(parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"    
             style={{
               background: `linear-gradient(to right, #2ecc71 0%, #2ecc71 ${(value - min) / (max - min) * 100}%, #334155 ${(value - min) / (max - min) * 100}%, #334155 100%)`,
             }}
@@ -286,14 +286,14 @@ const AdminInfoLine = () => {
     </div>
   );
 
-  const ColorPickerWithPreview = ({ 
-    label, 
-    value, 
-    onChange, 
-    isOpen, 
+  const ColorPickerWithPreview = ({
+    label,
+    value,
+    onChange,
+    isOpen,
     setIsOpen,
     previewColor
-  }: { 
+  }: {
     label: string;
     value: string;
     onChange: (c: string) => void;
@@ -301,13 +301,13 @@ const AdminInfoLine = () => {
     setIsOpen: (v: boolean) => void;
     previewColor?: string;
   }) => (
-    <div className="space-y-3 p-4 bg-black/30 rounded-xl border border-green-900/30">
-      <MiniPreview 
-        height={28} 
+    <div className="space-y-3 p-4 bg-black/30 rounded-xl border border-green-900/30">       
+      <MiniPreview
+        height={28}
         backgroundColor={value}
         textColor={formData.colorTexto}
       />
-      
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl border-2 border-green-900/30" style={{ backgroundColor: value }} />
@@ -334,7 +334,7 @@ const AdminInfoLine = () => {
                       key={color}
                       onClick={() => onChange(color)}
                       className={`w-8 h-8 rounded-lg transition-all hover:scale-110 hover:shadow-lg ${
-                        value === color ? 'ring-2 ring-green-500 scale-110 shadow-lg' : ''
+                        value === color ? 'ring-2 ring-green-500 scale-110 shadow-lg' : ''  
                       }`}
                       style={{ backgroundColor: color }}
                       title={color}
@@ -354,7 +354,7 @@ const AdminInfoLine = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header con navegación */}
         <div className="mb-8">
-          <AdminNavBack 
+          <AdminNavBack
             title={getText('Línea Informativa', 'Info Line', 'Γραμμή Πληροφοριών')}
             description={getText('Personaliza el mensaje animado', 'Customize animated message', 'Προσαρμογή μηνύματος')}
           />
@@ -369,12 +369,12 @@ const AdminInfoLine = () => {
                 <span className="hidden sm:inline">Descartar</span>
               </button>
             )}
-            
+
             <button
               onClick={handleSave}
               disabled={saving || !hasChanges}
               className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
-                hasChanges 
+                hasChanges
                   ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
                   : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
               }`}
@@ -382,7 +382,7 @@ const AdminInfoLine = () => {
               <Save size={20} />
               <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
               {hasChanges && !saving && (
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />    
               )}
             </button>
           </div>
@@ -421,7 +421,7 @@ const AdminInfoLine = () => {
                 {/* Español */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-gray-400 flex items-center gap-2">
+                    <label className="text-sm text-gray-400 flex items-center gap-2">       
                       <span className="text-xl">🇪🇸</span> Español
                     </label>
                     <button
@@ -433,7 +433,7 @@ const AdminInfoLine = () => {
                   </div>
                   <textarea
                     value={formData.texto}
-                    onChange={(e) => setFormData({...formData, texto: e.target.value})}
+                    onChange={(e) => setFormData({...formData, texto: e.target.value})}     
                     rows={2}
                     className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white resize-none focus:border-green-500/50 transition-all"
                     placeholder="Texto en español..."
@@ -450,7 +450,7 @@ const AdminInfoLine = () => {
                 {/* Inglés */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-gray-400 flex items-center gap-2">
+                    <label className="text-sm text-gray-400 flex items-center gap-2">       
                       <span className="text-xl">🇬🇧</span> English
                     </label>
                     <button
@@ -462,7 +462,7 @@ const AdminInfoLine = () => {
                   </div>
                   <textarea
                     value={formData.texto_en}
-                    onChange={(e) => setFormData({...formData, texto_en: e.target.value})}
+                    onChange={(e) => setFormData({...formData, texto_en: e.target.value})}  
                     rows={2}
                     className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white resize-none focus:border-green-500/50 transition-all"
                     placeholder="English text..."
@@ -479,7 +479,7 @@ const AdminInfoLine = () => {
                 {/* Griego */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-gray-400 flex items-center gap-2">
+                    <label className="text-sm text-gray-400 flex items-center gap-2">       
                       <span className="text-xl">🇬🇷</span> Ελληνικά
                     </label>
                     <button
@@ -491,7 +491,7 @@ const AdminInfoLine = () => {
                   </div>
                   <textarea
                     value={formData.texto_gr}
-                    onChange={(e) => setFormData({...formData, texto_gr: e.target.value})}
+                    onChange={(e) => setFormData({...formData, texto_gr: e.target.value})}  
                     rows={2}
                     className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white resize-none focus:border-green-500/50 transition-all"
                     placeholder="Ελληνικό κείμενο..."
@@ -581,7 +581,7 @@ const AdminInfoLine = () => {
               </div>
             </div>
 
-            {/* SECCIÓN 5: Animación */}
+            {/* SECCIÓN 5: Animación - CON VELOCIDAD CORREGIDA (135-300) */}
             <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-green-500/10 rounded-xl">
@@ -601,27 +601,29 @@ const AdminInfoLine = () => {
                   <label className="block text-sm text-gray-400 mb-2">Velocidad (seg)</label>
                   <input
                     type="range"
-                    min="20"
-                    max="200"
+                    min="135"      // 👈 CAMBIADO de 20 a 135
+                    max="300"      // 👈 CAMBIADO de 200 a 300
                     step="5"
                     value={formData.velocidad}
                     onChange={(e) => setFormData({...formData, velocidad: parseInt(e.target.value)})}
                     className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
-                  <div className="text-right text-sm text-white mt-1">
-                    {formData.velocidad}s
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Lento (135s)</span>
+                    <span className="text-white font-mono">{formData.velocidad}s</span>
+                    <span>Muy lento (300s)</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Dirección</label>
+                  <label className="block text-sm text-gray-400 mb-2">Dirección</label>    
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"
                         name="direccion"
                         checked={formData.direccion === 'left'}
-                        onChange={() => setFormData({...formData, direccion: 'left'})}
+                        onChange={() => setFormData({...formData, direccion: 'left'})}      
                         className="accent-green-500"
                       />
                       <span className="text-white text-sm">Izquierda →</span>
@@ -631,7 +633,7 @@ const AdminInfoLine = () => {
                         type="radio"
                         name="direccion"
                         checked={formData.direccion === 'right'}
-                        onChange={() => setFormData({...formData, direccion: 'right'})}
+                        onChange={() => setFormData({...formData, direccion: 'right'})}     
                         className="accent-green-500"
                       />
                       <span className="text-white text-sm">← Derecha</span>
@@ -641,7 +643,7 @@ const AdminInfoLine = () => {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm text-gray-400 mb-2">Posición</label>
+                <label className="block text-sm text-gray-400 mb-2">Posición</label>       
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2">
                     <input
@@ -661,7 +663,7 @@ const AdminInfoLine = () => {
                       type="radio"
                       name="posicion"
                       checked={formData.posicion === 'bottom'}
-                      onChange={() => setFormData({...formData, posicion: 'bottom'})}
+                      onChange={() => setFormData({...formData, posicion: 'bottom'})}       
                       className="accent-green-500"
                     />
                     <span className="text-white flex items-center gap-1">
@@ -677,7 +679,7 @@ const AdminInfoLine = () => {
                 <input
                   type="url"
                   value={formData.link || ''}
-                  onChange={(e) => setFormData({...formData, link: e.target.value})}
+                  onChange={(e) => setFormData({...formData, link: e.target.value})}        
                   className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
                   placeholder="https://..."
                 />
@@ -698,7 +700,7 @@ const AdminInfoLine = () => {
                 <input
                   type="checkbox"
                   checked={formData.activo}
-                  onChange={(e) => setFormData({...formData, activo: e.target.checked})}
+                  onChange={(e) => setFormData({...formData, activo: e.target.checked})}    
                   className="accent-green-500 w-5 h-5"
                 />
                 <span className="text-white">

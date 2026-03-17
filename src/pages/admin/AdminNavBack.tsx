@@ -12,25 +12,25 @@ const AdminNavBack = ({ title, description }: AdminNavBackProps) => {
       <div className="flex items-center gap-4">
         <Link
           to="/admin/dashboard"
-          className="p-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors group"
+          className="p-2 bg-black/50 border border-green-900/30 rounded-xl hover:bg-green-500/10 transition-colors group"
           title="Volver al panel principal"
         >
-          <ArrowLeft size={20} className="text-slate-400 group-hover:text-primary" />
+          <ArrowLeft size={20} className="text-gray-400 group-hover:text-green-500" />
         </Link>
         <div>
           <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-            <LayoutDashboard size={24} className="text-primary" />
+            <LayoutDashboard size={24} className="text-green-500" />
             {title}
           </h1>
           {description && (
-            <p className="text-slate-400 text-sm mt-1">{description}</p>
+            <p className="text-gray-500 text-sm mt-1">{description}</p>
           )}
         </div>
       </div>
 
       <Link
         to="/"
-        className="flex items-center justify-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors"
+        className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500/10 text-green-500 rounded-xl hover:bg-green-500/20 transition-all border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]"
         title="Ir a la tienda"
       >
         <Home size={18} />

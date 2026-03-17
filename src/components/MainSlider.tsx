@@ -55,7 +55,7 @@ const MainSlider = () => {
         {/* Primera imagen - SIN EXPANDIRSE */}
         <div className="h-1/2 w-full flex items-center justify-center bg-black">
           <img
-            src="/images/hero/hero.png"
+            src="/images/hero/hero.avif"
             alt={t("hero.future")}
             className="h-full w-auto max-w-full object-contain"
             style={{ filter: 'brightness(1.2) contrast(1.1)' }}
@@ -67,7 +67,7 @@ const MainSlider = () => {
         {/* Segunda imagen - SIN EXPANDIRSE */}
         <div className="h-1/2 w-full flex items-center justify-center bg-black">
           <img
-            src="/images/hero/hero.png"
+            src="/images/hero/hero.avif"
             alt={t("hero.future")}
             className="h-full w-auto max-w-full object-contain"
             style={{ 
@@ -82,7 +82,7 @@ const MainSlider = () => {
       {/* DESKTOP - UNA SOLA IMAGEN */}
       <div className="hidden sm:block absolute inset-0">
         <img
-          src="/images/hero/hero.png"
+          src="/images/hero/hero.avif"
           alt={t("hero.future")}
           className="w-full h-full object-cover"
           style={{ filter: 'brightness(1.2) contrast(1.1)' }}

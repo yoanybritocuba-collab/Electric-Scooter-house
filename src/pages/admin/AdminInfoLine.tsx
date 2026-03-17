@@ -191,7 +191,7 @@ const AdminInfoLine = () => {
     
     return (
       <div 
-        className="w-full overflow-hidden rounded-lg border border-slate-700/50 shadow-lg"
+        className="w-full overflow-hidden rounded-lg border border-green-900/30 shadow-lg"
         style={{
           backgroundColor: backgroundColor || formData.color,
           height: `${height}px`,
@@ -240,15 +240,15 @@ const AdminInfoLine = () => {
     icon?: any;
     previewHeight?: number;
   }) => (
-    <div className="space-y-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+    <div className="space-y-3 p-4 bg-black/30 rounded-xl border border-green-900/30">
       <MiniPreview height={previewHeight || value} />
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {Icon && <Icon size={14} className="text-primary" />}
-          <label className="text-sm text-slate-300">{label}</label>
+          {Icon && <Icon size={14} className="text-green-500" />}
+          <label className="text-sm text-gray-300">{label}</label>
         </div>
-        <span className="text-sm font-mono text-white bg-slate-800 px-3 py-1 rounded-full border border-slate-600">
+        <span className="text-sm font-mono text-white bg-black/50 px-3 py-1 rounded-full border border-green-900/30">
           {value}{unit}
         </span>
       </div>
@@ -256,7 +256,7 @@ const AdminInfoLine = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => onChange(Math.max(min, value - step))}
-          className="w-8 h-8 bg-slate-800 rounded-xl flex items-center justify-center hover:bg-slate-700 transition-colors border border-slate-600"
+          className="w-8 h-8 bg-black/50 rounded-xl flex items-center justify-center hover:bg-green-500/10 transition-colors border border-green-900/30 text-green-500"
         >
           <Minus size={14} />
         </button>
@@ -269,7 +269,7 @@ const AdminInfoLine = () => {
             step={step}
             value={value}
             onChange={(e) => onChange(parseInt(e.target.value))}
-            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
             style={{
               background: `linear-gradient(to right, #2ecc71 0%, #2ecc71 ${(value - min) / (max - min) * 100}%, #334155 ${(value - min) / (max - min) * 100}%, #334155 100%)`,
             }}
@@ -278,7 +278,7 @@ const AdminInfoLine = () => {
 
         <button
           onClick={() => onChange(Math.min(max, value + step))}
-          className="w-8 h-8 bg-slate-800 rounded-xl flex items-center justify-center hover:bg-slate-700 transition-colors border border-slate-600"
+          className="w-8 h-8 bg-black/50 rounded-xl flex items-center justify-center hover:bg-green-500/10 transition-colors border border-green-900/30 text-green-500"
         >
           <Plus size={14} />
         </button>
@@ -301,7 +301,7 @@ const AdminInfoLine = () => {
     setIsOpen: (v: boolean) => void;
     previewColor?: string;
   }) => (
-    <div className="space-y-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+    <div className="space-y-3 p-4 bg-black/30 rounded-xl border border-green-900/30">
       <MiniPreview 
         height={28} 
         backgroundColor={value}
@@ -310,12 +310,12 @@ const AdminInfoLine = () => {
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl border-2 border-slate-600" style={{ backgroundColor: value }} />
-          <span className="text-sm text-slate-300">{label}</span>
+          <div className="w-8 h-8 rounded-xl border-2 border-green-900/30" style={{ backgroundColor: value }} />
+          <span className="text-sm text-gray-300">{label}</span>
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 text-xs text-slate-400 hover:text-primary transition-colors px-3 py-1.5 bg-slate-800 rounded-xl border border-slate-600"
+          className="flex items-center gap-2 text-xs text-gray-400 hover:text-green-500 transition-colors px-3 py-1.5 bg-black/50 rounded-xl border border-green-900/30"
         >
           {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           <span>{isOpen ? 'Cerrar' : 'Abrir paleta'}</span>
@@ -323,18 +323,18 @@ const AdminInfoLine = () => {
       </div>
 
       {isOpen && (
-        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-600">
+        <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
           <div className="grid grid-cols-2 gap-4">
             {colorGamas.map((gama) => (
               <div key={gama.nombre} className="space-y-2">
-                <h4 className="text-xs text-slate-400">{gama.nombre}</h4>
+                <h4 className="text-xs text-gray-400">{gama.nombre}</h4>
                 <div className="flex gap-2 flex-wrap">
                   {gama.colores.map((color) => (
                     <button
                       key={color}
                       onClick={() => onChange(color)}
                       className={`w-8 h-8 rounded-lg transition-all hover:scale-110 hover:shadow-lg ${
-                        value === color ? 'ring-2 ring-white scale-110 shadow-lg' : ''
+                        value === color ? 'ring-2 ring-green-500 scale-110 shadow-lg' : ''
                       }`}
                       style={{ backgroundColor: color }}
                       title={color}
@@ -350,7 +350,7 @@ const AdminInfoLine = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-black text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header con navegación */}
         <div className="mb-8">
@@ -363,7 +363,7 @@ const AdminInfoLine = () => {
             {hasChanges && (
               <button
                 onClick={handleReset}
-                className="px-6 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-900/30"
               >
                 <RefreshCw size={18} />
                 <span className="hidden sm:inline">Descartar</span>
@@ -375,14 +375,14 @@ const AdminInfoLine = () => {
               disabled={saving || !hasChanges}
               className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
                 hasChanges 
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/30 animate-pulse'
-                  : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                  ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
+                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
               }`}
             >
               <Save size={20} />
               <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
               {hasChanges && !saving && (
-                <span className="w-2 h-2 bg-white rounded-full animate-ping ml-2" />
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
               )}
             </button>
           </div>
@@ -397,16 +397,16 @@ const AdminInfoLine = () => {
 
         {loading ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-slate-400">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
+            <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* SECCIÓN 1: Textos */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Globe size={18} className="text-primary" />
+                <div className="p-2 bg-green-500/10 rounded-xl shadow-[0_0_10px_rgba(34,197,94,0.1)]">
+                  <Globe size={18} className="text-green-500" />
                 </div>
                 <h2 className="font-display font-semibold text-white text-lg">
                   {getText('Textos en 3 idiomas', 'Texts in 3 languages', 'Κείμενα σε 3 γλώσσες')}
@@ -421,12 +421,12 @@ const AdminInfoLine = () => {
                 {/* Español */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-slate-400 flex items-center gap-2">
+                    <label className="text-sm text-gray-400 flex items-center gap-2">
                       <span className="text-xl">🇪🇸</span> Español
                     </label>
                     <button
                       onClick={() => handleCopy(formData.texto, 'es')}
-                      className="text-xs text-slate-500 hover:text-primary flex items-center gap-1 px-2 py-1 bg-slate-800 rounded-lg"
+                      className="text-xs text-gray-500 hover:text-green-500 flex items-center gap-1 px-2 py-1 bg-black/50 rounded-lg border border-green-900/30"
                     >
                       {copied === 'es' ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
                     </button>
@@ -435,13 +435,13 @@ const AdminInfoLine = () => {
                     value={formData.texto}
                     onChange={(e) => setFormData({...formData, texto: e.target.value})}
                     rows={2}
-                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white resize-none focus:border-primary/50 transition-all"
+                    className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white resize-none focus:border-green-500/50 transition-all"
                     placeholder="Texto en español..."
                   />
                   <button
                     onClick={() => handleTranslateFrom('es', formData.texto)}
                     disabled={!formData.texto}
-                    className="w-full text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1 py-2 border border-primary/20 rounded-lg hover:bg-primary/5"
+                    className="w-full text-xs text-green-500 hover:text-green-400 flex items-center justify-center gap-1 py-2 border border-green-500/20 rounded-lg hover:bg-green-500/5"
                   >
                     <Globe size={12} /> Auto-traducir
                   </button>
@@ -450,12 +450,12 @@ const AdminInfoLine = () => {
                 {/* Inglés */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-slate-400 flex items-center gap-2">
+                    <label className="text-sm text-gray-400 flex items-center gap-2">
                       <span className="text-xl">🇬🇧</span> English
                     </label>
                     <button
                       onClick={() => handleCopy(formData.texto_en, 'en')}
-                      className="text-xs text-slate-500 hover:text-primary flex items-center gap-1 px-2 py-1 bg-slate-800 rounded-lg"
+                      className="text-xs text-gray-500 hover:text-green-500 flex items-center gap-1 px-2 py-1 bg-black/50 rounded-lg border border-green-900/30"
                     >
                       {copied === 'en' ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
                     </button>
@@ -464,13 +464,13 @@ const AdminInfoLine = () => {
                     value={formData.texto_en}
                     onChange={(e) => setFormData({...formData, texto_en: e.target.value})}
                     rows={2}
-                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white resize-none focus:border-primary/50 transition-all"
+                    className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white resize-none focus:border-green-500/50 transition-all"
                     placeholder="English text..."
                   />
                   <button
                     onClick={() => handleTranslateFrom('en', formData.texto_en)}
                     disabled={!formData.texto_en}
-                    className="w-full text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1 py-2 border border-primary/20 rounded-lg hover:bg-primary/5"
+                    className="w-full text-xs text-green-500 hover:text-green-400 flex items-center justify-center gap-1 py-2 border border-green-500/20 rounded-lg hover:bg-green-500/5"
                   >
                     <Globe size={12} /> Auto-translate
                   </button>
@@ -479,12 +479,12 @@ const AdminInfoLine = () => {
                 {/* Griego */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-slate-400 flex items-center gap-2">
+                    <label className="text-sm text-gray-400 flex items-center gap-2">
                       <span className="text-xl">🇬🇷</span> Ελληνικά
                     </label>
                     <button
                       onClick={() => handleCopy(formData.texto_gr, 'gr')}
-                      className="text-xs text-slate-500 hover:text-primary flex items-center gap-1 px-2 py-1 bg-slate-800 rounded-lg"
+                      className="text-xs text-gray-500 hover:text-green-500 flex items-center gap-1 px-2 py-1 bg-black/50 rounded-lg border border-green-900/30"
                     >
                       {copied === 'gr' ? <><Check size={12} /> Αντιγράφηκε</> : <><Copy size={12} /> Αντιγραφή</>}
                     </button>
@@ -493,13 +493,13 @@ const AdminInfoLine = () => {
                     value={formData.texto_gr}
                     onChange={(e) => setFormData({...formData, texto_gr: e.target.value})}
                     rows={2}
-                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white resize-none focus:border-primary/50 transition-all"
+                    className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white resize-none focus:border-green-500/50 transition-all"
                     placeholder="Ελληνικό κείμενο..."
                   />
                   <button
                     onClick={() => handleTranslateFrom('gr', formData.texto_gr)}
                     disabled={!formData.texto_gr}
-                    className="w-full text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1 py-2 border border-primary/20 rounded-lg hover:bg-primary/5"
+                    className="w-full text-xs text-green-500 hover:text-green-400 flex items-center justify-center gap-1 py-2 border border-green-500/20 rounded-lg hover:bg-green-500/5"
                   >
                     <Globe size={12} /> Αυτόματη μετάφραση
                   </button>
@@ -508,10 +508,10 @@ const AdminInfoLine = () => {
             </div>
 
             {/* SECCIÓN 2: Grosor */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Move size={18} className="text-primary" />
+                <div className="p-2 bg-green-500/10 rounded-xl">
+                  <Move size={18} className="text-green-500" />
                 </div>
                 <h2 className="font-display font-semibold text-white text-lg">
                   {getText('Grosor de línea', 'Line thickness', 'Πάχος γραμμής')}
@@ -530,10 +530,10 @@ const AdminInfoLine = () => {
             </div>
 
             {/* SECCIÓN 3: Tamaño texto */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Type size={18} className="text-primary" />
+                <div className="p-2 bg-green-500/10 rounded-xl">
+                  <Type size={18} className="text-green-500" />
                 </div>
                 <h2 className="font-display font-semibold text-white text-lg">
                   {getText('Tamaño de texto', 'Text size', 'Μέγεθος κειμένου')}
@@ -552,10 +552,10 @@ const AdminInfoLine = () => {
             </div>
 
             {/* SECCIÓN 4: Colores */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Palette size={18} className="text-primary" />
+                <div className="p-2 bg-green-500/10 rounded-xl">
+                  <Palette size={18} className="text-green-500" />
                 </div>
                 <h2 className="font-display font-semibold text-white text-lg">
                   {getText('Colores', 'Colors', 'Χρώματα')}
@@ -582,10 +582,10 @@ const AdminInfoLine = () => {
             </div>
 
             {/* SECCIÓN 5: Animación */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Play size={18} className="text-primary" />
+                <div className="p-2 bg-green-500/10 rounded-xl">
+                  <Play size={18} className="text-green-500" />
                 </div>
                 <h2 className="font-display font-semibold text-white text-lg">
                   {getText('Animación', 'Animation', 'Κίνηση')}
@@ -598,7 +598,7 @@ const AdminInfoLine = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Velocidad (seg)</label>
+                  <label className="block text-sm text-gray-400 mb-2">Velocidad (seg)</label>
                   <input
                     type="range"
                     min="20"
@@ -606,7 +606,7 @@ const AdminInfoLine = () => {
                     step="5"
                     value={formData.velocidad}
                     onChange={(e) => setFormData({...formData, velocidad: parseInt(e.target.value)})}
-                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   />
                   <div className="text-right text-sm text-white mt-1">
                     {formData.velocidad}s
@@ -614,7 +614,7 @@ const AdminInfoLine = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">Dirección</label>
+                  <label className="block text-sm text-gray-400 mb-2">Dirección</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2">
                       <input
@@ -622,7 +622,7 @@ const AdminInfoLine = () => {
                         name="direccion"
                         checked={formData.direccion === 'left'}
                         onChange={() => setFormData({...formData, direccion: 'left'})}
-                        className="accent-primary"
+                        className="accent-green-500"
                       />
                       <span className="text-white text-sm">Izquierda →</span>
                     </label>
@@ -632,7 +632,7 @@ const AdminInfoLine = () => {
                         name="direccion"
                         checked={formData.direccion === 'right'}
                         onChange={() => setFormData({...formData, direccion: 'right'})}
-                        className="accent-primary"
+                        className="accent-green-500"
                       />
                       <span className="text-white text-sm">← Derecha</span>
                     </label>
@@ -641,7 +641,7 @@ const AdminInfoLine = () => {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm text-slate-400 mb-2">Posición</label>
+                <label className="block text-sm text-gray-400 mb-2">Posición</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2">
                     <input
@@ -649,10 +649,10 @@ const AdminInfoLine = () => {
                       name="posicion"
                       checked={formData.posicion === 'top'}
                       onChange={() => setFormData({...formData, posicion: 'top'})}
-                      className="accent-primary"
+                      className="accent-green-500"
                     />
                     <span className="text-white flex items-center gap-1">
-                      <ArrowUp size={14} className="text-primary" />
+                      <ArrowUp size={14} className="text-green-500" />
                       Superior
                     </span>
                   </label>
@@ -662,7 +662,7 @@ const AdminInfoLine = () => {
                       name="posicion"
                       checked={formData.posicion === 'bottom'}
                       onChange={() => setFormData({...formData, posicion: 'bottom'})}
-                      className="accent-primary"
+                      className="accent-green-500"
                     />
                     <span className="text-white flex items-center gap-1">
                       <ArrowDown size={14} className="text-yellow-500" />
@@ -673,33 +673,33 @@ const AdminInfoLine = () => {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm text-slate-400 mb-2">Enlace</label>
+                <label className="block text-sm text-gray-400 mb-2">Enlace</label>
                 <input
                   type="url"
                   value={formData.link || ''}
                   onChange={(e) => setFormData({...formData, link: e.target.value})}
-                  className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white"
+                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
                   placeholder="https://..."
                 />
               </div>
             </div>
 
             {/* Estado */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+            <div className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <Activity size={18} className="text-primary" />
+                <div className="p-2 bg-green-500/10 rounded-xl">
+                  <Activity size={18} className="text-green-500" />
                 </div>
                 <h2 className="font-display font-semibold text-white">
                   {getText('Estado', 'Status', 'Κατάσταση')}
                 </h2>
               </div>
-              <label className="flex items-center gap-3 cursor-pointer p-4 bg-slate-900/30 rounded-xl border border-slate-700">
+              <label className="flex items-center gap-3 cursor-pointer p-4 bg-black/50 rounded-xl border border-green-900/30">
                 <input
                   type="checkbox"
                   checked={formData.activo}
                   onChange={(e) => setFormData({...formData, activo: e.target.checked})}
-                  className="accent-primary w-5 h-5"
+                  className="accent-green-500 w-5 h-5"
                 />
                 <span className="text-white">
                   {getText('Activar línea informativa', 'Enable info line', 'Ενεργοποίηση γραμμής')}

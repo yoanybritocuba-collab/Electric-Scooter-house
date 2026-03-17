@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+import { FaViber } from "react-icons/fa";
 
 const ViberButton = () => {
   return (
@@ -20,7 +20,7 @@ const ViberButton = () => {
         <span className="absolute inline-flex h-1/2 w-1/2 rounded-full bg-[#7360F2]/20 opacity-25 animate-ping animation-delay-600"></span>
       </span>
 
-      <MessageCircle size={24} className="relative z-10" />
+      <FaViber size={24} className="relative z-10" />
     </a>
   );
 };

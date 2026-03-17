@@ -5,7 +5,8 @@ import { Navigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db, storage } from "@/firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Save, Upload, X } from "lucide-react";
+import AdminNavBack from "@/components/AdminNavBack";
+import { Save, Upload, X, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Categoria {
@@ -19,20 +20,29 @@ interface Categoria {
 
 const AdminCategorias = () => {
   const { user, isAdmin } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalData, setOriginalData] = useState<Categoria[]>([]);
 
   const categoriaIds = [
-    "patinetes", "bicicletas", "motos", "accesorios", 
+    "patinetes", "bicicletas", "motos", "accesorios",
     "piezas", "infantiles", "movilidad-reducida"
   ];
 
   useEffect(() => {
     loadCategorias();
   }, []);
+
+  useEffect(() => {
+    if (originalData.length > 0) {
+      const changed = JSON.stringify(categorias) !== JSON.stringify(originalData);
+      setHasChanges(changed);
+    }
+  }, [categorias, originalData]);
 
   const loadCategorias = async () => {
     setLoading(true);
@@ -53,6 +63,7 @@ const AdminCategorias = () => {
       }).sort((a, b) => a.orden - b.orden);
 
       setCategorias(categoriasCompletas);
+      setOriginalData(categoriasCompletas);
     } catch (error) {
       console.error("Error cargando categorías:", error);
       toast({
@@ -130,9 +141,12 @@ const AdminCategorias = () => {
           activo: cat.activo
         });
       }
+      setOriginalData(categorias);
+      setHasChanges(false);
       toast({
         title: "Éxito",
         description: "Categorías guardadas correctamente",
+        className: "bg-green-500 text-white",
       });
     } catch (error) {
       console.error("Error guardando:", error);
@@ -145,79 +159,132 @@ const AdminCategorias = () => {
     setSaving(false);
   };
 
+  const handleReset = () => {
+    setCategorias(originalData);
+    toast({
+      title: "Cambios descartados",
+      description: "Se restauró la configuración anterior",
+    });
+  };
+
   if (!user || !isAdmin) return <Navigate to="/admin" replace />;
 
+  const getText = (es: string, en: string, gr: string) => {
+    if (lang === 'en') return en;
+    if (lang === 'gr') return gr;
+    return es;
+  };
+
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-display font-bold text-2xl tracking-tight text-foreground">
-            Gestionar Categorías
-          </h1>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-glow transition-colors"
-          >
-            <Save size={16} />
-            {saving ? "Guardando..." : "Guardar Todo"}
-          </button>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header con navegación */}
+        <div className="mb-8">
+          <AdminNavBack 
+            title={getText('Gestionar Categorías', 'Manage Categories', 'Διαχείριση Κατηγοριών')}
+            description={getText('Organiza y clasifica tus productos', 'Organize your products', 'Οργάνωση προϊόντων')}
+          />
+
+          <div className="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+            {hasChanges && (
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-900/30"
+              >
+                <RefreshCw size={18} />
+                <span className="hidden sm:inline">Descartar</span>
+              </button>
+            )}
+            
+            <button
+              onClick={handleSave}
+              disabled={saving || !hasChanges}
+              className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
+                hasChanges 
+                  ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
+                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
+              }`}
+            >
+              <Save size={20} />
+              <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+              {hasChanges && !saving && (
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
+              )}
+            </button>
+          </div>
+
+          {hasChanges && (
+            <div className="mt-4 flex items-center gap-2 text-yellow-500 bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/20">
+              <AlertCircle size={16} />
+              <span className="text-sm">Tienes cambios sin guardar</span>
+            </div>
+          )}
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Cargando...</div>
+          <div className="text-center py-16">
+            <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
+          </div>
         ) : (
           <div className="space-y-6">
             {categorias.map((cat) => (
-              <div key={cat.id} className="bg-secondary p-6 rounded-lg border border-border">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div 
+                key={cat.id} 
+                className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">ID (fijo)</label>
+                    <label className="block text-sm text-gray-400 mb-1">ID (fijo)</label>
                     <input
                       value={cat.id}
                       disabled
-                      className="w-full bg-background border border-border rounded px-4 py-2 text-foreground opacity-50"
+                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-gray-500 opacity-50"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Orden</label>
+                    <label className="block text-sm text-gray-400 mb-1">Orden</label>
                     <input
                       type="number"
                       value={cat.orden}
                       onChange={(e) => handleChange(cat.id, "orden", parseInt(e.target.value))}
-                      className="w-full bg-background border border-border rounded px-4 py-2 text-foreground"
+                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Nombre</label>
+                    <label className="block text-sm text-gray-400 mb-1">Nombre</label>
                     <input
                       value={cat.nombre}
-                      onChange={(e) => handleChange(cat.id, "nombre", e.target.value)}
-                      className="w-full bg-background border border-border rounded px-4 py-2 text-foreground"
+                      onChange={(e) => handleChange(cat.id, "nombre", e.target.value)}      
+                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-muted-foreground mb-1">Descripción</label>
+                    <label className="block text-sm text-gray-400 mb-1">Descripción</label>
                     <input
                       value={cat.descripcion}
-                      onChange={(e) => handleChange(cat.id, "descripcion", e.target.value)}
-                      className="w-full bg-background border border-border rounded px-4 py-2 text-foreground"
+                      onChange={(e) => handleChange(cat.id, "descripcion", e.target.value)} 
+                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm text-muted-foreground mb-1">Imagen</label>
+                    <label className="block text-sm text-gray-400 mb-1">Imagen</label>
                     <div className="flex gap-4 items-start">
                       {cat.imagen && (
-                        <img src={cat.imagen} alt={cat.nombre} className="w-24 h-24 object-cover rounded" />
+                        <img 
+                          src={cat.imagen} 
+                          alt={cat.nombre} 
+                          className="w-24 h-24 object-cover rounded-xl border border-green-900/30" 
+                        />
                       )}
                       <div className="flex-1">
                         <input
                           value={cat.imagen}
-                          onChange={(e) => handleChange(cat.id, "imagen", e.target.value)}
+                          onChange={(e) => handleChange(cat.id, "imagen", e.target.value)}  
                           placeholder="URL de la imagen"
-                          className="w-full bg-background border border-border rounded px-4 py-2 text-foreground mb-2"
+                          className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white mb-3 focus:border-green-500/50 transition-all"
                         />
-                        <label className="flex items-center gap-2 bg-background border border-border rounded px-4 py-2 cursor-pointer hover:border-primary transition-colors w-fit">
+                        <label className="inline-flex items-center gap-2 bg-black/50 border border-green-900/30 hover:border-green-500/30 text-white px-4 py-2 rounded-xl cursor-pointer transition-colors">
                           <Upload size={16} />
                           {uploading === cat.id ? "Subiendo..." : "Subir imagen"}
                           <input
@@ -230,14 +297,14 @@ const AdminCategorias = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
                       checked={cat.activo}
-                      onChange={(e) => handleChange(cat.id, "activo", e.target.checked)}
-                      className="accent-primary"
+                      onChange={(e) => handleChange(cat.id, "activo", e.target.checked)}    
+                      className="accent-green-500 w-5 h-5"
                     />
-                    <label className="text-sm text-foreground">Activo</label>
+                    <label className="text-sm text-white">Activo</label>
                   </div>
                 </div>
               </div>

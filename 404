@@ -1,0 +1,176 @@
+interface TranslationResult {
+  texto: string;
+  error?: string;
+}
+
+/**
+ * Traduce un texto usando la API REST de Google Translate
+ * @param text Texto a traducir
+ * @param targetLang Idioma destino ('en' o 'el')
+ */
+export const translateText = async (
+  text: string,
+  targetLang: 'en' | 'el'
+): Promise<TranslationResult> => {
+  try {
+    if (!text.trim()) return { texto: '' };
+
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=es|${targetLang}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.responseStatus === 200) {
+      return { texto: data.responseData.translatedText };
+    } else {
+      throw new Error(data.responseDetails || 'Error en traducción');
+    }
+  } catch (error) {
+    console.error(`Error traduciendo a ${targetLang}:`, error);
+    return {
+      texto: '',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    };
+  }
+};
+
+/**
+ * Traduce un texto a múltiples idiomas simultáneamente
+ */
+export const translateToAllLanguages = async (text: string) => {
+  const [en, el] = await Promise.all([
+    translateText(text, 'en'),
+    translateText(text, 'el')
+  ]);
+
+  return {
+    en: en.texto,
+    el: el.texto,
+    errors: {
+      en: en.error,
+      el: el.error
+    }
+  };
+};
+
+/**
+ * Traduce un texto a TODOS los idiomas (español, inglés, griego)
+ * @param text Texto a traducir
+ * @param sourceLang Idioma de origen ('es', 'en', 'gr')
+ */
+export const translateToAll = async (
+  text: string,
+  sourceLang: string
+): Promise<{ es: string; en: string; gr: string }> => {
+  const result = {
+    es: sourceLang === 'es' ? text : '',
+    en: sourceLang === 'en' ? text : '',
+    gr: sourceLang === 'gr' ? text : ''
+  };
+
+  try {
+    // Si el origen es español, traducir a inglés y griego
+    if (sourceLang === 'es') {
+      const [en, gr] = await Promise.all([
+        translateText(text, 'en'),
+        translateText(text, 'el')
+      ]);
+      result.en = en.texto;
+      result.gr = gr.texto;
+    }
+    
+    // Si el origen es inglés, traducir a español y griego
+    else if (sourceLang === 'en') {
+      const urlEs = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`;
+      const responseEs = await fetch(urlEs);
+      const dataEs = await responseEs.json();
+      result.es = dataEs.responseData?.translatedText || '';
+      
+      const gr = await translateText(text, 'el');
+      result.gr = gr.texto;
+    }
+    
+    // Si el origen es griego, traducir a español e inglés
+    else if (sourceLang === 'gr') {
+      const urlEs = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=el|es`;
+      const responseEs = await fetch(urlEs);
+      const dataEs = await responseEs.json();
+      result.es = dataEs.responseData?.translatedText || '';
+      
+      const urlEn = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=el|en`;
+      const responseEn = await fetch(urlEn);
+      const dataEn = await responseEn.json();
+      result.en = dataEn.responseData?.translatedText || '';
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error en traducción múltiple:', error);
+    return result;
+  }
+};
+
+/**
+ * Traduce un objeto completo de especificaciones
+ * @param specs Objeto de especificaciones a traducir
+ */
+export const translateSpecs = async (specs: any) => {
+  const translatedSpecs: any = {};
+  
+  const textFields = [
+    'autonomia', 'peso', 'velocidad_max', 'motor', 'bateria', 
+    'tiempo_carga', 'ruedas', 'cambios', 'frenos', 'iluminacion',
+    'edad_recomendada', 'autonomia_bateria', 'max_peso', 'inclinacion_max', 'giro'
+  ];
+  
+  for (const field of textFields) {
+    if (specs[field] && typeof specs[field] === 'string' && specs[field].trim() !== '') {
+      if (!specs[`${field}_en`]) {
+        const enResult = await translateText(specs[field], 'en');
+        translatedSpecs[`${field}_en`] = enResult.texto;
+      }
+      
+      if (!specs[`${field}_gr`]) {
+        const grResult = await translateText(specs[field], 'el');
+        translatedSpecs[`${field}_gr`] = grResult.texto;
+      }
+    }
+  }
+  
+  return translatedSpecs;
+};
+
+/**
+ * Traduce TODO el producto completo
+ * @param productData Datos completos del producto
+ */
+export const translateFullProduct = async (productData: any) => {
+  const translations: any = {};
+  
+  // 1. Traducir nombre
+  if (productData.nombre && productData.nombre.trim() !== '') {
+    if (!productData.nombre_en || !productData.nombre_gr) {
+      const nameEn = await translateText(productData.nombre, 'en');
+      const nameGr = await translateText(productData.nombre, 'el');
+      translations.nombre_en = nameEn.texto;
+      translations.nombre_gr = nameGr.texto;
+    }
+  }
+  
+  // 2. Traducir descripción
+  if (productData.descripcion && productData.descripcion.trim() !== '') {
+    if (!productData.descripcion_en || !productData.descripcion_gr) {
+      const descEn = await translateText(productData.descripcion, 'en');
+      const descGr = await translateText(productData.descripcion, 'el');
+      translations.descripcion_en = descEn.texto;
+      translations.descripcion_gr = descGr.texto;
+    }
+  }
+  
+  // 3. Traducir especificaciones
+  if (productData.especificaciones) {
+    const specTranslations = await translateSpecs(productData.especificaciones);
+    translations.especificaciones = specTranslations;
+  }
+  
+  return translations;
+};

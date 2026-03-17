@@ -1,103 +1,184 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Navigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Lock, Eye, EyeOff } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Shield, Mail, Lock, LogIn, AlertTriangle } from "lucide-react";
 
 const AdminLogin = () => {
-  const { t } = useLanguage();
-  const { user, login } = useAuth();
+  const { login, isAdmin, user, registerAdminLog } = useAuth();
+  const { t, lang } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [intentos, setIntentos] = useState(0);
+  const [bloqueado, setBloqueado] = useState(false);
 
-  if (user) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
+  // Si ya está autenticado y es admin, redirigir
+  useEffect(() => {
+    if (user && isAdmin) {
+      navigate("/admin/dashboard");
+    }
+  }, [user, isAdmin, navigate]);
+
+  // Bloquear después de 5 intentos fallidos
+  useEffect(() => {
+    if (intentos >= 5) {
+      setBloqueado(true);
+      setTimeout(() => {
+        setBloqueado(false);
+        setIntentos(0);
+      }, 300000); // 5 minutos
+    }
+  }, [intentos]);
+
+  const getText = (es: string, en: string, gr: string) => {
+    if (lang === 'en') return en;
+    if (lang === 'gr') return gr;
+    return es;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    
+    if (bloqueado) {
+      setError("Demasiados intentos. Espera 5 minutos.");
+      return;
+    }
+
     setLoading(true);
+    setError("");
+
     try {
       await login(email, password);
-      toast({
-        title: "Éxito",
-        description: "Sesión iniciada correctamente",
-      });
-    } catch (err: any) {
-      const errorMessage = err.code === 'auth/invalid-credential' 
-        ? "Email o contraseña incorrectos"
-        : err.message || "Error de autenticación";
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      
+      // Registrar intento exitoso
+      await registerAdminLog('LOGIN_ADMIN_EXITOSO', { email });
+      setIntentos(0);
+      
+      // Redirigir al dashboard o a la página que intentaba acceder
+      const from = (location.state as any)?.from?.pathname || "/admin/dashboard";
+      navigate(from);
+      
+    } catch (error: any) {
+      setIntentos(prev => prev + 1);
+      console.error("Error de login:", error);
+      
+      setError(
+        intentos >= 4 
+          ? "Último intento antes de bloqueo" 
+          : "Credenciales incorrectas"
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm"
-      >
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        {/* Logo y título */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock size={20} className="text-primary" />
+          <div className="inline-flex p-4 bg-green-500/10 rounded-2xl border border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.2)] mb-4">
+            <Shield size={48} className="text-green-500" />
           </div>
-          <h1 className="font-display font-bold text-2xl tracking-tight text-foreground">
-            {t("admin.login")}
+          <h1 className="text-3xl font-display font-bold text-white mb-2">
+            {getText("Admin Pro", "Admin Pro", "Διαχειριστής Pro")}
           </h1>
+          <p className="text-gray-500">
+            {getText(
+              "Acceso restringido - Solo administradores",
+              "Restricted access - Administrators only",
+              "Περιορισμένη πρόσβαση - Μόνο διαχειριστές"
+            )}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t("admin.email")}
-            className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
-            required
-          />
+        {/* Formulario */}
+        <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 p-8 shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">
+                {getText("Email", "Email", "Email")}
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-gray-600 outline-none focus:border-green-500/50 transition-all"
+                  placeholder="admin@electric-scooter.com"
+                  required
+                  disabled={bloqueado}
+                />
+              </div>
+            </div>
 
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t("admin.password")}
-              className="w-full bg-secondary border border-border rounded px-4 py-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors pr-12"
-              required
-            />
+            {/* Password */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">
+                {getText("Contraseña", "Password", "Κωδικός")}
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-gray-600 outline-none focus:border-green-500/50 transition-all"
+                  placeholder="••••••••"
+                  required
+                  disabled={bloqueado}
+                />
+              </div>
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-2">
+                <AlertTriangle size={16} className="text-red-500" />
+                <p className="text-red-500 text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Intento counter */}
+            {intentos > 0 && !bloqueado && (
+              <p className="text-xs text-yellow-500 text-center">
+                Intento {intentos} de 5
+              </p>
+            )}
+
+            {/* Botón de login */}
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+              type="submit"
+              disabled={loading || bloqueado}
+              className="w-full bg-green-500/20 text-green-500 font-bold py-3 rounded-xl hover:bg-green-500/30 transition-all border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)] hover:shadow-[0_0_25px_rgba(34,197,94,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              <LogIn size={18} />
+              {loading
+                ? getText("Verificando...", "Verifying...", "Επαλήθευση...")
+                : bloqueado
+                ? getText("Bloqueado", "Blocked", "Αποκλεισμένος")
+                : getText("Acceder al Panel", "Access Panel", "Πρόσβαση Πίνακα")}
             </button>
+          </form>
+
+          {/* Información adicional */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-600">
+              {getText(
+                "Área restringida. Todos los intentos son registrados.",
+                "Restricted area. All attempts are logged.",
+                "Περιορισμένη περιοχή. Όλες οι απόπειρες καταγράφονται."
+              )}
+            </p>
           </div>
-
-          {error && <p className="text-destructive text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-primary-foreground font-display font-bold tracking-widest text-sm py-3 rounded transition-all duration-300 hover:bg-glow disabled:opacity-50"
-          >
-            {loading ? "Cargando..." : t("admin.enter")}
-          </button>
-        </form>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -4,7 +4,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Navigate } from "react-router-dom";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { Save, Truck, Euro, ToggleLeft, ToggleRight } from "lucide-react";
+import AdminNavBack from "@/components/AdminNavBack";
+import { Save, Truck, Euro, ToggleLeft, ToggleRight, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface ShippingConfig {
@@ -15,9 +16,11 @@ interface ShippingConfig {
 
 const AdminShipping = () => {
   const { user, isAdmin } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalData, setOriginalData] = useState<ShippingConfig | null>(null);
   const [config, setConfig] = useState<ShippingConfig>({
     freeShippingEnabled: true,
     freeShippingMinAmount: 50,
@@ -28,16 +31,33 @@ const AdminShipping = () => {
     loadConfig();
   }, []);
 
+  useEffect(() => {
+    if (originalData) {
+      const changed = JSON.stringify(config) !== JSON.stringify(originalData);
+      setHasChanges(changed);
+    }
+  }, [config, originalData]);
+
   const loadConfig = async () => {
+    setLoading(true);
     try {
       const docRef = doc(db, "configuracion", "shipping");
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
-        setConfig(docSnap.data() as ShippingConfig);
+        const data = docSnap.data() as ShippingConfig;
+        setConfig(data);
+        setOriginalData(data);
+      } else {
+        setOriginalData(config);
       }
     } catch (error) {
       console.error("Error cargando configuración:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la configuración",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -50,9 +70,12 @@ const AdminShipping = () => {
         ...config,
         updatedAt: new Date()
       });
+      setOriginalData(config);
+      setHasChanges(false);
       toast({
         title: "Éxito",
-        description: "Configuración de envío guardada correctamente",
+        description: "Configuración guardada correctamente",
+        className: "bg-green-500 text-white",
       });
     } catch (error) {
       console.error("Error guardando:", error);
@@ -65,33 +88,88 @@ const AdminShipping = () => {
     setSaving(false);
   };
 
+  const handleReset = () => {
+    if (originalData) {
+      setConfig(originalData);
+      toast({
+        title: "Cambios descartados",
+        description: "Se restauró la configuración anterior",
+      });
+    }
+  };
+
   if (!user || !isAdmin) return <Navigate to="/admin" replace />;
 
+  const getText = (es: string, en: string, gr: string) => {
+    if (lang === 'en') return en;
+    if (lang === 'gr') return gr;
+    return es;
+  };
+
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-2xl mx-auto px-4 lg:px-8">
-        <div className="bg-gray-900 rounded-lg p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Truck size={28} className="text-primary" />
-            <h1 className="font-display font-bold text-2xl text-white">
-              Configuración de Envío
-            </h1>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header con navegación */}
+        <div className="mb-8">
+          <AdminNavBack 
+            title={getText('Configuración de Envíos', 'Shipping Settings', 'Ρυθμίσεις Αποστολής')}
+            description={getText('Gastos y condiciones de envío', 'Shipping costs and conditions', 'Κόστος και όροι αποστολής')}
+          />
+
+          <div className="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+            {hasChanges && (
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-900/30"
+              >
+                <RefreshCw size={18} />
+                <span className="hidden sm:inline">Descartar</span>
+              </button>
+            )}
+            
+            <button
+              onClick={handleSave}
+              disabled={saving || !hasChanges}
+              className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
+                hasChanges 
+                  ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
+                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
+              }`}
+            >
+              <Save size={20} />
+              <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+              {hasChanges && !saving && (
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
+              )}
+            </button>
           </div>
 
-          {loading ? (
-            <div className="text-center py-8">Cargando...</div>
-          ) : (
+          {hasChanges && (
+            <div className="mt-4 flex items-center gap-2 text-yellow-500 bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/20">
+              <AlertCircle size={16} />
+              <span className="text-sm">Tienes cambios sin guardar</span>
+            </div>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
+          </div>
+        ) : (
+          <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 p-6 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
             <div className="space-y-6">
               {/* Activar/Desactivar envío gratis */}
-              <div className="bg-gray-800 rounded-lg p-4">
+              <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-white font-medium">Envío Gratis</label>
+                  <label className="text-white font-medium">{getText('Envío Gratis', 'Free Shipping', 'Δωρεάν Αποστολή')}</label>
                   <button
                     onClick={() => setConfig({
                       ...config,
                       freeShippingEnabled: !config.freeShippingEnabled
                     })}
-                    className="text-primary"
+                    className="text-green-500"
                   >
                     {config.freeShippingEnabled ? (
                       <ToggleRight size={32} />
@@ -100,19 +178,19 @@ const AdminShipping = () => {
                     )}
                   </button>
                 </div>
-                <p className="text-sm text-gray-400">
-                  Activa o desactiva la opción de envío gratis
+                <p className="text-sm text-gray-500">
+                  {getText('Activa o desactiva la opción de envío gratis', 'Enable or disable free shipping', 'Ενεργοποίηση ή απενεργοποίηση δωρεάν αποστολής')}
                 </p>
               </div>
 
               {/* Monto mínimo para envío gratis */}
               {config.freeShippingEnabled && (
-                <div className="bg-gray-800 rounded-lg p-4">
+                <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
                   <label className="block text-white font-medium mb-2">
-                    Monto mínimo para envío gratis (€)
+                    {getText('Monto mínimo para envío gratis (€)', 'Minimum amount for free shipping (€)', 'Ελάχιστο ποσό για δωρεάν αποστολή (€)')}
                   </label>
                   <div className="relative">
-                    <Euro size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Euro size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
                       type="number"
                       min="0"
@@ -122,22 +200,22 @@ const AdminShipping = () => {
                         ...config,
                         freeShippingMinAmount: parseFloat(e.target.value) || 0
                       })}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white outline-none focus:border-primary transition-colors"
+                      className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
                     />
                   </div>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Los pedidos superiores a este importe tendrán envío gratis
+                  <p className="text-sm text-gray-500 mt-2">
+                    {getText('Pedidos superiores a este importe tendrán envío gratis', 'Orders above this amount get free shipping', 'Παραγγελίες άνω αυτού του ποσού έχουν δωρεάν αποστολή')}
                   </p>
                 </div>
               )}
 
               {/* Costo de envío normal */}
-              <div className="bg-gray-800 rounded-lg p-4">
+              <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
                 <label className="block text-white font-medium mb-2">
-                  Costo de envío normal (€)
+                  {getText('Costo de envío normal (€)', 'Standard shipping cost (€)', 'Κανονικό κόστος αποστολής (€)')}
                 </label>
                 <div className="relative">
-                  <Euro size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Euro size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input
                     type="number"
                     min="0"
@@ -147,26 +225,16 @@ const AdminShipping = () => {
                       ...config,
                       shippingCost: parseFloat(e.target.value) || 0
                     })}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white outline-none focus:border-primary transition-colors"
+                    className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
                   />
                 </div>
-                <p className="text-sm text-gray-400 mt-2">
-                  Costo cuando no aplica envío gratis
+                <p className="text-sm text-gray-500 mt-2">
+                  {getText('Costo cuando no aplica envío gratis', 'Cost when free shipping does not apply', 'Κόστος όταν δεν ισχύει δωρεάν αποστολή')}
                 </p>
               </div>
-
-              {/* Botón guardar */}
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full bg-primary text-white py-3 rounded-lg hover:bg-glow transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Save size={18} />
-                {saving ? "Guardando..." : "Guardar Configuración"}
-              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Navigate } from "react-router-dom";
 import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import { Save } from "lucide-react";
+import AdminNavBack from "@/components/AdminNavBack";
+import { Save, Star, AlertCircle, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Product {
@@ -17,27 +18,62 @@ interface Product {
 
 const AdminMasVendidos = () => {
   const { user, isAdmin } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [masVendidos, setMasVendidos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalData, setOriginalData] = useState<string[]>([]);
 
   useEffect(() => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (originalData.length > 0) {
+      const changed = JSON.stringify(masVendidos) !== JSON.stringify(originalData);
+      setHasChanges(changed);
+    }
+  }, [masVendidos, originalData]);
+
+  // Filtrar productos cuando cambia la búsqueda
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredProducts(products);
+    } else {
+      const term = searchTerm.toLowerCase();
+      const filtered = products.filter(p => 
+        p.nombre.toLowerCase().includes(term) ||
+        p.categoria.toLowerCase().includes(term) ||
+        p.precio.toString().includes(term)
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchTerm, products]);
+
   const loadData = async () => {
     setLoading(true);
     try {
       const productSnap = await getDocs(collection(db, "productos"));
-      setProducts(productSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
+      const productos = productSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product));  
+      setProducts(productos);
+      setFilteredProducts(productos);
 
       const configSnap = await getDocs(collection(db, "configuracion"));
       const config = configSnap.docs.find(d => d.id === "masVendidos");
+
+      let data: string[] = [];
       if (config?.exists()) {
-        setMasVendidos(config.data().productos || []);
+        data = config.data().productos || [];
+      } else {
+        data = [];
       }
+
+      setMasVendidos(data);
+      setOriginalData(data);
     } catch (error) {
       console.error("Error cargando datos:", error);
       toast({
@@ -45,16 +81,19 @@ const AdminMasVendidos = () => {
         description: "No se pudieron cargar los datos",
         variant: "destructive",
       });
+      setMasVendidos([]);
+      setOriginalData([]);
     }
     setLoading(false);
   };
 
   const toggleProduct = (productId: string) => {
-    setMasVendidos(prev =>
-      prev.includes(productId)
+    setMasVendidos(prev => {
+      const newList = prev.includes(productId)
         ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+        : [...prev, productId];
+      return newList;
+    });
   };
 
   const handleSave = async () => {
@@ -64,9 +103,12 @@ const AdminMasVendidos = () => {
         productos: masVendidos,
         updatedAt: new Date()
       });
+      setOriginalData(masVendidos);
+      setHasChanges(false);
       toast({
         title: "Éxito",
-        description: "Productos más vendidos guardados correctamente",
+        description: "Productos destacados guardados correctamente",
+        className: "bg-green-500 text-white",
       });
     } catch (error) {
       console.error("Error guardando:", error);
@@ -79,36 +121,108 @@ const AdminMasVendidos = () => {
     setSaving(false);
   };
 
+  const handleReset = () => {
+    setMasVendidos(originalData);
+    toast({
+      title: "Cambios descartados",
+      description: "Se restauró la configuración anterior",
+    });
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
   if (!user || !isAdmin) return <Navigate to="/admin" replace />;
 
+  const getText = (es: string, en: string, gr: string) => {
+    if (lang === 'en') return en;
+    if (lang === 'gr') return gr;
+    return es;
+  };
+
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-display font-bold text-2xl tracking-tight text-foreground">
-            Productos Más Vendidos
-          </h1>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-glow transition-colors"
-          >
-            <Save size={16} />
-            {saving ? "Guardando..." : "Guardar Cambios"}
-          </button>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header con navegación */}
+        <div className="mb-8">
+          <AdminNavBack
+            title={getText('Productos Destacados', 'Featured Products', 'Προβεβλημένα Προϊόντα')}
+            description={getText('Selecciona los productos más vendidos', 'Select best-selling products', 'Επιλέξτε δημοφιλή προϊόντα')}
+          />
+
+          <div className="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+            {hasChanges && (
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-900/30"
+              >
+                <RefreshCw size={18} />
+                <span className="hidden sm:inline">Descartar</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleSave}
+              disabled={saving || !hasChanges}
+              className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
+                hasChanges
+                  ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
+                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
+              }`}
+            >
+              <Save size={20} />
+              <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+              {hasChanges && !saving && (
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
+              )}
+            </button>
+          </div>
+
+          {hasChanges && (
+            <div className="mt-4 flex items-center gap-2 text-yellow-500 bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/20">
+              <AlertCircle size={16} />
+              <span className="text-sm">Tienes cambios sin guardar</span>
+            </div>
+          )}
+        </div>
+
+        {/* Buscador */}
+        <div className="mb-6 bg-[#0a0a0a] rounded-2xl p-4 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            <input
+              type="text"
+              placeholder={getText('Buscar productos...', 'Search products...', 'Αναζήτηση προϊόντων...')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-10 py-3 text-white placeholder:text-gray-600 outline-none focus:border-green-500/50 transition-all"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-8">Cargando...</div>
+          <div className="text-center py-16">
+            <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-4 rounded-xl cursor-pointer transition-all border-2 ${
                   masVendidos.includes(product.id)
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border bg-secondary hover:border-primary/50'
+                    ? 'border-yellow-500 bg-yellow-500/10 shadow-lg shadow-yellow-500/20'
+                    : 'border-green-900/30 bg-[#0a0a0a] hover:border-green-500/50'
                 }`}
                 onClick={() => toggleProduct(product.id)}
               >
@@ -117,13 +231,18 @@ const AdminMasVendidos = () => {
                     <img
                       src={product.imagenes[0]}
                       alt={product.nombre}
-                      className="w-20 h-20 object-cover rounded"
+                      className="w-20 h-20 object-cover rounded-lg"
                     />
                   )}
-                  <div>
-                    <h3 className="font-display font-bold text-foreground">{product.nombre}</h3>
-                    <p className="text-primary font-bold">{product.precio}€</p>
-                    <p className="text-sm text-muted-foreground capitalize">{product.categoria}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-display font-bold text-white">{product.nombre}</h3>
+                      {masVendidos.includes(product.id) && (
+                        <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                      )}
+                    </div>
+                    <p className="text-green-500 font-bold">€{product.precio}</p>
+                    <p className="text-sm text-gray-500 capitalize">{product.categoria}</p>
                   </div>
                 </div>
               </div>

@@ -146,7 +146,7 @@ const AdminCategorias = () => {
       toast({
         title: "Éxito",
         description: "Categorías guardadas correctamente",
-        className: "bg-green-500 text-white",
+        className: "bg-purple-500 text-white",
       });
     } catch (error) {
       console.error("Error guardando:", error);
@@ -178,7 +178,6 @@ const AdminCategorias = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header con navegación */}
         <div className="mb-8">
           <AdminNavBack 
             title={getText('Gestionar Categorías', 'Manage Categories', 'Διαχείριση Κατηγοριών')}
@@ -189,7 +188,7 @@ const AdminCategorias = () => {
             {hasChanges && (
               <button
                 onClick={handleReset}
-                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-900/30"
+                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-purple-900/30"
               >
                 <RefreshCw size={18} />
                 <span className="hidden sm:inline">Descartar</span>
@@ -201,14 +200,14 @@ const AdminCategorias = () => {
               disabled={saving || !hasChanges}
               className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
                 hasChanges 
-                  ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
-                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
+                  ? 'bg-purple-500/20 text-purple-500 hover:bg-purple-500/30 border border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.3)] animate-pulse'
+                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-purple-900/30'
               }`}
             >
               <Save size={20} />
               <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
               {hasChanges && !saving && (
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-ping ml-2" />
               )}
             </button>
           </div>
@@ -223,7 +222,7 @@ const AdminCategorias = () => {
 
         {loading ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
           </div>
         ) : (
@@ -231,7 +230,7 @@ const AdminCategorias = () => {
             {categorias.map((cat) => (
               <div 
                 key={cat.id} 
-                className="bg-[#0a0a0a] rounded-2xl p-6 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]"
+                className="bg-[#0a0a0a] rounded-2xl p-6 border border-purple-900/30 hover:border-purple-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(147,51,234,0.2)]"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -239,7 +238,7 @@ const AdminCategorias = () => {
                     <input
                       value={cat.id}
                       disabled
-                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-gray-500 opacity-50"
+                      className="w-full bg-black/50 border border-purple-900/30 rounded-xl px-4 py-3 text-gray-500 opacity-50"
                     />
                   </div>
                   <div>
@@ -248,7 +247,7 @@ const AdminCategorias = () => {
                       type="number"
                       value={cat.orden}
                       onChange={(e) => handleChange(cat.id, "orden", parseInt(e.target.value))}
-                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
+                      className="w-full bg-black/50 border border-purple-900/30 rounded-xl px-4 py-3 text-white focus:border-purple-500/50 transition-all"
                     />
                   </div>
                   <div>
@@ -256,7 +255,7 @@ const AdminCategorias = () => {
                     <input
                       value={cat.nombre}
                       onChange={(e) => handleChange(cat.id, "nombre", e.target.value)}      
-                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
+                      className="w-full bg-black/50 border border-purple-900/30 rounded-xl px-4 py-3 text-white focus:border-purple-500/50 transition-all"
                     />
                   </div>
                   <div>
@@ -264,7 +263,7 @@ const AdminCategorias = () => {
                     <input
                       value={cat.descripcion}
                       onChange={(e) => handleChange(cat.id, "descripcion", e.target.value)} 
-                      className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white focus:border-green-500/50 transition-all"
+                      className="w-full bg-black/50 border border-purple-900/30 rounded-xl px-4 py-3 text-white focus:border-purple-500/50 transition-all"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -274,7 +273,7 @@ const AdminCategorias = () => {
                         <img 
                           src={cat.imagen} 
                           alt={cat.nombre} 
-                          className="w-24 h-24 object-cover rounded-xl border border-green-900/30" 
+                          className="w-24 h-24 object-cover rounded-xl border border-purple-900/30" 
                         />
                       )}
                       <div className="flex-1">
@@ -282,9 +281,9 @@ const AdminCategorias = () => {
                           value={cat.imagen}
                           onChange={(e) => handleChange(cat.id, "imagen", e.target.value)}  
                           placeholder="URL de la imagen"
-                          className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white mb-3 focus:border-green-500/50 transition-all"
+                          className="w-full bg-black/50 border border-purple-900/30 rounded-xl px-4 py-3 text-white mb-3 focus:border-purple-500/50 transition-all"
                         />
-                        <label className="inline-flex items-center gap-2 bg-black/50 border border-green-900/30 hover:border-green-500/30 text-white px-4 py-2 rounded-xl cursor-pointer transition-colors">
+                        <label className="inline-flex items-center gap-2 bg-black/50 border border-purple-900/30 hover:border-purple-500/30 text-white px-4 py-2 rounded-xl cursor-pointer transition-colors">
                           <Upload size={16} />
                           {uploading === cat.id ? "Subiendo..." : "Subir imagen"}
                           <input
@@ -302,7 +301,7 @@ const AdminCategorias = () => {
                       type="checkbox"
                       checked={cat.activo}
                       onChange={(e) => handleChange(cat.id, "activo", e.target.checked)}    
-                      className="accent-green-500 w-5 h-5"
+                      className="accent-purple-500 w-5 h-5"
                     />
                     <label className="text-sm text-white">Activo</label>
                   </div>

@@ -75,7 +75,7 @@ const AdminShipping = () => {
       toast({
         title: "Éxito",
         description: "Configuración guardada correctamente",
-        className: "bg-green-500 text-white",
+        className: "bg-purple-500 text-white",
       });
     } catch (error) {
       console.error("Error guardando:", error);
@@ -109,7 +109,6 @@ const AdminShipping = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header con navegación */}
         <div className="mb-8">
           <AdminNavBack 
             title={getText('Configuración de Envíos', 'Shipping Settings', 'Ρυθμίσεις Αποστολής')}
@@ -120,7 +119,7 @@ const AdminShipping = () => {
             {hasChanges && (
               <button
                 onClick={handleReset}
-                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-900/30"
+                className="px-6 py-3 bg-black/50 text-white rounded-xl hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-purple-900/30"
               >
                 <RefreshCw size={18} />
                 <span className="hidden sm:inline">Descartar</span>
@@ -132,14 +131,14 @@ const AdminShipping = () => {
               disabled={saving || !hasChanges}
               className={`px-8 py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg ${
                 hasChanges 
-                  ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse'
-                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-green-900/30'
+                  ? 'bg-purple-500/20 text-purple-500 hover:bg-purple-500/30 border border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.3)] animate-pulse'
+                  : 'bg-black/50 text-gray-500 cursor-not-allowed border border-purple-900/30'
               }`}
             >
               <Save size={20} />
               <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
               {hasChanges && !saving && (
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping ml-2" />
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-ping ml-2" />
               )}
             </button>
           </div>
@@ -154,14 +153,13 @@ const AdminShipping = () => {
 
         {loading ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
           </div>
         ) : (
-          <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 p-6 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
+          <div className="bg-[#0a0a0a] rounded-2xl border border-purple-900/30 p-6 hover:border-purple-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(147,51,234,0.2)]">
             <div className="space-y-6">
-              {/* Activar/Desactivar envío gratis */}
-              <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
+              <div className="bg-black/50 rounded-xl p-4 border border-purple-900/30">
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-white font-medium">{getText('Envío Gratis', 'Free Shipping', 'Δωρεάν Αποστολή')}</label>
                   <button
@@ -169,7 +167,7 @@ const AdminShipping = () => {
                       ...config,
                       freeShippingEnabled: !config.freeShippingEnabled
                     })}
-                    className="text-green-500"
+                    className="text-purple-500"
                   >
                     {config.freeShippingEnabled ? (
                       <ToggleRight size={32} />
@@ -183,9 +181,8 @@ const AdminShipping = () => {
                 </p>
               </div>
 
-              {/* Monto mínimo para envío gratis */}
               {config.freeShippingEnabled && (
-                <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
+                <div className="bg-black/50 rounded-xl p-4 border border-purple-900/30">
                   <label className="block text-white font-medium mb-2">
                     {getText('Monto mínimo para envío gratis (€)', 'Minimum amount for free shipping (€)', 'Ελάχιστο ποσό για δωρεάν αποστολή (€)')}
                   </label>
@@ -200,7 +197,7 @@ const AdminShipping = () => {
                         ...config,
                         freeShippingMinAmount: parseFloat(e.target.value) || 0
                       })}
-                      className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
+                      className="w-full bg-black/50 border border-purple-900/30 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-purple-500/50 transition-all"
                     />
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
@@ -209,8 +206,7 @@ const AdminShipping = () => {
                 </div>
               )}
 
-              {/* Costo de envío normal */}
-              <div className="bg-black/50 rounded-xl p-4 border border-green-900/30">
+              <div className="bg-black/50 rounded-xl p-4 border border-purple-900/30">
                 <label className="block text-white font-medium mb-2">
                   {getText('Costo de envío normal (€)', 'Standard shipping cost (€)', 'Κανονικό κόστος αποστολής (€)')}
                 </label>
@@ -225,7 +221,7 @@ const AdminShipping = () => {
                       ...config,
                       shippingCost: parseFloat(e.target.value) || 0
                     })}
-                    className="w-full bg-black/50 border border-green-900/30 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
+                    className="w-full bg-black/50 border border-purple-900/30 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-purple-500/50 transition-all"
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-2">

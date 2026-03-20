@@ -12,7 +12,7 @@ import {
   ShoppingBag, Shield,
   Home, LogOut as LogOutIcon,
   ChevronLeft, ChevronRight,
-  Sparkles // 👈 NUEVO ICONO
+  Sparkles
 } from "lucide-react";
 import { t } from "@/services/adminTranslationService";
 
@@ -44,7 +44,6 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
-  // Categorías con traducción
   const categories = [
     { id: "todos", nombre: t("admin.categories.all", lang), icon: Package },
     { id: "patinetes", nombre: t("admin.categories.scooters", lang), icon: Zap },
@@ -130,7 +129,7 @@ const AdminDashboard = () => {
     { to: "/admin/producto/nuevo", icon: Plus, label: t("admin.menu.new_product", lang) },
     { to: "/admin/masvendidos", icon: Star, label: t("admin.menu.featured", lang) },
     { to: "/admin/ofertas", icon: Percent, label: t("admin.menu.sales", lang) },
-    { to: "/admin/nuevos", icon: Sparkles, label: "LO NUEVO" }, // 👈 AÑADIDO
+    { to: "/admin/nuevos", icon: Sparkles, label: "LO NUEVO" },
     { to: "/admin/categorias", icon: FolderOpen, label: t("admin.menu.categories", lang) },
     { to: "/admin/shipping", icon: Truck, label: t("admin.menu.shipping", lang) },
     { to: "/admin/info-line", icon: MessageSquare, label: t("admin.menu.info_line", lang) },
@@ -139,14 +138,15 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <aside className={`fixed left-0 top-0 h-full bg-[#0a0a0a] border-r border-green-900/30 z-50 transition-all duration-300 ${
+      {/* Sidebar morado */}
+      <aside className={`fixed left-0 top-0 h-full bg-[#0a0a0a] border-r border-purple-900/30 z-50 transition-all duration-300 ${
         sidebarOpen ? 'w-64' : 'w-16'
       }`}>
         <div className="relative h-full flex flex-col">
-          <div className="h-16 flex items-center justify-center border-b border-green-900/30">
+          <div className="h-16 flex items-center justify-center border-b border-purple-900/30">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-green-500/10 rounded-lg text-green-500"
+              className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-500"
               title={sidebarOpen ? t("admin.sidebar.collapse", lang) : t("admin.sidebar.expand", lang)}
             >
               {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
@@ -158,13 +158,13 @@ const AdminDashboard = () => {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 px-3 py-2 hover:bg-green-500/5 transition-all ${
+                className={`flex items-center gap-3 px-3 py-2 hover:bg-purple-500/5 transition-all ${
                   sidebarOpen ? 'justify-start' : 'justify-center'
                 }`}
                 title={!sidebarOpen ? item.label : ""}
               >
-                <div className="w-6 h-6 bg-green-500/10 rounded-lg flex items-center justify-center">
-                  <item.icon size={14} className="text-green-500" />
+                <div className="w-6 h-6 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <item.icon size={14} className="text-purple-500" />
                 </div>
                 {sidebarOpen && (
                   <span className="text-sm text-gray-300 hover:text-white">
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
             ))}
           </nav>
 
-          <div className="p-3 border-t border-green-900/30">
+          <div className="p-3 border-t border-purple-900/30">
             <button
               onClick={handleLogoutAndGoHome}
               className={`flex items-center gap-3 w-full text-red-400 hover:bg-red-500/10 rounded-lg py-2 ${
@@ -206,7 +206,7 @@ const AdminDashboard = () => {
             
             <button
               onClick={handleLogoutAndGoHome}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black font-medium rounded-lg hover:bg-green-400 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-black font-medium rounded-lg hover:bg-purple-400 transition-all"
               title={t("admin.store", lang)}
             >
               <Home size={18} />
@@ -214,9 +214,10 @@ const AdminDashboard = () => {
             </button>
           </div>
 
+          {/* Stats con borde morado */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {stats.map((stat, index) => (
-              <div key={index} className="bg-[#0a0a0a] p-4 rounded-xl border border-green-900/30">
+              <div key={index} className="bg-[#0a0a0a] p-4 rounded-xl border border-purple-900/30 hover:border-purple-500/50 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl font-bold text-white">{stat.value}</span>
                 </div>
@@ -225,7 +226,7 @@ const AdminDashboard = () => {
             ))}
           </div>
 
-          <div className="bg-[#0a0a0a] rounded-xl border border-green-900/30 p-4">
+          <div className="bg-[#0a0a0a] rounded-xl border border-purple-900/30 p-4">
             <h2 className="text-lg font-semibold text-white mb-4">{t("admin.products.title", lang)}</h2>
             
             <div className="relative mb-4">
@@ -235,7 +236,7 @@ const AdminDashboard = () => {
                 placeholder={t("admin.products.search", lang)}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-black/50 border border-green-900/30 rounded-lg pl-9 pr-4 py-2 text-white text-sm"
+                className="w-full bg-black/50 border border-purple-900/30 rounded-lg pl-9 pr-4 py-2 text-white text-sm focus:border-purple-500/50"
               />
             </div>
 
@@ -248,8 +249,8 @@ const AdminDashboard = () => {
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs ${
                       selectedCategory === cat.id
-                        ? 'bg-green-500/20 text-green-500 border border-green-500/30'
-                        : 'bg-black/30 text-gray-400 hover:text-white border border-green-900/30'
+                        ? 'bg-purple-500/20 text-purple-500 border border-purple-500/30'
+                        : 'bg-black/30 text-gray-400 hover:text-white border border-purple-900/30'
                     }`}
                   >
                     <Icon size={12} />
@@ -267,18 +268,18 @@ const AdminDashboard = () => {
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {filteredProducts.slice(0, 10).map((p) => (
-                <div key={p.id} className="flex items-center justify-between p-2 bg-black/30 rounded-lg border border-green-900/30">
+                <div key={p.id} className="flex items-center justify-between p-2 bg-black/30 rounded-lg border border-purple-900/30">
                   <div className="flex items-center gap-2">
                     {p.imagenes?.[0] && (
                       <img src={p.imagenes[0]} alt={p.nombre} className="w-8 h-8 object-cover rounded" />
                     )}
                     <div>
                       <p className="text-white text-sm">{p.nombre}</p>
-                      <p className="text-green-500 text-xs">{p.precio}€</p>
+                      <p className="text-purple-500 text-xs">{p.precio}€</p>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Link to={`/admin/producto/${p.id}`} className="p-1 text-gray-400 hover:text-green-500">
+                    <Link to={`/admin/producto/${p.id}`} className="p-1 text-gray-400 hover:text-purple-500">
                       <Pencil size={14} />
                     </Link>
                     <button onClick={() => handleDelete(p.id)} className="p-1 text-gray-400 hover:text-red-500">

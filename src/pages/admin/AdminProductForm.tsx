@@ -6,7 +6,7 @@ import { doc, getDoc, setDoc, addDoc, collection } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/firebase/config";
 import AdminNavBack from "@/components/AdminNavBack";
-import { Upload, X, Save, Globe, RefreshCw, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Upload, X, Save, Globe, RefreshCw, Plus, Trash2, ChevronDown, ChevronUp, Edit2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { translateToAll } from "@/services/translationService";
 
@@ -20,66 +20,34 @@ const categories = [
   { value: "movilidad-reducida", label: "Movilidad Reducida", icon: "♿" },
 ];
 
-// Especificaciones predefinidas - SIMPLES Y CLARAS
-const especificacionesPredefinidas: Record<string, Array<{ key: string; label: string; unit: string; type: string }>> = {
+// Especificaciones sugeridas por categoría (solo como sugerencia, el admin puede modificarlas)
+const especificacionesSugeridas: Record<string, Array<{ key: string; label: string; unit: string; type: string }>> = {
   patinetes: [
     { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
     { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
     { key: "peso", label: "Peso", unit: "kg", type: "text" },
     { key: "potencia_motor", label: "Potencia motor", unit: "W", type: "text" },
-    { key: "bateria", label: "Batería", unit: "Ah", type: "text" },
-    { key: "tiempo_carga", label: "Tiempo de carga", unit: "horas", type: "text" },
-    { key: "neumaticos", label: "Neumáticos", unit: "", type: "text" },
-    { key: "frenos", label: "Frenos", unit: "", type: "text" },
   ],
   bicicletas: [
     { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
     { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
     { key: "peso", label: "Peso", unit: "kg", type: "text" },
     { key: "motor", label: "Motor", unit: "W", type: "text" },
-    { key: "bateria", label: "Batería", unit: "Ah", type: "text" },
-    { key: "cambio", label: "Cambio", unit: "", type: "text" },
   ],
   motos: [
     { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
     { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
     { key: "peso", label: "Peso", unit: "kg", type: "text" },
     { key: "potencia_motor", label: "Potencia motor", unit: "kW", type: "text" },
-    { key: "bateria", label: "Batería", unit: "kWh", type: "text" },
-    { key: "carga_maxima", label: "Carga máxima", unit: "kg", type: "text" },
-    { key: "frenos", label: "Frenos", unit: "", type: "text" },
-  ],
-  accesorios: [
-    { key: "material", label: "Material", unit: "", type: "text" },
-    { key: "color", label: "Color", unit: "", type: "text" },
-    { key: "compatibilidad", label: "Compatibilidad", unit: "", type: "text" },
-  ],
-  infantiles: [
-    { key: "edad", label: "Edad recomendada", unit: "años", type: "text" },
-    { key: "peso_maximo", label: "Peso máximo", unit: "kg", type: "text" },
-    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
-  ],
-  "movilidad-reducida": [
-    { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
-    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
-    { key: "peso", label: "Peso", unit: "kg", type: "text" },
-    { key: "capacidad", label: "Capacidad máxima", unit: "kg", type: "text" },
-    { key: "plegable", label: "Plegable", unit: "", type: "checkbox" },
-  ],
-  piezas: [
-    { key: "marca", label: "Marca", unit: "", type: "text" },
-    { key: "compatibilidad", label: "Compatibilidad", unit: "", type: "text" },
-    { key: "material", label: "Material", unit: "", type: "text" },
   ],
   default: [
     { key: "especificacion1", label: "Especificación 1", unit: "", type: "text" },
     { key: "especificacion2", label: "Especificación 2", unit: "", type: "text" },
-    { key: "especificacion3", label: "Especificación 3", unit: "", type: "text" },
   ]
 };
 
 interface EspecificacionItem {
-  key: string;
+  id: string;
   label: string;
   unit: string;
   type: string;
@@ -117,17 +85,41 @@ const AdminProductForm = () => {
   const [translating, setTranslating] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Inicializar especificaciones según categoría
-  const initEspecificacionesPorCategoria = (categoriaId: string) => {
-    const predef = especificacionesPredefinidas[categoriaId] || especificacionesPredefinidas.default;
+  // Inicializar especificaciones desde Firebase o crear nuevas
+  const initEspecificaciones = (categoriaId: string, especificacionesGuardadas?: Record<string, any>) => {
+    let nuevasEspecs: EspecificacionItem[] = [];
     
-    const nuevasEspecs: EspecificacionItem[] = predef.map(esp => ({
-      ...esp,
-      valor: ""
-    }));
+    if (especificacionesGuardadas && Object.keys(especificacionesGuardadas).length > 0) {
+      // Cargar especificaciones guardadas
+      nuevasEspecs = Object.entries(especificacionesGuardadas)
+        .filter(([key]) => !key.endsWith('_en') && !key.endsWith('_gr'))
+        .map(([key, value]) => ({
+          id: key,
+          label: key,
+          unit: "",
+          type: "text",
+          valor: value as string,
+        }));
+    } else {
+      // Usar especificaciones sugeridas por categoría
+      const sugeridas = especificacionesSugeridas[categoriaId] || especificacionesSugeridas.default;
+      nuevasEspecs = sugeridas.map((esp, idx) => ({
+        id: esp.key,
+        label: esp.label,
+        unit: esp.unit,
+        type: esp.type,
+        valor: "",
+      }));
+    }
     
     setEspecificacionesList(nuevasEspecs);
-    setForm(prev => ({ ...prev, especificaciones: {} }));
+    
+    // Construir objeto de especificaciones para guardar
+    const especObj: Record<string, any> = {};
+    nuevasEspecs.forEach(esp => {
+      especObj[esp.id] = esp.valor;
+    });
+    setForm(prev => ({ ...prev, especificaciones: especObj }));
   };
 
   useEffect(() => {
@@ -157,21 +149,8 @@ const AdminProductForm = () => {
               especificaciones: data.especificaciones || {},
             });
             
-            // Cargar especificaciones existentes
-            const predef = especificacionesPredefinidas[data.categoria] || especificacionesPredefinidas.default;
-            const specsExistentes: EspecificacionItem[] = predef.map(esp => {
-              let valor = data.especificaciones?.[esp.key] || "";
-              // Si es checkbox, convertir booleano a texto
-              if (esp.type === 'checkbox' && valor === true) valor = "Sí";
-              if (esp.type === 'checkbox' && valor === false) valor = "No";
-              
-              return {
-                ...esp,
-                valor: valor,
-              };
-            });
-            
-            setEspecificacionesList(specsExistentes);
+            // Cargar especificaciones guardadas
+            initEspecificaciones(data.categoria, data.especificaciones);
           } else {
             toast({ title: "Error", description: "Producto no encontrado", variant: "destructive" });
             navigate("/admin/dashboard");
@@ -182,7 +161,7 @@ const AdminProductForm = () => {
         }
         setLoading(false);
       } else {
-        initEspecificacionesPorCategoria("patinetes");
+        initEspecificaciones("patinetes", {});
         setLoading(false);
       }
     };
@@ -192,32 +171,41 @@ const AdminProductForm = () => {
 
   const handleCategoriaChange = (categoriaId: string) => {
     setForm(prev => ({ ...prev, categoria: categoriaId }));
-    initEspecificacionesPorCategoria(categoriaId);
+    initEspecificaciones(categoriaId, {});
   };
 
-  const updateEspecificacion = (index: number, valor: string) => {
-    const nuevas = [...especificacionesList];
-    nuevas[index] = { ...nuevas[index], valor };
+  const updateEspecificacionValor = (id: string, valor: string) => {
+    const nuevas = especificacionesList.map(esp =>
+      esp.id === id ? { ...esp, valor } : esp
+    );
     setEspecificacionesList(nuevas);
     
-    // Guardar en objeto de especificaciones
-    const esp = nuevas[index];
-    let valorGuardar: any = valor;
+    // Actualizar objeto de especificaciones
+    const especObj: Record<string, any> = {};
+    nuevas.forEach(esp => {
+      especObj[esp.id] = esp.valor;
+    });
+    setForm(prev => ({ ...prev, especificaciones: especObj }));
+  };
+
+  const updateEspecificacionLabel = (id: string, nuevoLabel: string) => {
+    const nuevas = especificacionesList.map(esp =>
+      esp.id === id ? { ...esp, label: nuevoLabel } : esp
+    );
+    setEspecificacionesList(nuevas);
     
-    if (esp.type === 'checkbox') {
-      valorGuardar = valor === "Sí" ? true : (valor === "No" ? false : "");
-    }
-    
-    setForm(prev => ({
-      ...prev,
-      especificaciones: { ...prev.especificaciones, [esp.key]: valorGuardar }
-    }));
+    // Actualizar objeto de especificaciones (cambiar la clave)
+    const especObj: Record<string, any> = {};
+    nuevas.forEach(esp => {
+      especObj[esp.label] = esp.valor;
+    });
+    setForm(prev => ({ ...prev, especificaciones: especObj }));
   };
 
   const agregarEspecificacion = () => {
-    const nuevaKey = `custom_${Date.now()}`;
+    const newId = `espec_${Date.now()}`;
     setEspecificacionesList([...especificacionesList, {
-      key: nuevaKey,
+      id: newId,
       label: "Nueva especificación",
       unit: "",
       type: "text",
@@ -225,20 +213,16 @@ const AdminProductForm = () => {
     }]);
   };
 
-  const eliminarEspecificacion = (index: number) => {
-    const espEliminada = especificacionesList[index];
-    const nuevas = especificacionesList.filter((_, i) => i !== index);
+  const eliminarEspecificacion = (id: string) => {
+    const nuevas = especificacionesList.filter(esp => esp.id !== id);
     setEspecificacionesList(nuevas);
     
-    const nuevasEspec = { ...form.especificaciones };
-    delete nuevasEspec[espEliminada.key];
-    setForm(prev => ({ ...prev, especificaciones: nuevasEspec }));
-  };
-
-  const actualizarNombreEspecificacion = (index: number, nuevoNombre: string) => {
-    const nuevas = [...especificacionesList];
-    nuevas[index] = { ...nuevas[index], label: nuevoNombre };
-    setEspecificacionesList(nuevas);
+    // Actualizar objeto de especificaciones
+    const especObj: Record<string, any> = {};
+    nuevas.forEach(esp => {
+      especObj[esp.label] = esp.valor;
+    });
+    setForm(prev => ({ ...prev, especificaciones: especObj }));
   };
 
   const handleImageUpload = async (files: FileList | null) => {
@@ -302,14 +286,12 @@ const AdminProductForm = () => {
 
     setSaving(true);
     try {
-      // Construir especificaciones finales
+      // Construir especificaciones finales con los labels como claves
       const especificacionesFinales: Record<string, any> = {};
       especificacionesList.forEach(esp => {
-        let valor = esp.valor;
-        if (esp.type === 'checkbox') {
-          valor = esp.valor === "Sí" ? true : (esp.valor === "No" ? false : "");
+        if (esp.label && esp.label.trim()) {
+          especificacionesFinales[esp.label] = esp.valor;
         }
-        especificacionesFinales[esp.key] = valor;
       });
       
       const productData = {
@@ -340,6 +322,7 @@ const AdminProductForm = () => {
       
       setTimeout(() => navigate("/admin/dashboard"), 1000);
     } catch (err) {
+      console.error(err);
       toast({ title: "Error", description: "No se pudo guardar", variant: "destructive" });
     } finally {
       setSaving(false);
@@ -469,7 +452,7 @@ const AdminProductForm = () => {
             </div>
           </div>
 
-          {/* ESPECIFICACIONES - SIMPLE Y PRÁCTICO */}
+          {/* ESPECIFICACIONES - COMPLETAMENTE EDITABLE */}
           <div className="border border-green-900/30 rounded-xl overflow-hidden mb-6">
             <button
               type="button"
@@ -482,39 +465,35 @@ const AdminProductForm = () => {
             
             {mostrarEspecificaciones && (
               <div className="p-4 pt-0 border-t border-green-900/30">
+                <p className="text-xs text-gray-500 mb-3">
+                  ✏️ Puedes editar el nombre, el valor, agregar o eliminar especificaciones
+                </p>
                 <div className="space-y-3">
-                  {especificacionesList.map((esp, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <input
-                        type="text"
-                        value={esp.label}
-                        onChange={(e) => actualizarNombreEspecificacion(idx, e.target.value)}
-                        className="w-1/3 bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
-                        placeholder="Nombre"
-                      />
-                      {esp.type === 'checkbox' ? (
-                        <select
-                          value={esp.valor}
-                          onChange={(e) => updateEspecificacion(idx, e.target.value)}
-                          className="w-1/3 bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
-                        >
-                          <option value="">Seleccionar</option>
-                          <option value="Sí">✓ Sí</option>
-                          <option value="No">✗ No</option>
-                        </select>
-                      ) : (
+                  {especificacionesList.map((esp) => (
+                    <div key={esp.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 bg-black/30 rounded-lg border border-green-900/20">
+                      <div className="flex-1 w-full sm:w-auto">
+                        <input
+                          type="text"
+                          value={esp.label}
+                          onChange={(e) => updateEspecificacionLabel(esp.id, e.target.value)}
+                          className="w-full bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
+                          placeholder="Nombre de la especificación"
+                        />
+                      </div>
+                      <div className="flex-1 w-full sm:w-auto">
                         <input
                           type="text"
                           value={esp.valor}
-                          onChange={(e) => updateEspecificacion(idx, e.target.value)}
-                          className="flex-1 bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
-                          placeholder={`Valor${esp.unit ? ` (${esp.unit})` : ''}`}
+                          onChange={(e) => updateEspecificacionValor(esp.id, e.target.value)}
+                          className="w-full bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
+                          placeholder="Valor (ej: 80 km/h, Sí, 5 kg)"
                         />
-                      )}
+                      </div>
                       <button
                         type="button"
-                        onClick={() => eliminarEspecificacion(idx)}
-                        className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                        onClick={() => eliminarEspecificacion(esp.id)}
+                        className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Eliminar especificación"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -524,9 +503,9 @@ const AdminProductForm = () => {
                   <button
                     type="button"
                     onClick={agregarEspecificacion}
-                    className="w-full py-2 border border-dashed border-green-500/30 rounded-lg text-green-500 hover:bg-green-500/10 flex items-center justify-center gap-2 text-sm"
+                    className="w-full py-2 border border-dashed border-green-500/30 rounded-lg text-green-500 hover:bg-green-500/10 flex items-center justify-center gap-2 text-sm transition-all"
                   >
-                    <Plus size={14} /> Agregar especificación
+                    <Plus size={14} /> Agregar nueva especificación
                   </button>
                 </div>
               </div>
@@ -546,7 +525,7 @@ const AdminProductForm = () => {
                 </div>
               ))}
             </div>
-            <label className="inline-flex items-center gap-2 bg-black/50 border border-green-900/30 rounded-lg px-4 py-2 cursor-pointer">
+            <label className="inline-flex items-center gap-2 bg-black/50 border border-green-900/30 rounded-lg px-4 py-2 cursor-pointer hover:border-green-500/50 transition-colors">
               <Upload size={14} />
               {uploading ? "Subiendo..." : "Subir imágenes"}
               <input type="file" multiple accept="image/*" onChange={(e) => handleImageUpload(e.target.files)} className="hidden" />

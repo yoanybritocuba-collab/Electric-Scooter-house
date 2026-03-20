@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Navigate } from "react-router-dom";
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import AdminNavBack from "@/components/AdminNavBack";
 import { Save, Tag, AlertCircle, RefreshCw, Search, X } from "lucide-react";
@@ -14,6 +14,8 @@ interface Product {
   precio: number;
   categoria: string;
   imagenes: string[];
+  rebaja?: boolean;
+  descuento?: number;
 }
 
 const AdminOfertas = () => {
@@ -32,14 +34,22 @@ const AdminOfertas = () => {
     loadData();
   }, []);
 
+  // ===== DETECCIÓN DE CAMBIOS CORREGIDA =====
   useEffect(() => {
-    if (Object.keys(originalData).length > 0) {
+    if (!loading && Object.keys(originalData).length > 0) {
       const changed = JSON.stringify(ofertas) !== JSON.stringify(originalData);
+      console.log("🔍 Comparando cambios en ofertas:", { 
+        changed, 
+        ofertasKeys: Object.keys(ofertas).length,
+        originalKeys: Object.keys(originalData).length
+      });
       setHasChanges(changed);
+    } else if (!loading && Object.keys(originalData).length === 0 && Object.keys(ofertas).length > 0) {
+      console.log("🔍 Original vacío, hay ofertas cargadas - hay cambios");
+      setHasChanges(true);
     }
-  }, [ofertas, originalData]);
+  }, [ofertas, originalData, loading]);
 
-  // Filtrar productos cuando cambia la búsqueda
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredProducts(products);
@@ -58,24 +68,29 @@ const AdminOfertas = () => {
     setLoading(true);
     try {
       const productSnap = await getDocs(collection(db, "productos"));
-      const productos = productSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product));  
+      const productos = productSnap.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data(),
+        rebaja: d.data().rebaja === true,
+        descuento: d.data().descuento || 0
+      } as Product));
       setProducts(productos);
       setFilteredProducts(productos);
 
       const configSnap = await getDocs(collection(db, "configuracion"));
       const config = configSnap.docs.find(d => d.id === "ofertas");
+      
       let data = {};
-
       if (config?.exists()) {
-        data = config.data().productos || {};
-      } else {
-        productos.forEach(p => {
-          data = { ...data, [p.id]: { activo: false, descuento: 0 } };
-        });
+        const configData = config.data();
+        const { updatedAt, ...rest } = configData;
+        data = rest;
       }
 
       setOfertas(data);
-      setOriginalData(data);
+      setOriginalData(JSON.parse(JSON.stringify(data)));
+      console.log("📦 Ofertas cargadas:", data);
+      
     } catch (error) {
       console.error("Error cargando datos:", error);
       toast({
@@ -88,34 +103,55 @@ const AdminOfertas = () => {
   };
 
   const toggleOferta = (productId: string) => {
-    setOfertas(prev => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        activo: !prev[productId]?.activo
-      }
-    }));
+    setOfertas(prev => {
+      const nuevo = {
+        ...prev,
+        [productId]: {
+          activo: !prev[productId]?.activo,
+          descuento: prev[productId]?.descuento || 0
+        }
+      };
+      console.log("🔄 Toggle oferta:", { productId, nuevo: nuevo[productId] });
+      return nuevo;
+    });
   };
 
   const handleDescuentoChange = (productId: string, descuento: number) => {
-    setOfertas(prev => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        descuento: Math.min(100, Math.max(0, descuento))
-      }
-    }));
+    setOfertas(prev => {
+      const nuevo = {
+        ...prev,
+        [productId]: {
+          activo: prev[productId]?.activo || false,
+          descuento: Math.min(100, Math.max(0, descuento))
+        }
+      };
+      console.log("🔄 Cambio descuento:", { productId, nuevo: nuevo[productId] });
+      return nuevo;
+    });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      console.log("💾 Guardando ofertas:", ofertas);
+      
       await setDoc(doc(db, "configuracion", "ofertas"), {
-        productos: ofertas,
+        ...ofertas,
         updatedAt: new Date()
       });
-      setOriginalData(ofertas);
+      
+      for (const [productId, oferta] of Object.entries(ofertas)) {
+        const productRef = doc(db, "productos", productId);
+        await updateDoc(productRef, {
+          rebaja: oferta.activo,
+          descuento: oferta.descuento
+        });
+        console.log(`✅ Producto ${productId} actualizado`);
+      }
+      
+      setOriginalData(JSON.parse(JSON.stringify(ofertas)));
       setHasChanges(false);
+      
       toast({
         title: "Éxito",
         description: "Ofertas guardadas correctamente",
@@ -133,7 +169,7 @@ const AdminOfertas = () => {
   };
 
   const handleReset = () => {
-    setOfertas(originalData);
+    setOfertas(JSON.parse(JSON.stringify(originalData)));
     toast({
       title: "Cambios descartados",
       description: "Se restauró la configuración anterior",
@@ -155,7 +191,6 @@ const AdminOfertas = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header con navegación */}
         <div className="mb-8">
           <AdminNavBack
             title={getText('Ofertas y Descuentos', 'Offers & Discounts', 'Προσφορές & Εκπτώσεις')}
@@ -198,7 +233,6 @@ const AdminOfertas = () => {
           )}
         </div>
 
-        {/* Buscador */}
         <div className="mb-6 bg-[#0a0a0a] rounded-2xl p-4 border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -225,67 +259,89 @@ const AdminOfertas = () => {
             <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">{getText('Cargando...', 'Loading...', 'Φόρτωση...')}</p>
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-16 bg-[#0a0a0a] rounded-2xl border border-green-900/30">
+            <Tag size={64} className="text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg mb-2">
+              {getText('No hay productos en oferta', 'No products on sale', 'Δεν υπάρχουν προϊόντα σε προσφορά')}
+            </p>
+            <p className="text-gray-500 text-sm">
+              {searchTerm 
+                ? getText(`No se encontraron productos para "${searchTerm}"`, `No products found for "${searchTerm}"`, `Δεν βρέθηκαν προϊόντα για "${searchTerm}"`)
+                : getText('Selecciona productos para crear ofertas', 'Select products to create offers', 'Επιλέξτε προϊόντα για δημιουργία προσφορών')}
+            </p>
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="mt-4 px-4 py-2 bg-green-500/20 text-green-500 rounded-lg hover:bg-green-500/30 transition-all"
+              >
+                {getText('Limpiar búsqueda', 'Clear search', 'Εκκαθάριση αναζήτησης')}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="space-y-4">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-[#0a0a0a] p-4 rounded-xl border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]"
-              >
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Imagen */}
-                  {product.imagenes?.[0] && (
-                    <img
-                      src={product.imagenes[0]}
-                      alt={product.nombre}
-                      className="w-full sm:w-20 h-48 sm:h-20 object-cover rounded-lg"
-                    />
-                  )}
-                  
-                  {/* Información del producto */}
-                  <div className="flex-1">
-                    <h3 className="font-display font-bold text-white text-lg sm:text-base">{product.nombre}</h3>
-                    <p className="text-green-500 font-bold text-lg sm:text-base">€{product.precio}</p>
-                    <p className="text-sm text-gray-500 capitalize mb-3 sm:mb-2">{product.categoria}</p>
-                    
-                    {/* Checkbox debajo de la info */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={ofertas[product.id]?.activo || false}
-                          onChange={() => toggleOferta(product.id)}
-                          className="accent-green-500 w-5 h-5"
-                        />
-                        <span className="text-sm text-white">En oferta</span>
-                      </label>
-                    </div>
+            {filteredProducts.map((product) => {
+              const oferta = ofertas[product.id];
+              const activo = oferta?.activo || false;
+              const descuento = oferta?.descuento || 0;
 
-                    {/* Panel de descuento */}
-                    {ofertas[product.id]?.activo && (
-                      <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 bg-black/50 rounded-lg border border-green-900/30">
-                        <Tag size={16} className="text-green-500 hidden sm:block" />
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <span className="text-sm text-gray-400">Descuento:</span>        
-                          <input
-                            type="number"
-                            value={ofertas[product.id]?.descuento || 0}
-                            onChange={(e) => handleDescuentoChange(product.id, parseInt(e.target.value) || 0)}
-                            className="w-20 bg-black/50 border border-green-900/30 rounded-lg px-2 py-1 text-white"
-                            min="0"
-                            max="100"
-                          />
-                          <span className="text-sm text-white">%</span>
-                        </div>
-                        <div className="text-sm text-green-500 w-full sm:w-auto text-right">
-                          Precio final: €{(product.precio * (1 - (ofertas[product.id]?.descuento || 0) / 100)).toFixed(2)}
-                        </div>
-                      </div>
+              return (
+                <div
+                  key={product.id}
+                  className="bg-[#0a0a0a] p-4 rounded-xl border border-green-900/30 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]"
+                >
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {product.imagenes?.[0] && (
+                      <img
+                        src={product.imagenes[0]}
+                        alt={product.nombre}
+                        className="w-full sm:w-20 h-48 sm:h-20 object-cover rounded-lg"
+                      />
                     )}
+                    
+                    <div className="flex-1">
+                      <h3 className="font-display font-bold text-white text-lg sm:text-base">{product.nombre}</h3>
+                      <p className="text-green-500 font-bold text-lg sm:text-base">€{product.precio}</p>
+                      <p className="text-sm text-gray-500 capitalize mb-3 sm:mb-2">{product.categoria}</p>
+                      
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={activo}
+                            onChange={() => toggleOferta(product.id)}
+                            className="accent-green-500 w-5 h-5"
+                          />
+                          <span className="text-sm text-white">En oferta</span>
+                        </label>
+                      </div>
+
+                      {activo && (
+                        <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 bg-black/50 rounded-lg border border-green-900/30">
+                          <Tag size={16} className="text-green-500 hidden sm:block" />
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <span className="text-sm text-gray-400">Descuento:</span>
+                            <input
+                              type="number"
+                              value={descuento}
+                              onChange={(e) => handleDescuentoChange(product.id, parseInt(e.target.value) || 0)}
+                              className="w-20 bg-black/50 border border-green-900/30 rounded-lg px-2 py-1 text-white"
+                              min="0"
+                              max="100"
+                            />
+                            <span className="text-sm text-white">%</span>
+                          </div>
+                          <div className="text-sm text-green-500 w-full sm:w-auto text-right">
+                            Precio final: €{(product.precio * (1 - descuento / 100)).toFixed(2)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

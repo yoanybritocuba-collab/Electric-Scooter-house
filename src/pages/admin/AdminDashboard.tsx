@@ -11,7 +11,8 @@ import {
   MessageSquare,
   ShoppingBag, Shield,
   Home, LogOut as LogOutIcon,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight,
+  Sparkles // 👈 NUEVO ICONO
 } from "lucide-react";
 import { t } from "@/services/adminTranslationService";
 
@@ -129,6 +130,7 @@ const AdminDashboard = () => {
     { to: "/admin/producto/nuevo", icon: Plus, label: t("admin.menu.new_product", lang) },
     { to: "/admin/masvendidos", icon: Star, label: t("admin.menu.featured", lang) },
     { to: "/admin/ofertas", icon: Percent, label: t("admin.menu.sales", lang) },
+    { to: "/admin/nuevos", icon: Sparkles, label: "LO NUEVO" }, // 👈 AÑADIDO
     { to: "/admin/categorias", icon: FolderOpen, label: t("admin.menu.categories", lang) },
     { to: "/admin/shipping", icon: Truck, label: t("admin.menu.shipping", lang) },
     { to: "/admin/info-line", icon: MessageSquare, label: t("admin.menu.info_line", lang) },

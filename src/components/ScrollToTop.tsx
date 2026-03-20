@@ -5,9 +5,8 @@ const ScrollToTop = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    if (!pathname.includes('/categoria/')) {
-      window.scrollTo(0, 0);
-    }
+    // Desactivado - no hacemos scroll automático
+    // window.scrollTo(0, 0);
   }, [pathname]);
 
   return null;

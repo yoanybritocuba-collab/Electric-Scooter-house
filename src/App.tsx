@@ -15,7 +15,7 @@ import MobileBottomBar from "@/components/MobileBottomBar";
 import ViberButton from "@/components/ViberAppButton";
 import ScrollToTop from "@/components/ScrollToTop";
 import MainSlider from "@/components/MainSlider";
-import MobileHero from "@/components/MobileHero"; // 👈 NUEVO: Hero para móviles
+import MobileHero from "@/components/MobileHero";
 import LoginPage from "./pages/LoginPage";
 import PuntosPage from "./pages/PuntosPage";
 import Index from "./pages/Index";
@@ -31,6 +31,7 @@ import AdminProductForm from "./pages/admin/AdminProductForm";
 import AdminCategorias from "./pages/admin/AdminCategorias";
 import AdminMasVendidos from "./pages/admin/AdminMasVendidos";
 import AdminOfertas from "./pages/admin/AdminOfertas";
+import AdminNuevos from "./pages/admin/AdminNuevos";
 import AdminChangePassword from "./pages/admin/AdminChangePassword";
 import AdminShipping from "./pages/admin/AdminShipping";
 import AdminInfoLine from "./pages/admin/AdminInfoLine";
@@ -38,14 +39,28 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Componente para manejar la visualización condicional
+const MainSliderForDevice = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile ? <MobileHero /> : <MainSlider />;
+};
+
 const AppContent = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   
   return (
     <>
-      {/* Elementos que SOLO se muestran fuera del admin */}
       {!isAdminRoute && (
         <>
           <Navbar />
@@ -54,7 +69,6 @@ const AppContent = () => {
       )}
       
       <Routes>
-        {/* Ruta principal - AHORA CON DETECCIÓN DE MÓVIL */}
         <Route path="/" element={
           <>
             <MainSliderForDevice />
@@ -87,59 +101,27 @@ const AppContent = () => {
         <Route path="/admin/ofertas" element={
           <AdminRoute><AdminOfertas /></AdminRoute>
         } />
+        <Route path="/admin/nuevos" element={
+          <AdminRoute><AdminNuevos /></AdminRoute>
+        } />
         <Route path="/admin/change-password" element={
-          <AdminRoute>
-            <AdminChangePassword />
-          </AdminRoute>
+          <AdminRoute><AdminChangePassword /></AdminRoute>
         } />
         <Route path="/admin/shipping" element={
-          <AdminRoute>
-            <AdminShipping />
-          </AdminRoute>
+          <AdminRoute><AdminShipping /></AdminRoute>
         } />
         <Route path="/admin/info-line" element={
-          <AdminRoute>
-            <AdminInfoLine />
-          </AdminRoute>
+          <AdminRoute><AdminInfoLine /></AdminRoute>
         } />
         
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {/* Elementos que SOLO se muestran fuera del admin */}
-      {!isAdminRoute && (
-        <>
-          <Footer />
-          <MobileBottomBar />
-          <ViberButton />
-        </>
-      )}
+      {/* Footer eliminado de aquí - se controlará dentro de Index */}
       
       <ScrollToTop />
     </>
   );
-};
-
-// Componente para elegir entre hero de móvil o PC
-const MainSliderForDevice = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    // Detectar si es móvil
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    // Comprobar al cargar
-    checkMobile();
-    
-    // Comprobar al cambiar tamaño de ventana
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Mostrar diferente según el dispositivo
-  return isMobile ? <MobileHero /> : <MainSlider />;
 };
 
 const App = () => (

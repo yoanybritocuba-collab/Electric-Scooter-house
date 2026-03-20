@@ -6,11 +6,10 @@ import { doc, getDoc, setDoc, addDoc, collection } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/firebase/config";
 import AdminNavBack from "@/components/AdminNavBack";
-import { Upload, X, Baby, Save, Globe, RefreshCw } from "lucide-react";
+import { Upload, X, Save, Globe, RefreshCw, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { translateToAll } from "@/services/translationService";
 
-// Categorías unificadas
 const categories = [
   { value: "patinetes", label: "Patinetes Eléctricos", icon: "🛴" },
   { value: "bicicletas", label: "Bicicletas Eléctricas", icon: "🚲" },
@@ -21,12 +20,78 @@ const categories = [
   { value: "movilidad-reducida", label: "Movilidad Reducida", icon: "♿" },
 ];
 
+// Especificaciones predefinidas - SIMPLES Y CLARAS
+const especificacionesPredefinidas: Record<string, Array<{ key: string; label: string; unit: string; type: string }>> = {
+  patinetes: [
+    { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
+    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
+    { key: "peso", label: "Peso", unit: "kg", type: "text" },
+    { key: "potencia_motor", label: "Potencia motor", unit: "W", type: "text" },
+    { key: "bateria", label: "Batería", unit: "Ah", type: "text" },
+    { key: "tiempo_carga", label: "Tiempo de carga", unit: "horas", type: "text" },
+    { key: "neumaticos", label: "Neumáticos", unit: "", type: "text" },
+    { key: "frenos", label: "Frenos", unit: "", type: "text" },
+  ],
+  bicicletas: [
+    { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
+    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
+    { key: "peso", label: "Peso", unit: "kg", type: "text" },
+    { key: "motor", label: "Motor", unit: "W", type: "text" },
+    { key: "bateria", label: "Batería", unit: "Ah", type: "text" },
+    { key: "cambio", label: "Cambio", unit: "", type: "text" },
+  ],
+  motos: [
+    { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
+    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
+    { key: "peso", label: "Peso", unit: "kg", type: "text" },
+    { key: "potencia_motor", label: "Potencia motor", unit: "kW", type: "text" },
+    { key: "bateria", label: "Batería", unit: "kWh", type: "text" },
+    { key: "carga_maxima", label: "Carga máxima", unit: "kg", type: "text" },
+    { key: "frenos", label: "Frenos", unit: "", type: "text" },
+  ],
+  accesorios: [
+    { key: "material", label: "Material", unit: "", type: "text" },
+    { key: "color", label: "Color", unit: "", type: "text" },
+    { key: "compatibilidad", label: "Compatibilidad", unit: "", type: "text" },
+  ],
+  infantiles: [
+    { key: "edad", label: "Edad recomendada", unit: "años", type: "text" },
+    { key: "peso_maximo", label: "Peso máximo", unit: "kg", type: "text" },
+    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
+  ],
+  "movilidad-reducida": [
+    { key: "autonomia", label: "Autonomía", unit: "km", type: "text" },
+    { key: "velocidad_max", label: "Velocidad máxima", unit: "km/h", type: "text" },
+    { key: "peso", label: "Peso", unit: "kg", type: "text" },
+    { key: "capacidad", label: "Capacidad máxima", unit: "kg", type: "text" },
+    { key: "plegable", label: "Plegable", unit: "", type: "checkbox" },
+  ],
+  piezas: [
+    { key: "marca", label: "Marca", unit: "", type: "text" },
+    { key: "compatibilidad", label: "Compatibilidad", unit: "", type: "text" },
+    { key: "material", label: "Material", unit: "", type: "text" },
+  ],
+  default: [
+    { key: "especificacion1", label: "Especificación 1", unit: "", type: "text" },
+    { key: "especificacion2", label: "Especificación 2", unit: "", type: "text" },
+    { key: "especificacion3", label: "Especificación 3", unit: "", type: "text" },
+  ]
+};
+
+interface EspecificacionItem {
+  key: string;
+  label: string;
+  unit: string;
+  type: string;
+  valor: string;
+}
+
 const AdminProductForm = () => {
   const { user, isAdmin } = useAuth();
-  const { t, lang } = useLanguage();
+  const { lang } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isNew = id === "nuevo";
+  const isNew = id === "nuevo" || !id;
 
   const [form, setForm] = useState({
     nombre: "",
@@ -35,7 +100,6 @@ const AdminProductForm = () => {
     descripcion: "",
     descripcion_en: "",
     descripcion_gr: "",
-    
     precio: 0,
     categoria: "patinetes",
     imagenes: [] as string[],
@@ -43,66 +107,28 @@ const AdminProductForm = () => {
     nuevo: false,
     rebaja: false,
     descuento: 0,
-    
-    especificaciones: {
-      autonomia: "",
-      autonomia_en: "",
-      autonomia_gr: "",
-      peso: "",
-      peso_en: "",
-      peso_gr: "",
-      plegable: false,
-      velocidad_max: "",
-      velocidad_max_en: "",
-      velocidad_max_gr: "",
-      motor: "",
-      motor_en: "",
-      motor_gr: "",
-      bateria: "",
-      bateria_en: "",
-      bateria_gr: "",
-      tiempo_carga: "",
-      tiempo_carga_en: "",
-      tiempo_carga_gr: "",
-      ruedas: "",
-      ruedas_en: "",
-      ruedas_gr: "",
-      cambios: "",
-      cambios_en: "",
-      cambios_gr: "",
-      suspension: false,
-      frenos: "",
-      frenos_en: "",
-      frenos_gr: "",
-      iluminacion: "",
-      iluminacion_en: "",
-      iluminacion_gr: "",
-      edad_recomendada: "",
-      edad_recomendada_en: "",
-      edad_recomendada_gr: "",
-      colores: [] as string[],
-      luces: false,
-      sonidos: false,
-      autonomia_bateria: "",
-      autonomia_bateria_en: "",
-      autonomia_bateria_gr: "",
-      max_peso: "",
-      max_peso_en: "",
-      max_peso_gr: "",
-      inclinacion_max: "",
-      inclinacion_max_en: "",
-      inclinacion_max_gr: "",
-      giro: "",
-      giro_en: "",
-      giro_gr: "",
-    },
+    especificaciones: {} as Record<string, any>,
   });
 
+  const [especificacionesList, setEspecificacionesList] = useState<EspecificacionItem[]>([]);
+  const [mostrarEspecificaciones, setMostrarEspecificaciones] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [translating, setTranslating] = useState(false);
-  const [colorInput, setColorInput] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Inicializar especificaciones según categoría
+  const initEspecificacionesPorCategoria = (categoriaId: string) => {
+    const predef = especificacionesPredefinidas[categoriaId] || especificacionesPredefinidas.default;
+    
+    const nuevasEspecs: EspecificacionItem[] = predef.map(esp => ({
+      ...esp,
+      valor: ""
+    }));
+    
+    setEspecificacionesList(nuevasEspecs);
+    setForm(prev => ({ ...prev, especificaciones: {} }));
+  };
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -112,28 +138,213 @@ const AdminProductForm = () => {
           const docRef = doc(db, "productos", id);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setForm(docSnap.data() as any);
-          } else {
-            toast({
-              title: "Error",
-              description: "Producto no encontrado",
-              variant: "destructive",
+            const data = docSnap.data();
+            
+            setForm({
+              nombre: data.nombre || "",
+              nombre_en: data.nombre_en || "",
+              nombre_gr: data.nombre_gr || "",
+              descripcion: data.descripcion || "",
+              descripcion_en: data.descripcion_en || "",
+              descripcion_gr: data.descripcion_gr || "",
+              precio: data.precio || 0,
+              categoria: data.categoria || "patinetes",
+              imagenes: data.imagenes || [],
+              masVendido: data.masVendido === true,
+              nuevo: data.nuevo === true,
+              rebaja: data.rebaja === true,
+              descuento: data.descuento || 0,
+              especificaciones: data.especificaciones || {},
             });
+            
+            // Cargar especificaciones existentes
+            const predef = especificacionesPredefinidas[data.categoria] || especificacionesPredefinidas.default;
+            const specsExistentes: EspecificacionItem[] = predef.map(esp => {
+              let valor = data.especificaciones?.[esp.key] || "";
+              // Si es checkbox, convertir booleano a texto
+              if (esp.type === 'checkbox' && valor === true) valor = "Sí";
+              if (esp.type === 'checkbox' && valor === false) valor = "No";
+              
+              return {
+                ...esp,
+                valor: valor,
+              };
+            });
+            
+            setEspecificacionesList(specsExistentes);
+          } else {
+            toast({ title: "Error", description: "Producto no encontrado", variant: "destructive" });
             navigate("/admin/dashboard");
           }
         } catch (error) {
           console.error("Error cargando producto:", error);
-          toast({
-            title: "Error",
-            description: "No se pudo cargar el producto",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "No se pudo cargar el producto", variant: "destructive" });
         }
+        setLoading(false);
+      } else {
+        initEspecificacionesPorCategoria("patinetes");
         setLoading(false);
       }
     };
+    
     loadProduct();
   }, [id, isNew, navigate]);
+
+  const handleCategoriaChange = (categoriaId: string) => {
+    setForm(prev => ({ ...prev, categoria: categoriaId }));
+    initEspecificacionesPorCategoria(categoriaId);
+  };
+
+  const updateEspecificacion = (index: number, valor: string) => {
+    const nuevas = [...especificacionesList];
+    nuevas[index] = { ...nuevas[index], valor };
+    setEspecificacionesList(nuevas);
+    
+    // Guardar en objeto de especificaciones
+    const esp = nuevas[index];
+    let valorGuardar: any = valor;
+    
+    if (esp.type === 'checkbox') {
+      valorGuardar = valor === "Sí" ? true : (valor === "No" ? false : "");
+    }
+    
+    setForm(prev => ({
+      ...prev,
+      especificaciones: { ...prev.especificaciones, [esp.key]: valorGuardar }
+    }));
+  };
+
+  const agregarEspecificacion = () => {
+    const nuevaKey = `custom_${Date.now()}`;
+    setEspecificacionesList([...especificacionesList, {
+      key: nuevaKey,
+      label: "Nueva especificación",
+      unit: "",
+      type: "text",
+      valor: ""
+    }]);
+  };
+
+  const eliminarEspecificacion = (index: number) => {
+    const espEliminada = especificacionesList[index];
+    const nuevas = especificacionesList.filter((_, i) => i !== index);
+    setEspecificacionesList(nuevas);
+    
+    const nuevasEspec = { ...form.especificaciones };
+    delete nuevasEspec[espEliminada.key];
+    setForm(prev => ({ ...prev, especificaciones: nuevasEspec }));
+  };
+
+  const actualizarNombreEspecificacion = (index: number, nuevoNombre: string) => {
+    const nuevas = [...especificacionesList];
+    nuevas[index] = { ...nuevas[index], label: nuevoNombre };
+    setEspecificacionesList(nuevas);
+  };
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files) return;
+    setUploading(true);
+    const urls: string[] = [];
+    try {
+      for (const file of Array.from(files)) {
+        const storageRef = ref(storage, `productos/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        urls.push(url);
+      }
+      setForm((prev) => ({ ...prev, imagenes: [...prev.imagenes, ...urls] }));
+      toast({ title: "Éxito", description: "Imágenes subidas", className: "bg-green-500 text-white" });
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudieron subir las imágenes", variant: "destructive" });
+    }
+    setUploading(false);
+  };
+
+  const removeImage = (index: number) => {
+    setForm((prev) => ({ ...prev, imagenes: prev.imagenes.filter((_, i) => i !== index) }));
+  };
+
+  const handleAutoTranslate = async () => {
+    if (!form.nombre.trim()) {
+      toast({ title: "Error", description: "Escribe el nombre en español primero", variant: "destructive" });
+      return;
+    }
+
+    setTranslating(true);
+    try {
+      const nombreTrans = await translateToAll(form.nombre, 'es');
+      const descTrans = await translateToAll(form.descripcion || form.nombre, 'es');
+      
+      setForm(prev => ({
+        ...prev,
+        nombre_en: nombreTrans.en,
+        nombre_gr: nombreTrans.gr,
+        descripcion_en: descTrans.en,
+        descripcion_gr: descTrans.gr,
+      }));
+      
+      toast({ title: "Éxito", description: "Traducido a inglés y griego", className: "bg-green-500 text-white" });
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo traducir", variant: "destructive" });
+    }
+    setTranslating(false);
+  };
+
+  const handleSave = async () => {
+    if (!form.nombre.trim()) {
+      toast({ title: "Error", description: "El nombre es obligatorio", variant: "destructive" });
+      return;
+    }
+    if (form.precio <= 0) {
+      toast({ title: "Error", description: "El precio debe ser mayor a 0", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Construir especificaciones finales
+      const especificacionesFinales: Record<string, any> = {};
+      especificacionesList.forEach(esp => {
+        let valor = esp.valor;
+        if (esp.type === 'checkbox') {
+          valor = esp.valor === "Sí" ? true : (esp.valor === "No" ? false : "");
+        }
+        especificacionesFinales[esp.key] = valor;
+      });
+      
+      const productData = {
+        nombre: form.nombre,
+        nombre_en: form.nombre_en || "",
+        nombre_gr: form.nombre_gr || "",
+        descripcion: form.descripcion,
+        descripcion_en: form.descripcion_en || "",
+        descripcion_gr: form.descripcion_gr || "",
+        precio: form.precio,
+        categoria: form.categoria,
+        imagenes: form.imagenes,
+        masVendido: form.masVendido === true,
+        nuevo: form.nuevo === true,
+        rebaja: form.rebaja === true,
+        descuento: form.descuento || 0,
+        especificaciones: especificacionesFinales,
+        updatedAt: new Date(),
+      };
+      
+      if (isNew) {
+        await addDoc(collection(db, "productos"), productData);
+        toast({ title: "Éxito", description: "Producto creado", className: "bg-green-500 text-white" });
+      } else if (id) {
+        await setDoc(doc(db, "productos", id), productData);
+        toast({ title: "Éxito", description: "Producto actualizado", className: "bg-green-500 text-white" });
+      }
+      
+      setTimeout(() => navigate("/admin/dashboard"), 1000);
+    } catch (err) {
+      toast({ title: "Error", description: "No se pudo guardar", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!user || !isAdmin) return <Navigate to="/admin" replace />;
 
@@ -149,730 +360,222 @@ const AdminProductForm = () => {
     </div>
   );
 
-  const handleImageUpload = async (files: FileList | null) => {
-    if (!files) return;
-    setUploading(true);
-    const urls: string[] = [];
-    try {
-      for (const file of Array.from(files)) {
-        const storageRef = ref(storage, `productos/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        urls.push(url);
-      }
-      setForm((prev) => ({ ...prev, imagenes: [...prev.imagenes, ...urls] }));
-      toast({
-        title: "Éxito",
-        description: "Imágenes subidas correctamente",
-        className: "bg-green-500 text-white",
-      });
-    } catch (error) {
-      console.error("Error subiendo imágenes:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron subir las imágenes",
-        variant: "destructive",
-      });
-    }
-    setUploading(false);
-  };
-
-  const removeImage = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      imagenes: prev.imagenes.filter((_, i) => i !== index),
-    }));
-  };
-
-  const addColor = () => {
-    if (colorInput.trim() && !form.especificaciones.colores.includes(colorInput.trim())) {
-      setForm({
-        ...form,
-        especificaciones: {
-          ...form.especificaciones,
-          colores: [...form.especificaciones.colores, colorInput.trim()],
-        },
-      });
-      setColorInput("");
-    }
-  };
-
-  const removeColor = (color: string) => {
-    setForm({
-      ...form,
-      especificaciones: {
-        ...form.especificaciones,
-        colores: form.especificaciones.colores.filter(c => c !== color),
-      },
-    });
-  };
-
-  // Función para traducir un campo específico
-  const translateField = async (text: string, sourceLang: string) => {
-    if (!text) return { es: "", en: "", gr: "" };
-    return await translateToAll(text, sourceLang);
-  };
-
-  // Función para traducir todo el producto
-  const handleAutoTranslateFull = async () => {
-    if (!form.nombre.trim()) {
-      toast({
-        title: "Error",
-        description: "Primero escribe el nombre en español",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setTranslating(true);
-    try {
-      // Traducir nombre
-      const nombreTrans = await translateToAll(form.nombre, 'es');
-      
-      // Traducir descripción
-      const descTrans = await translateToAll(form.descripcion || form.nombre, 'es');
-      
-      // Traducir especificaciones una por una
-      const especificacionesTrans = { ...form.especificaciones };
-      
-      // Lista de campos de especificaciones a traducir
-      const camposTexto = [
-        'autonomia', 'peso', 'velocidad_max', 'motor', 'bateria',
-        'tiempo_carga', 'ruedas', 'cambios', 'frenos', 'iluminacion',
-        'edad_recomendada', 'autonomia_bateria', 'max_peso', 'inclinacion_max', 'giro'
-      ];
-
-      for (const campo of camposTexto) {
-        const valor = (form.especificaciones as any)[campo];
-        if (valor) {
-          const trans = await translateToAll(valor, 'es');
-          (especificacionesTrans as any)[`${campo}_en`] = trans.en;
-          (especificacionesTrans as any)[`${campo}_gr`] = trans.gr;
-        }
-      }
-      
-      setForm(prev => ({
-        ...prev,
-        nombre_en: nombreTrans.en,
-        nombre_gr: nombreTrans.gr,
-        descripcion_en: descTrans.en,
-        descripcion_gr: descTrans.gr,
-        especificaciones: especificacionesTrans
-      }));
-      
-      toast({
-        title: "Éxito",
-        description: "✅ Producto traducido completamente a inglés y griego",
-        className: "bg-green-500 text-white",
-      });
-    } catch (error) {
-      console.error("Error en traducción:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo traducir automáticamente",
-        variant: "destructive",
-      });
-    }
-    setTranslating(false);
-  };
-
-  const handleSave = async () => {
-    if (!form.nombre.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre en español es obligatorio",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (form.precio <= 0) {
-      toast({
-        title: "Error",
-        description: "El precio debe ser mayor a 0",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSaving(true);
-    try {
-      let productData = { ...form };
-      
-      // Si faltan traducciones, generarlas automáticamente
-      if (!form.nombre_en || !form.nombre_gr) {
-        const nombreTrans = await translateToAll(form.nombre, 'es');
-        productData.nombre_en = nombreTrans.en;
-        productData.nombre_gr = nombreTrans.gr;
-      }
-      
-      if (!form.descripcion_en || !form.descripcion_gr) {
-        const descTrans = await translateToAll(form.descripcion || form.nombre, 'es');
-        productData.descripcion_en = descTrans.en;
-        productData.descripcion_gr = descTrans.gr;
-      }
-      
-      productData.updatedAt = new Date();
-      if (isNew) {
-        productData.createdAt = new Date();
-      }
-
-      if (isNew) {
-        await addDoc(collection(db, "productos"), productData);
-        toast({
-          title: "Éxito",
-          description: "Producto creado correctamente",
-          className: "bg-green-500 text-white",
-        });
-      } else if (id) {
-        await setDoc(doc(db, "productos", id), productData);
-        toast({
-          title: "Éxito",
-          description: "Producto actualizado correctamente",
-          className: "bg-green-500 text-white",
-        });
-      }
-      navigate("/admin/dashboard");
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el producto",
-        variant: "destructive",
-      });
-    }
-    setSaving(false);
-  };
-
-  const isInfantil = form.categoria === "infantiles";
-
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header con navegación */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <AdminNavBack 
-            title={isNew ? getText('Nuevo Producto', 'New Product', 'Νέο Προϊόν') : getText('Editar Producto', 'Edit Product', 'Επεξεργασία Προϊόντος')}
-            description={getText('Completa la información en 3 idiomas', 'Complete information in 3 languages', 'Συμπληρώστε πληροφορίες σε 3 γλώσσες')}
+            title={isNew ? "Nuevo Producto" : "Editar Producto"}
+            description="Completa la información del producto"
           />
 
-          <div className="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+          <div className="mt-4 flex justify-end gap-3">
             <button
-              onClick={handleAutoTranslateFull}
-              disabled={translating || !form.nombre.trim()}
-              className="px-6 py-3 bg-black/50 text-green-500 rounded-xl hover:bg-green-500/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+              onClick={handleAutoTranslate}
+              disabled={translating || !form.nombre}
+              className="px-4 py-2 bg-black/50 text-green-500 rounded-xl hover:bg-green-500/10 flex items-center gap-2 border border-green-500/30"
             >
-              {translating ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  <span>Traduciendo...</span>
-                </>
-              ) : (
-                <>
-                  <Globe size={16} />
-                  <span>Auto-traducir</span>
-                </>
-              )}
+              <Globe size={16} />
+              {translating ? "Traduciendo..." : "Auto-traducir"}
             </button>
             
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-8 py-4 bg-green-500/20 text-green-500 rounded-xl hover:bg-green-500/30 transition-all flex items-center justify-center gap-2 text-base sm:text-lg font-bold shadow-lg border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+              className="px-6 py-2 bg-green-500/20 text-green-500 rounded-xl hover:bg-green-500/30 flex items-center gap-2 font-bold border border-green-500/30"
             >
-              <Save size={20} />
-              <span>{saving ? 'Guardando...' : 'Guardar Producto'}</span>
+              <Save size={18} />
+              {saving ? "Guardando..." : "Guardar"}
             </button>
           </div>
         </div>
 
-        <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 p-6 hover:border-green-500/50 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(34,197,94,0.2)]">
-          <div className="space-y-6">
-            {/* ===== NOMBRE EN 3 IDIOMAS ===== */}
-            <div className="border-b border-green-900/30 pb-4">
-              <h3 className="font-display font-bold text-lg text-white mb-4">Nombre del producto</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">
-                  Español <span className="text-green-500">*</span>
-                </label>
-                <input
-                  value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
-                  placeholder="Nombre en español"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">English</label>
-                <input
-                  value={form.nombre_en || ""}
-                  onChange={(e) => setForm({ ...form, nombre_en: e.target.value })}
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
-                  placeholder="Name in English"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Ελληνικά</label>
-                <input
-                  value={form.nombre_gr || ""}
-                  onChange={(e) => setForm({ ...form, nombre_gr: e.target.value })}
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
-                  placeholder="Όνομα στα Ελληνικά"
-                />
-              </div>
+        <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 p-6">
+          {/* NOMBRE */}
+          <div className="mb-6">
+            <label className="block text-sm text-gray-400 mb-1">Nombre del producto *</label>
+            <input
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white"
+              placeholder="Ej: Moto eléctrica futurista"
+            />
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <input
+                value={form.nombre_en}
+                onChange={(e) => setForm({ ...form, nombre_en: e.target.value })}
+                className="bg-black/50 border border-green-900/30 rounded-xl px-4 py-2 text-white text-sm"
+                placeholder="English name"
+              />
+              <input
+                value={form.nombre_gr}
+                onChange={(e) => setForm({ ...form, nombre_gr: e.target.value })}
+                className="bg-black/50 border border-green-900/30 rounded-xl px-4 py-2 text-white text-sm"
+                placeholder="Ελληνικό όνομα"
+              />
             </div>
+          </div>
 
-            {/* Precio y descuento */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Precio (€) *</label>
-                <input
-                  type="number"
-                  value={form.precio}
-                  onChange={(e) => setForm({ ...form, precio: Number(e.target.value) })}
-                  min="0"
-                  step="0.01"
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Descuento (%)</label>
-                <input
-                  type="number"
-                  value={form.descuento || 0}
-                  onChange={(e) => setForm({ ...form, descuento: Number(e.target.value) })}
-                  min="0"
-                  max="100"
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Categoría */}
+          {/* PRECIO Y CATEGORÍA */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Categoría *</label>
+              <label className="block text-sm text-gray-400 mb-1">Precio (€) *</label>
+              <input
+                type="number"
+                value={form.precio}
+                onChange={(e) => setForm({ ...form, precio: Number(e.target.value) })}
+                className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Categoría</label>
               <select
                 value={form.categoria}
-                onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-                className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all"
+                onChange={(e) => handleCategoriaChange(e.target.value)}
+                className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white"
               >
-                {categories.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.icon} {c.label}
-                  </option>
+                {categories.map(c => (
+                  <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
                 ))}
               </select>
             </div>
+          </div>
 
-            {/* ===== DESCRIPCIÓN EN 3 IDIOMAS ===== */}
-            <div className="border-b border-green-900/30 pb-4">
-              <h3 className="font-display font-bold text-lg text-white mb-4">Descripción</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Español</label>
-                <textarea
-                  value={form.descripcion}
-                  onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                  rows={3}
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all resize-none"
-                  placeholder="Descripción en español"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">English</label>
-                <textarea
-                  value={form.descripcion_en || ""}
-                  onChange={(e) => setForm({ ...form, descripcion_en: e.target.value })}
-                  rows={3}
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all resize-none"
-                  placeholder="Description in English"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Ελληνικά</label>
-                <textarea
-                  value={form.descripcion_gr || ""}
-                  onChange={(e) => setForm({ ...form, descripcion_gr: e.target.value })}
-                  rows={3}
-                  className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white outline-none focus:border-green-500/50 transition-all resize-none"
-                  placeholder="Περιγραφή στα Ελληνικά"
-                />
-              </div>
+          {/* DESCRIPCIÓN */}
+          <div className="mb-6">
+            <label className="block text-sm text-gray-400 mb-1">Descripción</label>
+            <textarea
+              value={form.descripcion}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              rows={3}
+              className="w-full bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 text-white"
+              placeholder="Descripción en español..."
+            />
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <textarea
+                value={form.descripcion_en}
+                onChange={(e) => setForm({ ...form, descripcion_en: e.target.value })}
+                rows={2}
+                className="bg-black/50 border border-green-900/30 rounded-xl px-4 py-2 text-white text-sm"
+                placeholder="English description"
+              />
+              <textarea
+                value={form.descripcion_gr}
+                onChange={(e) => setForm({ ...form, descripcion_gr: e.target.value })}
+                rows={2}
+                className="bg-black/50 border border-green-900/30 rounded-xl px-4 py-2 text-white text-sm"
+                placeholder="Ελληνική περιγραφή"
+              />
             </div>
+          </div>
 
-            {/* Imágenes */}
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Imágenes</label>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {form.imagenes.map((img, i) => (
-                  <div key={i} className="relative w-20 h-20">
-                    <img src={img} alt="" className="w-full h-full object-cover rounded-lg border border-green-900/30" />
-                    <button
-                      onClick={() => removeImage(i)}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <label className="inline-flex items-center gap-2 bg-black/50 border border-green-900/30 rounded-xl px-4 py-3 cursor-pointer hover:border-green-500/50 transition-colors">
-                <Upload size={16} className="text-green-500" />
-                <span className="text-gray-400 text-sm">
-                  {uploading ? "Subiendo..." : "Subir imágenes"}
-                </span>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e.target.files)}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {/* ===== ESPECIFICACIONES ===== */}
-            <div className="border-b border-green-900/30 pb-4">
-              <h3 className="font-display font-bold text-lg text-white mb-4">Especificaciones</h3>
-
-              {/* Autonomía */}
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Autonomía / Range / Αυτονομία</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <input
-                    value={form.especificaciones.autonomia}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, autonomia: e.target.value },
-                      })
-                    }
-                    placeholder="Español"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.autonomia_en || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, autonomia_en: e.target.value },
-                      })
-                    }
-                    placeholder="English"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.autonomia_gr || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, autonomia_gr: e.target.value },
-                      })
-                    }
-                    placeholder="Ελληνικά"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Peso */}
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Peso / Weight / Βάρος</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <input
-                    value={form.especificaciones.peso}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, peso: e.target.value },
-                      })
-                    }
-                    placeholder="Español"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.peso_en || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, peso_en: e.target.value },
-                      })
-                    }
-                    placeholder="English"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.peso_gr || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, peso_gr: e.target.value },
-                      })
-                    }
-                    placeholder="Ελληνικά"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Velocidad máxima */}
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Velocidad máx / Max speed / Μέγιστη ταχύτητα</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <input
-                    value={form.especificaciones.velocidad_max || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, velocidad_max: e.target.value },
-                      })
-                    }
-                    placeholder="Español"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.velocidad_max_en || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, velocidad_max_en: e.target.value },
-                      })
-                    }
-                    placeholder="English"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.velocidad_max_gr || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, velocidad_max_gr: e.target.value },
-                      })
-                    }
-                    placeholder="Ελληνικά"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Motor */}
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Motor / Motor / Κινητήρας</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <input
-                    value={form.especificaciones.motor || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, motor: e.target.value },
-                      })
-                    }
-                    placeholder="Español"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.motor_en || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, motor_en: e.target.value },
-                      })
-                    }
-                    placeholder="English"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.motor_gr || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, motor_gr: e.target.value },
-                      })
-                    }
-                    placeholder="Ελληνικά"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Batería */}
-              <div className="mb-4">
-                <label className="block text-sm text-gray-400 mb-1">Batería / Battery / Μπαταρία</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <input
-                    value={form.especificaciones.bateria || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, bateria: e.target.value },
-                      })
-                    }
-                    placeholder="Español"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.bateria_en || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, bateria_en: e.target.value },
-                      })
-                    }
-                    placeholder="English"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                  <input
-                    value={form.especificaciones.bateria_gr || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        especificaciones: { ...form.especificaciones, bateria_gr: e.target.value },
-                      })
-                    }
-                    placeholder="Ελληνικά"
-                    className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Edad recomendada - solo para infantiles */}
-              {isInfantil && (
-                <div className="mb-4">
-                  <label className="block text-sm text-gray-400 mb-1">Edad recomendada / Recommended age / Συνιστώμενη ηλικία</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <input
-                      value={form.especificaciones.edad_recomendada || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          especificaciones: { ...form.especificaciones, edad_recomendada: e.target.value },
-                        })
-                      }
-                      placeholder="Español"
-                      className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                    />
-                    <input
-                      value={form.especificaciones.edad_recomendada_en || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          especificaciones: { ...form.especificaciones, edad_recomendada_en: e.target.value },
-                        })
-                      }
-                      placeholder="English"
-                      className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                    />
-                    <input
-                      value={form.especificaciones.edad_recomendada_gr || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          especificaciones: { ...form.especificaciones, edad_recomendada_gr: e.target.value },
-                        })
-                      }
-                      placeholder="Ελληνικά"
-                      className="bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Colores */}
-              {isInfantil && (
-                <div className="mt-4">
-                  <label className="block text-sm text-gray-400 mb-1">Colores disponibles</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {form.especificaciones.colores?.map((color) => (
-                      <span
-                        key={color}
-                        className="inline-flex items-center gap-1 bg-black/50 border border-green-900/30 px-3 py-1 rounded-full text-sm text-white"
-                      >
-                        {color}
-                        <button
-                          onClick={() => removeColor(color)}
-                          className="text-gray-400 hover:text-red-500"
+          {/* ESPECIFICACIONES - SIMPLE Y PRÁCTICO */}
+          <div className="border border-green-900/30 rounded-xl overflow-hidden mb-6">
+            <button
+              type="button"
+              onClick={() => setMostrarEspecificaciones(!mostrarEspecificaciones)}
+              className="w-full flex items-center justify-between p-3 bg-black/30 hover:bg-green-500/5"
+            >
+              <span className="font-medium text-white">📋 Especificaciones técnicas</span>
+              {mostrarEspecificaciones ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            
+            {mostrarEspecificaciones && (
+              <div className="p-4 pt-0 border-t border-green-900/30">
+                <div className="space-y-3">
+                  {especificacionesList.map((esp, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={esp.label}
+                        onChange={(e) => actualizarNombreEspecificacion(idx, e.target.value)}
+                        className="w-1/3 bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
+                        placeholder="Nombre"
+                      />
+                      {esp.type === 'checkbox' ? (
+                        <select
+                          value={esp.valor}
+                          onChange={(e) => updateEspecificacion(idx, e.target.value)}
+                          className="w-1/3 bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
                         >
-                          <X size={14} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      value={colorInput}
-                      onChange={(e) => setColorInput(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && addColor()}
-                      placeholder="Añadir color"
-                      className="flex-1 bg-black/50 border border-green-900/30 rounded-lg px-4 py-2 text-white outline-none focus:border-green-500/50 transition-all"
-                    />
-                    <button
-                      onClick={addColor}
-                      className="px-4 py-2 bg-green-500/20 text-green-500 rounded-lg hover:bg-green-500/30 transition-all border border-green-500/30"
-                    >
-                      Añadir
-                    </button>
-                  </div>
+                          <option value="">Seleccionar</option>
+                          <option value="Sí">✓ Sí</option>
+                          <option value="No">✗ No</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={esp.valor}
+                          onChange={(e) => updateEspecificacion(idx, e.target.value)}
+                          className="flex-1 bg-black/50 border border-green-900/30 rounded-lg px-3 py-2 text-white text-sm"
+                          placeholder={`Valor${esp.unit ? ` (${esp.unit})` : ''}`}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => eliminarEspecificacion(idx)}
+                        className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={agregarEspecificacion}
+                    className="w-full py-2 border border-dashed border-green-500/30 rounded-lg text-green-500 hover:bg-green-500/10 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Plus size={14} /> Agregar especificación
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            {/* Checkboxes */}
-            <div className="flex flex-wrap gap-6">
-              {[
-                { key: "masVendido", label: "Más vendido" },
-                { key: "nuevo", label: "Nuevo" },
-                { key: "rebaja", label: "Rebaja" },
-                { key: "especificaciones.plegable", label: "Plegable" },
-                { key: "especificaciones.suspension", label: "Suspensión" },
-                { key: "especificaciones.luces", label: "Luces" },
-                { key: "especificaciones.sonidos", label: "Sonidos" },
-              ].map(({ key, label }) => {
-                const isSpec = key.startsWith("especificaciones.");
-                const specKey = key.split(".")[1];
-                const checked = isSpec
-                  ? (form.especificaciones as any)[specKey]
-                  : (form as any)[key];
-                return (
-                  <label key={key} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={checked || false}
-                      onChange={(e) => {
-                        if (isSpec) {
-                          setForm({
-                            ...form,
-                            especificaciones: {
-                              ...form.especificaciones,
-                              [specKey]: e.target.checked,
-                            },
-                          });
-                        } else {
-                          setForm({ ...form, [key]: e.target.checked });
-                        }
-                      }}
-                      className="accent-green-500"
-                    />
-                    <span className="text-gray-300 text-sm">{label}</span>
-                  </label>
-                );
-              })}
+          {/* IMÁGENES */}
+          <div className="mb-6">
+            <label className="block text-sm text-gray-400 mb-2">Imágenes</label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {form.imagenes.map((img, i) => (
+                <div key={i} className="relative w-16 h-16">
+                  <img src={img} className="w-full h-full object-cover rounded-lg border border-green-900/30" />
+                  <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-xs">
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
             </div>
+            <label className="inline-flex items-center gap-2 bg-black/50 border border-green-900/30 rounded-lg px-4 py-2 cursor-pointer">
+              <Upload size={14} />
+              {uploading ? "Subiendo..." : "Subir imágenes"}
+              <input type="file" multiple accept="image/*" onChange={(e) => handleImageUpload(e.target.files)} className="hidden" />
+            </label>
+          </div>
 
-            {/* Botón cancelar */}
-            <div className="flex justify-end pt-4">
-              <button
-                onClick={() => navigate("/admin/dashboard")}
-                className="px-6 py-3 bg-black/50 text-gray-400 rounded-xl hover:bg-black/70 transition-all border border-green-900/30"
-              >
-                Cancelar
-              </button>
-            </div>
+          {/* OPCIONES */}
+          <div className="flex flex-wrap gap-4 pt-2 border-t border-green-900/30">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={form.masVendido} onChange={(e) => setForm({ ...form, masVendido: e.target.checked })} className="accent-green-500" />
+              <span>⭐ Más vendido</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={form.nuevo} onChange={(e) => setForm({ ...form, nuevo: e.target.checked })} className="accent-green-500" />
+              <span>✨ Nuevo</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={form.rebaja} onChange={(e) => setForm({ ...form, rebaja: e.target.checked })} className="accent-green-500" />
+              <span>🔥 En oferta</span>
+            </label>
+            {form.rebaja && (
+              <input
+                type="number"
+                placeholder="% descuento"
+                value={form.descuento}
+                onChange={(e) => setForm({ ...form, descuento: Number(e.target.value) })}
+                className="w-24 bg-black/50 border border-green-900/30 rounded-lg px-2 py-1 text-white text-sm"
+              />
+            )}
           </div>
         </div>
       </div>

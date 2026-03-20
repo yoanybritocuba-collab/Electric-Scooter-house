@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface CartItem {
   id: string;
-  nombre: string;      // Español
-  nombre_en?: string;  // Inglés
-  nombre_gr?: string;  // Griego
+  nombre: string;
+  nombre_en?: string;
+  nombre_gr?: string;
   precio: number;
   cantidad: number;
   imagen: string;
@@ -31,36 +31,62 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
+  // Cargar carrito desde localStorage al iniciar
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setItems(JSON.parse(savedCart));
+    try {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+          console.log("🛒 Carrito cargado desde localStorage:", parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Error cargando carrito:", error);
     }
   }, []);
 
+  // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    try {
+      localStorage.setItem('cart', JSON.stringify(items));
+      console.log("🛒 Carrito guardado en localStorage:", items);
+    } catch (error) {
+      console.error("Error guardando carrito:", error);
+    }
   }, [items]);
 
   const addItem = (newItem: Omit<CartItem, 'cantidad'>) => {
+    console.log("➕ Añadiendo al carrito:", newItem);
+    
     setItems(prev => {
       const existing = prev.find(item => item.id === newItem.id);
+      
       if (existing) {
-        return prev.map(item =>
+        const updated = prev.map(item =>
           item.id === newItem.id
             ? { ...item, cantidad: item.cantidad + 1 }
             : item
         );
+        console.log("🔄 Producto existente, cantidad aumentada:", updated);
+        return updated;
       }
-      return [...prev, { ...newItem, cantidad: 1 }];
+      
+      const newCartItem = { ...newItem, cantidad: 1 };
+      const updated = [...prev, newCartItem];
+      console.log("✨ Nuevo producto añadido al carrito:", updated);
+      return updated;
     });
   };
 
   const removeItem = (id: string) => {
+    console.log("❌ Eliminando del carrito:", id);
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
   const updateQuantity = (id: string, cantidad: number) => {
+    console.log("📦 Actualizando cantidad:", id, cantidad);
     if (cantidad <= 0) {
       removeItem(id);
       return;
@@ -73,11 +99,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearCart = () => {
+    console.log("🗑️ Limpiando carrito");
     setItems([]);
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
   const totalPrice = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+
+  console.log("📊 Estado actual del carrito:", { items, totalItems, totalPrice });
 
   return (
     <CartContext.Provider value={{

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube, MessageCircle } from "lucide-react"; // AÑADIDO MessageCircle
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube, MessageCircle } from "lucide-react";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -76,17 +76,14 @@ const Footer = () => {
                 </button>
               </li>
               
-              {/* WhatsApp - CORREGIDO: ahora usa MessageCircle en lugar de Phone */}
+              {/* WhatsApp con efecto de ondas */}
               <li>
                 <button
                   onClick={handleWhatsAppClick}
                   className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left group"
                 >
                   <div className="relative">
-                    {/* Icono de WhatsApp (MessageCircle) en lugar de Phone */}
                     <MessageCircle size={16} className="flex-shrink-0 relative z-10 text-[#25D366]" />
-                    
-                    {/* ONDAS DE RADIO alrededor del icono */}
                     <span className="absolute inset-0 flex items-center justify-center">
                       <span className="absolute inline-flex h-8 w-8 rounded-full bg-[#25D366]/20 opacity-75 animate-ping"></span>
                       <span className="absolute inline-flex h-6 w-6 rounded-full bg-[#25D366]/10 opacity-50 animate-ping animation-delay-300"></span>
@@ -168,6 +165,16 @@ const Footer = () => {
           />
         </div>
       </div>
+
+      {/* Agregar estilos CSS para animation-delay si no existen en tailwind.config */}
+      <style>{`
+        .animation-delay-300 {
+          animation-delay: 300ms;
+        }
+        .animation-delay-600 {
+          animation-delay: 600ms;
+        }
+      `}</style>
     </footer>
   );
 };

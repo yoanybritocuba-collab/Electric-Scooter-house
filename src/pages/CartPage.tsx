@@ -1,186 +1,259 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { useCart } from "@/contexts/CartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import ProductCard from "@/components/ProductCard";
-import { motion } from "framer-motion";
-import { ArrowLeft, Package } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, CreditCard, Truck, Shield } from "lucide-react";
 
-interface Product {
-  id: string;
-  nombre: string;
-  precio: number;
-  categoria: string;
-  imagenes: string[];
-  masVendido?: boolean;
-  nuevo?: boolean;
-  rebaja?: boolean;
-  descuento?: number;
-}
+const CartPage = () => {
+  const { items, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
+  const { lang } = useLanguage();
 
-interface Categoria {
-  id: string;
-  nombre: string;
-  nombre_en?: string;
-  nombre_gr?: string;
-  descripcion: string;
-  imagen: string;
-  activo: boolean;
-}
-
-const CategoryPage = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const { t, lang } = useLanguage();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categoria, setCategoria] = useState<Categoria | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [ofertas, setOfertas] = useState<Record<string, { activo: boolean; descuento: number }>>({});
-
-  // ===== ÚNICA FUNCIÓN DE SCROLL =====
-  const handleProductClick = () => {
-    if (!slug) return;
-    // Guardar scroll y categoría
-    sessionStorage.setItem(`scroll_${slug}`, window.scrollY.toString());
-    sessionStorage.setItem('lastCategory', slug);
+  const getText = (es: string, en: string, gr: string) => {
+    if (lang === 'en') return en;
+    if (lang === 'gr') return gr;
+    return es;
   };
 
-  // ===== ÚNICO EFECTO DE SCROLL =====
-  useEffect(() => {
-    if (!slug) return;
-    const savedScroll = sessionStorage.getItem(`scroll_${slug}`);
-    
-    if (savedScroll && products.length > 0) {
-      // Pequeño retraso para asegurar que el DOM cargó
-      setTimeout(() => {
-        window.scrollTo({
-          top: parseInt(savedScroll),
-          behavior: 'auto'
-        });
-        sessionStorage.removeItem(`scroll_${slug}`);
-      }, 100);
-    }
-  }, [slug, products]);
-
-  useEffect(() => {
-    loadData();
-  }, [slug]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      if (!slug) return;
-      
-      const catQuery = query(collection(db, "categorias"), where("id", "==", slug));
-      const catSnap = await getDocs(catQuery);
-      if (!catSnap.empty) {
-        setCategoria(catSnap.docs[0].data() as Categoria);
-      }
-
-      const productsQuery = query(collection(db, "productos"), where("categoria", "==", slug));
-      const productsSnap = await getDocs(productsQuery);
-      const loadedProducts = productsSnap.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          nombre: data.nombre || "",
-          precio: data.precio || 0,
-          categoria: data.categoria || "",
-          imagenes: data.imagenes || [],
-          masVendido: data.masVendido === true,
-          nuevo: data.nuevo === true,
-          rebaja: data.rebaja === true,
-          descuento: data.descuento || 0
-        } as Product;
-      });
-      setProducts(loadedProducts);
-
-      const configSnap = await getDocs(collection(db, "configuracion"));
-      const ofertasConfig = configSnap.docs.find(d => d.id === "ofertas");
-      if (ofertasConfig?.exists()) {
-        setOfertas(ofertasConfig.data().productos || {});
-      }
-    } catch (error) {
-      console.error("Error cargando datos:", error);
-    }
-    setLoading(false);
+  const getProductName = (item: any) => {
+    if (lang === 'en' && item.nombre_en) return item.nombre_en;
+    if (lang === 'gr' && item.nombre_gr) return item.nombre_gr;
+    return item.nombre;
   };
 
-  const getNombreCategoria = (): string => {
-    if (!categoria) return slug || "";
-    if (lang === 'en' && categoria.nombre_en) return categoria.nombre_en;
-    if (lang === 'gr' && categoria.nombre_gr) return categoria.nombre_gr;
-    return categoria.nombre;
-  };
+  const shippingCost = totalPrice >= 50 ? 0 : 5.99;
+  const finalTotal = totalPrice + shippingCost;
 
-  if (loading) {
+  if (items.length === 0) {
     return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{t("messages.loading")}</p>
+      <div className="min-h-screen pt-32 pb-16 bg-gradient-to-b from-black to-gray-900">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center py-16 bg-[#0a0a0a]/50 rounded-2xl border border-green-900/30 backdrop-blur-sm">
+            <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag size={32} className="text-green-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {getText("Tu carrito está vacío", "Your cart is empty", "Το καλάθι σας είναι άδειο")}
+            </h2>
+            <p className="text-gray-400 mb-6">
+              {getText("Parece que aún no has añadido ningún producto", "You haven't added any products yet", "Δεν έχετε προσθέσει ακόμα κανένα προϊόν")}
+            </p>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 bg-green-500 text-black px-6 py-3 rounded-xl font-medium hover:bg-green-400 transition-all"
+            >
+              <ArrowLeft size={18} />
+              {getText("Seguir comprando", "Continue shopping", "Συνέχεια αγορών")}
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
-        <img src="/images/hero/hero.avif" alt="Fondo" className="w-full h-full object-cover opacity-20" />
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+    <div className="min-h-screen pt-32 pb-16 bg-gradient-to-b from-black to-gray-900">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            {getText("Mi Carrito", "My Cart", "Το Καλάθι μου")}
+            <span className="text-green-500 text-lg ml-2">({totalItems} {getText("productos", "items", "προϊόντα")})</span>
+          </h1>
+          <Link
+            to="/"
+            className="text-gray-400 hover:text-green-500 transition-colors flex items-center gap-2 text-sm"
+          >
+            <ArrowLeft size={16} />
+            {getText("Seguir comprando", "Continue shopping", "Συνέχεια αγορών")}
+          </Link>
+        </div>
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors mb-6">
-          <ArrowLeft size={18} />
-          <span>{t("category.back") || "Volver"}</span>
-        </Link>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Lista de productos - VERSIÓN COMPACTA */}
+          <div className="lg:col-span-2">
+            <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 overflow-hidden">
+              {/* Cabecera de la tabla - oculta en móvil */}
+              <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-black/50 border-b border-green-900/30 text-sm text-gray-500">
+                <div className="col-span-6">Producto</div>
+                <div className="col-span-2 text-center">Precio</div>
+                <div className="col-span-2 text-center">Cantidad</div>
+                <div className="col-span-1 text-center">Total</div>
+                <div className="col-span-1"></div>
+              </div>
 
-        <h1 className="font-display font-bold text-3xl md:text-4xl text-white mb-8">
-          {getNombreCategoria()}
-        </h1>
+              {/* Items del carrito */}
+              <div className="divide-y divide-green-900/20">
+                {items.map((item) => {
+                  const productName = getProductName(item);
+                  const itemTotal = item.precio * item.cantidad;
+                  
+                  return (
+                    <div key={item.id} className="p-4 hover:bg-green-500/5 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        {/* Imagen y nombre */}
+                        <div className="flex items-center gap-4 md:w-2/5">
+                          <Link to={`/producto/${item.id}`} className="flex-shrink-0">
+                            <img
+                              src={item.imagen}
+                              alt={productName}
+                              className="w-16 h-16 object-cover rounded-xl bg-gray-800 border border-green-900/30"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://placehold.co/100x100/2a2a2a/2ecc71?text=${encodeURIComponent(productName.substring(0, 3))}`;
+                              }}
+                            />
+                          </Link>
+                          <Link to={`/producto/${item.id}`} className="hover:text-green-500 transition-colors">
+                            <h3 className="font-medium text-white text-sm md:text-base line-clamp-2">
+                              {productName}
+                            </h3>
+                          </Link>
+                        </div>
 
-        {categoria?.descripcion && (
-          <p className="text-gray-400 max-w-3xl mb-8">
-            {lang === 'en' && categoria.descripcion}
-            {lang === 'gr' && categoria.descripcion}
-            {lang === 'es' && categoria.descripcion}
-          </p>
-        )}
+                        {/* Precio unitario */}
+                        <div className="md:w-1/6">
+                          <p className="text-green-500 font-semibold text-sm md:text-base">
+                            {item.precio.toFixed(2)}€
+                          </p>
+                        </div>
 
-        {products.length === 0 ? (
-          <div className="text-center py-16">
-            <Package size={64} className="text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">
-              {t("category.no_products") || "No hay productos en esta categoría"}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Link
-                  to={`/producto/${product.id}`}
-                  onClick={handleProductClick}
+                        {/* Cantidad con controles */}
+                        <div className="md:w-1/6">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateQuantity(item.id, item.cantidad - 1)}
+                              className="w-7 h-7 rounded-lg bg-black/50 border border-green-900/30 text-white hover:bg-green-500/20 hover:border-green-500/50 transition-all flex items-center justify-center"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="text-white font-medium w-8 text-center text-sm">
+                              {item.cantidad}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.id, item.cantidad + 1)}
+                              className="w-7 h-7 rounded-lg bg-black/50 border border-green-900/30 text-white hover:bg-green-500/20 hover:border-green-500/50 transition-all flex items-center justify-center"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Total por producto */}
+                        <div className="md:w-1/6">
+                          <p className="text-white font-semibold text-sm md:text-base">
+                            {itemTotal.toFixed(2)}€
+                          </p>
+                        </div>
+
+                        {/* Eliminar */}
+                        <div className="md:w-1/12 flex justify-end">
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                            title={getText("Eliminar", "Remove", "Αφαίρεση")}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer del carrito */}
+              <div className="p-4 bg-black/30 border-t border-green-900/30 flex justify-between items-center">
+                <button
+                  onClick={clearCart}
+                  className="text-gray-500 hover:text-red-500 text-sm flex items-center gap-2 transition-colors"
                 >
-                  <ProductCard
-                    {...product}
-                    descuento={ofertas[product.id]?.descuento}
-                  />
+                  <Trash2 size={14} />
+                  {getText("Vaciar carrito", "Clear cart", "Άδειασμα καλαθιού")}
+                </button>
+                <Link
+                  to="/"
+                  className="text-green-500 hover:text-green-400 text-sm flex items-center gap-2 transition-colors"
+                >
+                  <ShoppingBag size={14} />
+                  {getText("Seguir comprando", "Continue shopping", "Συνέχεια αγορών")}
                 </Link>
-              </motion.div>
-            ))}
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Resumen del pedido - PROFESIONAL */}
+          <div className="lg:col-span-1">
+            <div className="bg-[#0a0a0a] rounded-2xl border border-green-900/30 p-6 sticky top-32">
+              <h2 className="text-lg font-bold text-white mb-4">
+                {getText("Resumen del pedido", "Order summary", "Σύνοψη παραγγελίας")}
+              </h2>
+              
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-gray-400 text-sm">
+                  <span>{getText("Subtotal", "Subtotal", "Υποσύνολο")}</span>
+                  <span className="text-white">{totalPrice.toFixed(2)}€</span>
+                </div>
+                
+                <div className="flex justify-between text-gray-400 text-sm">
+                  <span className="flex items-center gap-1">
+                    <Truck size={14} />
+                    {getText("Envío", "Shipping", "Αποστολή")}
+                  </span>
+                  {shippingCost === 0 ? (
+                    <span className="text-green-500 font-medium">
+                      {getText("Gratis", "Free", "Δωρεάν")}
+                    </span>
+                  ) : (
+                    <span className="text-white">{shippingCost.toFixed(2)}€</span>
+                  )}
+                </div>
+                
+                {totalPrice > 0 && totalPrice < 50 && (
+                  <div className="bg-yellow-500/10 rounded-xl p-3 border border-yellow-500/20">
+                    <p className="text-yellow-500 text-xs text-center">
+                      {getText(
+                        `Añade ${(50 - totalPrice).toFixed(2)}€ más para envío gratis`,
+                        `Add ${(50 - totalPrice).toFixed(2)}€ more for free shipping`,
+                        `Προσθέστε ${(50 - totalPrice).toFixed(2)}€ ακόμα για δωρεάν αποστολή`
+                      )}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="border-t border-green-900/30 pt-3 flex justify-between font-bold">
+                  <span className="text-white">{getText("Total", "Total", "Σύνολο")}</span>
+                  <span className="text-green-500 text-xl">{finalTotal.toFixed(2)}€</span>
+                </div>
+              </div>
+
+              {/* Botón de compra */}
+              <button className="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition-all flex items-center justify-center gap-2 mb-4">
+                <CreditCard size={18} />
+                {getText("FINALIZAR COMPRA", "CHECKOUT", "ΟΛΟΚΛΗΡΩΣΗ ΑΓΟΡΑΣ")}
+              </button>
+
+              {/* Métodos de pago */}
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-2">
+                  {getText("Aceptamos", "We accept", "Δεχόμαστε")}
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-xs bg-gray-800 px-2 py-1 rounded">💳 Visa</span>
+                  <span className="text-xs bg-gray-800 px-2 py-1 rounded">💳 Mastercard</span>
+                  <span className="text-xs bg-gray-800 px-2 py-1 rounded">💰 Bizum</span>
+                  <span className="text-xs bg-gray-800 px-2 py-1 rounded">📱 PayPal</span>
+                </div>
+              </div>
+
+              {/* Garantía */}
+              <div className="mt-4 pt-4 border-t border-green-900/30 flex items-center justify-center gap-2 text-xs text-gray-500">
+                <Shield size={12} />
+                <span>{getText("Compra segura", "Secure checkout", "Ασφαλής αγορά")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default CategoryPage;
+export default CartPage;

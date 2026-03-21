@@ -7,11 +7,12 @@ import ProductCard from "@/components/ProductCard";
 import Footer from "@/components/Footer";
 import MobileBottomBar from "@/components/MobileBottomBar";
 import ViberButton from "@/components/ViberAppButton";
+import MainSlider from "@/components/MainSlider";
+import MobileHero from "@/components/MobileHero";
 import { motion } from "framer-motion";
 import { 
-  Zap, Bike, Car, Wrench, Settings, 
   Star, Percent, Baby, Accessibility, Sparkles,
-  Gauge, Headphones, Package,
+  Gauge, Bike, Car, Wrench, Settings, Package,
   Battery, Plug, Shield
 } from "lucide-react";
 
@@ -19,7 +20,7 @@ const categoryIcons: Record<string, any> = {
   patinetes: Gauge,
   bicicletas: Bike,
   motos: Car,
-  accesorios: Headphones,
+  accesorios: Wrench,
   piezas: Settings,
   infantiles: Baby,
   "movilidad-reducida": Accessibility,
@@ -68,30 +69,26 @@ const Index = () => {
   const [masVendidos, setMasVendidos] = useState<string[]>([]);
   const [ofertas, setOfertas] = useState<OfertaConfig>({});
   const [nuevosIds, setNuevosIds] = useState<string[]>([]);
-  const [placeholderProduct, setPlaceholderProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [restored, setRestored] = useState(false);
   const [showFooter, setShowFooter] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const getNombreCategoria = (cat: Categoria): string => {
     if (lang === 'en' && cat.nombre_en) return cat.nombre_en;
     if (lang === 'gr' && cat.nombre_gr) return cat.nombre_gr;
     return cat.nombre;
   };
-
-  useEffect(() => {
-    const loadPlaceholder = async () => {
-      try {
-        const placeholderDoc = await getDoc(doc(db, "productos", "aPMG8JBnCm9cRsLNnFJ6"));
-        if (placeholderDoc.exists()) {
-          setPlaceholderProduct({ id: placeholderDoc.id, ...placeholderDoc.data() } as Product);
-        }
-      } catch (error) {
-        console.error("Error cargando placeholder:", error);
-      }
-    };
-    loadPlaceholder();
-  }, []);
 
   useEffect(() => {
     loadData();
@@ -268,7 +265,7 @@ const Index = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{t("messages.loading")}</p>
+          <p className="text-muted-foreground">{t("messages.loading") || "Cargando..."}</p>
         </div>
       </div>
     );
@@ -276,20 +273,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
-        <img
-          src="/images/hero/hero.avif"
-          alt="Fondo"
-          className="w-full h-full object-cover opacity-20"
-        />
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+      {/* HERO SLIDER - DESKTOP o MÓVIL según el dispositivo */}
+      {isMobile ? <MobileHero /> : <MainSlider />}
 
-      <div className="relative z-10">
+      <div className="relative z-10 bg-black/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          {/* SECCIÓN DE CATEGORÍAS */}
           <section className="py-16">
-            <h2 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-foreground mb-8 drop-shadow-lg">
-              {t("home.categories")}
+            <h2 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-white mb-8 drop-shadow-lg">
+              {t("home.categories") || "Categorías"}
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {categories.map((cat, i) => {
@@ -324,13 +316,13 @@ const Index = () => {
                           e.currentTarget.src = `https://placehold.co/600x400/2a2a2a/2ecc71?text=${nombreCategoria}`;
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-primary/20 backdrop-blur rounded-full flex items-center justify-center">
                             <Icon size={16} className="text-primary" />
                           </div>
-                          <span className="font-display text-sm tracking-widest uppercase text-foreground">
+                          <span className="font-display text-sm tracking-widest uppercase text-white">
                             {nombreCategoria}
                           </span>
                         </div>
@@ -342,6 +334,7 @@ const Index = () => {
             </div>
           </section>
 
+          {/* SECCIONES DE PRODUCTOS */}
           {masVendidosList.length > 0 && (
             <Section title="MÁS VENDIDOS" icon={Star} items={masVendidosList} />
           )}

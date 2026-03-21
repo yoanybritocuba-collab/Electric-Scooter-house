@@ -131,15 +131,15 @@ const CategoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen pt-32 pb-16">
       <div className="fixed inset-0 -z-10" style={{ top: '80px', height: 'calc(100% - 80px)' }}>
         <img src="/images/hero/hero.avif" alt="Fondo" className="w-full h-full object-cover opacity-20" />
         <div className="absolute inset-0 bg-black/30" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
-        {/* Botón volver - con texto normal (primera letra mayúscula) */}
-        <div className="pt-6 pb-4">
+        {/* Botón volver */}
+        <div className="mb-6">
           <Link 
             to="/" 
             className="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors group"

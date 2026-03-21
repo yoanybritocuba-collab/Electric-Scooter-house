@@ -7,6 +7,15 @@ const MainSlider = () => {
   const [index, setIndex] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
 
+  // Imágenes locales del proyecto
+  const images = [
+    '/images/hero/hero.avif',
+    '/images/hero/hero1.avif',
+    '/images/hero/hero2.avif',
+    '/images/hero/hero3.avif',
+    '/images/hero/hero4.avif'
+  ];
+
   const texts = [
     t("hero.future"),
     t("hero.zero"),
@@ -20,10 +29,10 @@ const MainSlider = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % texts.length);
-    }, 6000);
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [texts.length]);
+  }, [images.length]);
 
   const textVariants = {
     initial: { x: '-150vw', opacity: 0, scale: 0.5 },
@@ -47,9 +56,8 @@ const MainSlider = () => {
     animate: { width: 128, opacity: 1, transition: { delay: 0.7, duration: 0.6 } }
   };
 
-  // Para depuración
   useEffect(() => {
-    console.log("🖼️ MainSlider montado");
+    console.log("🖼️ MainSlider montado - imágenes:", images);
   }, []);
 
   const handleImageLoad = () => {
@@ -59,7 +67,9 @@ const MainSlider = () => {
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.error("❌ Error cargando imagen:", e.currentTarget.src);
-    setImageLoaded(true); // Para que desaparezca el loader aunque falle
+    // Usar imagen de respaldo
+    e.currentTarget.src = "https://placehold.co/1920x1080/2a2a2a/2ecc71?text=Electric+Scooter+House";
+    setImageLoaded(true);
   };
 
   return (
@@ -71,20 +81,28 @@ const MainSlider = () => {
         top: 0
       }}
     >
-      {/* IMAGEN DE FONDO - CORREGIDA A .avif */}
-      <div className="absolute inset-0">
-        <img
-          src="/images/hero/hero.avif"
-          alt="Electric Scooter House"
-          className="w-full h-full object-cover"
-          style={{ 
-            filter: 'brightness(1.2) contrast(1.1)',
-            objectPosition: 'center'
-          }}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
-      </div>
+      {/* IMAGEN DE FONDO CON ANIMACIÓN */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 1.2 }}
+          className="absolute inset-0"
+        >
+          <img
+            src={images[index]}
+            alt="Electric Scooter House"
+            className="w-full h-full object-cover"
+            style={{ 
+              objectPosition: 'center'
+            }}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </motion.div>
+      </AnimatePresence>
       
       {/* Loader mientras carga */}
       {!imageLoaded && (
@@ -131,7 +149,7 @@ const MainSlider = () => {
                 textShadow: '0 4px 8px rgba(0,0,0,0.8), 0 8px 16px rgba(0,0,0,0.5)',
               }}
             >
-              {texts[index]}
+              {texts[index % texts.length]}
             </motion.h1>
             
             {/* Línea decorativa */}
@@ -145,9 +163,9 @@ const MainSlider = () => {
         </AnimatePresence>
       </div>
       
-      {/* Indicadores */}
+      {/* Indicadores de imagen */}
       <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-        {texts.map((_, i) => (
+        {images.map((_, i) => (
           <button
             key={i}
             onClick={() => setIndex(i)}

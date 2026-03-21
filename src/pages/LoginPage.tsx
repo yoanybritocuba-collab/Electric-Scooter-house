@@ -3,11 +3,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Navigate, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, Eye, EyeOff, Chrome, Facebook } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const LoginPage = () => {
-  const { user, login, register, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { user, login, register } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   
@@ -129,32 +129,6 @@ const LoginPage = () => {
               {loading ? "Procesando..." : (isLogin ? "Entrar" : "Registrarse")}
             </button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-500">O continúa con</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={loginWithGoogle}
-              className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg transition-colors"
-            >
-              <Chrome size={18} />
-              Google
-            </button>
-            <button
-              onClick={loginWithFacebook}
-              className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg transition-colors"
-            >
-              <Facebook size={18} />
-              Facebook
-            </button>
-          </div>
 
           <p className="text-center text-gray-500 text-sm mt-6">
             {isLogin ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}

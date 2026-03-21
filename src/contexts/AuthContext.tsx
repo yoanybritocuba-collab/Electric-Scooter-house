@@ -35,7 +35,6 @@ interface AuthContextType {
 // NIVEL 1: Super Admins (pueden crear otros admins)
 const SUPER_ADMIN_EMAILS = ["electrichousescooters@gmail.com"];
 
-// NIVEL 2: Admins normales (se almacenan en Firestore)
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -65,16 +64,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [puntos, setPuntos] = useState(0);
   const [adminLevel, setAdminLevel] = useState<'super' | 'admin' | 'none'>('none');
 
-  // Función para verificar si un usuario es admin desde Firestore
   const checkAdminStatus = async (uid: string, email: string) => {
     try {
-      // NIVEL 1: Super Admin (por email)
       if (SUPER_ADMIN_EMAILS.includes(email)) {
         setAdminLevel('super');
         return true;
       }
 
-      // NIVEL 2: Admin normal (desde Firestore)
       const adminDoc = await getDoc(doc(db, "admins", uid));
       if (adminDoc.exists() && adminDoc.data().active === true) {
         setAdminLevel('admin');
@@ -90,7 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Función para registrar logs de admin
   const registerAdminLog = async (action: string, details: any) => {
     if (!user) return;
     
@@ -114,17 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Cargar perfil de usuario desde Firestore
         const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-        
-        // Verificar si es admin
         await checkAdminStatus(user.uid, user.email || "");
         
         if (userDoc.exists()) {
           setUserProfile(userDoc.data());
           setPuntos(userDoc.data().puntos || 0);
         } else {
-          // Crear perfil si no existe
           const nuevoUsuario = {
             email: user.email,
             nombre: user.displayName || "",
@@ -171,6 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authError = error as AuthError;
       if (authError.code === 'auth/email-already-in-use') {
         throw new Error("Este email ya está registrado");
+      } else if (authError.code === 'auth/weak-password') {
+        throw new Error("La contraseña debe tener al menos 6 caracteres");
       } else {
         throw new Error(authError.message);
       }
@@ -180,14 +173,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Registrar intento de login
       await registerAdminLog('LOGIN_INTENTO', { email, success: true });
-      
     } catch (error) {
       const authError = error as AuthError;
-      
-      // Registrar intento fallido
       await registerAdminLog('LOGIN_FALLIDO', { email, error: authError.code });
       
       if (authError.code === 'auth/invalid-credential') {
@@ -198,9 +186,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // GOOGLE LOGIN - CORREGIDO CON MEJOR MANEJO DE ERRORES
   const loginWithGoogle = async () => {
     try {
+      console.log("🔄 Iniciando login con Google...");
+      
+      // Configurar proveedor con parámetros adicionales
+      googleProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       const result = await signInWithPopup(auth, googleProvider);
+      console.log("✅ Login con Google exitoso:", result.user.email);
       
       await registerAdminLog('LOGIN_GOOGLE', { email: result.user.email, success: true });
 
@@ -219,16 +216,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           esAdmin: false
         });
       }
-    } catch (error) {
-      console.error("Error con Google:", error);
-      await registerAdminLog('LOGIN_GOOGLE_ERROR', { error });
-      throw new Error("No se pudo iniciar sesión con Google");
+      
+      return result;
+    } catch (error: any) {
+      console.error("❌ Error con Google:", error);
+      
+      let errorMessage = "No se pudo iniciar sesión con Google";
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = "El navegador bloqueó la ventana emergente. Permite las ventanas emergentes para este sitio.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Cerraste la ventana de inicio de sesión. Intenta de nuevo.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "Este dominio no está autorizado para usar Google. Contacta al administrador.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Error de red. Verifica tu conexión a internet.";
+      }
+      
+      await registerAdminLog('LOGIN_GOOGLE_ERROR', { error: error.code, message: errorMessage });
+      throw new Error(errorMessage);
     }
   };
 
+  // FACEBOOK LOGIN - CORREGIDO CON MEJOR MANEJO DE ERRORES
   const loginWithFacebook = async () => {
     try {
+      console.log("🔄 Iniciando login con Facebook...");
+      
+      // Configurar proveedor con parámetros adicionales
+      facebookProvider.setCustomParameters({
+        display: 'popup'
+      });
+      
       const result = await signInWithPopup(auth, facebookProvider);
+      console.log("✅ Login con Facebook exitoso:", result.user.email);
       
       await registerAdminLog('LOGIN_FACEBOOK', { email: result.user.email, success: true });
 
@@ -247,10 +268,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           esAdmin: false
         });
       }
-    } catch (error) {
-      console.error("Error con Facebook:", error);
-      await registerAdminLog('LOGIN_FACEBOOK_ERROR', { error });
-      throw new Error("No se pudo iniciar sesión con Facebook");
+      
+      return result;
+    } catch (error: any) {
+      console.error("❌ Error con Facebook:", error);
+      
+      let errorMessage = "No se pudo iniciar sesión con Facebook";
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = "El navegador bloqueó la ventana emergente. Permite las ventanas emergentes para este sitio.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Cerraste la ventana de inicio de sesión. Intenta de nuevo.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "Este dominio no está autorizado para usar Facebook. Contacta al administrador.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Error de red. Verifica tu conexión a internet.";
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+        errorMessage = "Ya existe una cuenta con este email usando otro método de inicio de sesión.";
+      }
+      
+      await registerAdminLog('LOGIN_FACEBOOK_ERROR', { error: error.code, message: errorMessage });
+      throw new Error(errorMessage);
     }
   };
 
@@ -263,23 +301,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }
-  };
-
-  // Función para que super admins puedan agregar nuevos admins
-  const addAdmin = async (uid: string, email: string, nivel: 'admin' | 'super' = 'admin') => {
-    if (adminLevel !== 'super') {
-      throw new Error("No tienes permisos para agregar administradores");
-    }
-    
-    await setDoc(doc(db, "admins", uid), {
-      email,
-      nivel,
-      active: true,
-      createdBy: user?.uid,
-      createdAt: new Date()
-    });
-    
-    await registerAdminLog('ADMIN_ADDED', { newAdminEmail: email, nivel });
   };
 
   const isAdmin = adminLevel !== 'none';

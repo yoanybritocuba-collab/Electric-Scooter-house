@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 interface CartItem {
   id: string;
@@ -30,32 +31,61 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const { user } = useAuth();
 
-  // Cargar carrito desde localStorage al iniciar
+  // Cargar carrito cuando cambia el usuario
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
+    if (user) {
+      // Usuario logueado - cargar carrito desde localStorage con su ID
+      const savedCart = localStorage.getItem(`cart_${user.uid}`);
       if (savedCart) {
-        const parsed = JSON.parse(savedCart);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-          console.log("🛒 Carrito cargado desde localStorage:", parsed);
+        try {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) {
+            setItems(parsed);
+            console.log(`🛒 Carrito cargado para usuario: ${user.email}`, parsed);
+          }
+        } catch (error) {
+          console.error("Error cargando carrito:", error);
+          setItems([]);
         }
+      } else {
+        // Usuario nuevo sin carrito
+        setItems([]);
+        console.log(`🛒 Carrito vacío para nuevo usuario: ${user.email}`);
       }
-    } catch (error) {
-      console.error("Error cargando carrito:", error);
+    } else {
+      // Usuario no logueado - cargar carrito de invitado
+      const savedCart = localStorage.getItem('cart_guest');
+      if (savedCart) {
+        try {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) {
+            setItems(parsed);
+            console.log("🛒 Carrito cargado para invitado:", parsed);
+          }
+        } catch (error) {
+          console.error("Error cargando carrito invitado:", error);
+          setItems([]);
+        }
+      } else {
+        setItems([]);
+      }
     }
-  }, []);
+  }, [user]);
 
-  // Guardar carrito en localStorage cuando cambie
+  // Guardar carrito cuando cambia el usuario o los items
   useEffect(() => {
-    try {
-      localStorage.setItem('cart', JSON.stringify(items));
-      console.log("🛒 Carrito guardado en localStorage:", items);
-    } catch (error) {
-      console.error("Error guardando carrito:", error);
+    if (user) {
+      // Usuario logueado - guardar en localStorage con su ID
+      localStorage.setItem(`cart_${user.uid}`, JSON.stringify(items));
+      console.log(`🛒 Carrito guardado para usuario: ${user.email}`, items);
+    } else {
+      // Usuario no logueado - guardar como invitado
+      localStorage.setItem('cart_guest', JSON.stringify(items));
+      console.log("🛒 Carrito guardado para invitado:", items);
     }
-  }, [items]);
+  }, [items, user]);
 
   const addItem = (newItem: Omit<CartItem, 'cantidad'>) => {
     console.log("➕ Añadiendo al carrito:", newItem);
@@ -106,7 +136,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
   const totalPrice = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
 
-  console.log("📊 Estado actual del carrito:", { items, totalItems, totalPrice });
+  console.log("📊 Estado actual del carrito:", { items, totalItems, totalPrice, usuario: user?.email || "invitado" });
 
   return (
     <CartContext.Provider value={{

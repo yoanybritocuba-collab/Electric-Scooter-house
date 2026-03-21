@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, X, Shield, ShoppingCart, Menu, User } from "lucide-react";
+import { Search, X, Shield, ShoppingCart, Menu, User, MessageCircle, Phone, Mail, MapPin, Clock, Facebook, Instagram, Youtube, Twitter, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +17,6 @@ const navLinks = [
   { key: "parts", path: "/categoria/piezas" },
   { key: "kids", path: "/categoria/infantiles" },
   { key: "mobility", path: "/categoria/movilidad-reducida" },
-  { key: "contact", path: "/contacto" },
   { key: "admin", path: "/admin" },
 ];
 
@@ -29,6 +28,36 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [horarioOpen, setHorarioOpen] = useState(false);
+
+  // Función getText para traducciones manuales
+  const getText = (es: string, en: string, gr: string) => {
+    if (lang === 'en') return en;
+    if (lang === 'gr') return gr;
+    return es;
+  };
+
+  const viberNumber = "306993185757";
+  const phoneNumber = "6993185757";
+  const phoneFijo = "2102799443";
+  const email = "info@electricscooterhouse.com";
+  const viberLink = `https://msng.link/vi/${viberNumber}`;
+  
+  const direccion = "Καρολίδου 10, Νέα Ιωνία 14231, Αθήνα";
+  const direccionLink = "https://maps.google.com/?q=Καρολίδου+10+Νέα+Ιωνία+14231";
+
+  const horarios = {
+    es: "Lunes a Viernes: 10:00 - 20:00\nSábados: 10:00 - 14:00\nDomingos: Cerrado",
+    en: "Monday to Friday: 10:00 - 20:00\nSaturdays: 10:00 - 14:00\nSundays: Closed",
+    gr: "Δευτέρα έως Παρασκευή: 10:00 - 20:00\nΣάββατο: 10:00 - 14:00\nΚυριακή: Κλειστά"
+  };
+
+  const getHorario = () => {
+    if (lang === 'en') return horarios.en;
+    if (lang === 'gr') return horarios.gr;
+    return horarios.es;
+  };
 
   useEffect(() => {
     console.log("🌐 Idioma actual en Navbar:", lang);
@@ -42,6 +71,8 @@ const Navbar = () => {
 
   useEffect(() => {
     setMenuOpen(false);
+    setContactOpen(false);
+    setHorarioOpen(false);
   }, [location]);
 
   return (
@@ -110,7 +141,6 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* PERFIL - SOLO EN DESKTOP */}
             <Link
               to={user ? "/perfil" : "/login"}
               className="p-2 text-muted-foreground hover:text-primary transition-colors"
@@ -122,9 +152,8 @@ const Navbar = () => {
             <LanguageSelector />
           </div>
 
-          {/* MÓVIL - Iconos (SIN USUARIO, SOLO ADMIN, IDIOMA, MENÚ) */}
+          {/* MÓVIL - Iconos */}
           <div className="flex lg:hidden items-center gap-3">
-            {/* ADMIN */}
             <Link
               to="/admin"
               className="p-2 text-primary hover:text-glow transition-colors"
@@ -135,7 +164,6 @@ const Navbar = () => {
 
             <LanguageSelector />
 
-            {/* MENÚ HAMBURGUESA */}
             <button
               className="p-2 text-foreground hover:text-primary transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -151,17 +179,18 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu overlay - CONTACTO Y HORARIO DESPLEGABLES */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black lg:hidden"
+            className="fixed inset-0 z-[60] bg-black lg:hidden overflow-y-auto"
             style={{ top: '80px' }}
           >
-            <div className="flex flex-col items-center justify-start pt-8 overflow-y-auto h-full">
+            <div className="flex flex-col items-center justify-start pt-4 pb-8">
+              {/* Buscador */}
               <button
                 onClick={() => {
                   setMenuOpen(false);
@@ -169,9 +198,10 @@ const Navbar = () => {
                 }}
                 className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors border-b border-gray-800"
               >
-                {t("nav.search") || "Buscar"}
+                🔍 {t("nav.search") || "Buscar"}
               </button>
 
+              {/* Enlaces de navegación */}
               {navLinks.map((link) => (
                 <Link
                   key={link.key}
@@ -187,13 +217,215 @@ const Navbar = () => {
                 </Link>
               ))}
 
-              {/* PERFIL EN MENÚ MÓVIL */}
+              {/* ========== PANEL 1: CONTACTO (DESPLEGABLE) ========== */}
+              <div className="w-full border-b border-gray-800">
+                <button
+                  onClick={() => setContactOpen(!contactOpen)}
+                  className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>📞 {getText("CONTACTO", "CONTACT", "ΕΠΙΚΟΙΝΩΝΙΑ")}</span>
+                  {contactOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+                
+                <AnimatePresence>
+                  {contactOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden bg-black/50"
+                    >
+                      {/* Viber */}
+                      <a
+                        href={viberLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full py-3 text-center text-purple-400 hover:text-purple-300 transition-colors flex items-center justify-center gap-3 border-t border-gray-800"
+                      >
+                        <MessageCircle size={20} />
+                        <span className="text-base">Viber</span>
+                        <span className="text-xs text-gray-500">+{phoneNumber}</span>
+                      </a>
+
+                      {/* WhatsApp */}
+                      <a
+                        href={`https://wa.me/${viberNumber}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full py-3 text-center text-green-500 hover:text-green-400 transition-colors flex items-center justify-center gap-3 border-t border-gray-800"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                        </svg>
+                        <span className="text-base">WhatsApp</span>
+                        <span className="text-xs text-gray-500">+{phoneNumber}</span>
+                      </a>
+
+                      {/* Teléfono Móvil */}
+                      <a
+                        href={`tel:+${phoneNumber}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full py-3 text-center text-gray-300 hover:text-white transition-colors flex items-center justify-center gap-3 border-t border-gray-800"
+                      >
+                        <Phone size={18} />
+                        <span className="text-base">Teléfono Móvil</span>
+                        <span className="text-xs text-gray-500">+{phoneNumber}</span>
+                      </a>
+
+                      {/* Teléfono Fijo */}
+                      <a
+                        href={`tel:+30${phoneFijo}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full py-3 text-center text-gray-300 hover:text-white transition-colors flex items-center justify-center gap-3 border-t border-gray-800"
+                      >
+                        <Phone size={18} />
+                        <span className="text-base">Teléfono Fijo</span>
+                        <span className="text-xs text-gray-500">+30 {phoneFijo}</span>
+                      </a>
+
+                      {/* Email */}
+                      <a
+                        href={`mailto:${email}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full py-3 text-center text-gray-300 hover:text-white transition-colors flex items-center justify-center gap-3 border-t border-gray-800"
+                      >
+                        <Mail size={18} />
+                        <span className="text-base">Email</span>
+                        <span className="text-xs text-gray-500 truncate max-w-[150px]">{email}</span>
+                      </a>
+
+                      {/* Ubicación */}
+                      <a
+                        href={direccionLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full py-3 text-center text-gray-300 hover:text-white transition-colors flex items-center justify-center gap-3 border-t border-gray-800"
+                      >
+                        <MapPin size={18} />
+                        <span className="text-base">Ubicación</span>
+                        <span className="text-xs text-gray-500 truncate max-w-[200px]">{direccion}</span>
+                      </a>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* ========== PANEL 2: HORARIO (DESPLEGABLE) ========== */}
+              <div className="w-full border-b border-gray-800">
+                <button
+                  onClick={() => setHorarioOpen(!horarioOpen)}
+                  className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>⏰ {getText("HORARIO", "SCHEDULE", "ΩΡΑΡΙΟ")}</span>
+                  {horarioOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+                
+                <AnimatePresence>
+                  {horarioOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden bg-black/50"
+                    >
+                      <div className="py-4 px-4 text-center text-gray-300 text-sm whitespace-pre-line border-t border-gray-800">
+                        {getHorario()}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* ========== PANEL 3: REDES SOCIALES (VISIBLE DIRECTAMENTE) ========== */}
+              <div className="w-full border-b border-gray-800">
+                <p className="w-full py-4 text-center text-white text-lg font-bold">
+                  🌐 {getText("REDES SOCIALES", "SOCIAL MEDIA", "ΚΟΙΝΩΝΙΚΑ ΔΙΚΤΥΑ")}
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-6 py-4">
+                  {/* Facebook */}
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex flex-col items-center gap-1 group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#1877f2] flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+                      <Facebook size={24} />
+                    </div>
+                    <span className="text-xs text-gray-400">Facebook</span>
+                  </a>
+
+                  {/* Instagram */}
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex flex-col items-center gap-1 group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#f09433] via-[#d62976] to-[#962fbf] flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+                      <Instagram size={24} />
+                    </div>
+                    <span className="text-xs text-gray-400">Instagram</span>
+                  </a>
+
+                  {/* YouTube */}
+                  <a
+                    href="https://youtube.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex flex-col items-center gap-1 group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#ff0000] flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+                      <Youtube size={24} />
+                    </div>
+                    <span className="text-xs text-gray-400">YouTube</span>
+                  </a>
+
+                  {/* Twitter/X */}
+                  <a
+                    href="https://twitter.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex flex-col items-center gap-1 group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform border border-gray-700">
+                      <Twitter size={24} />
+                    </div>
+                    <span className="text-xs text-gray-400">Twitter</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Perfil */}
               <Link
                 to={user ? "/perfil" : "/login"}
                 onClick={() => setMenuOpen(false)}
                 className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors border-b border-gray-800"
               >
-                {user ? "Mi Perfil" : "Iniciar Sesión"}
+                {user ? "👤 Mi Perfil" : "🔐 Iniciar Sesión"}
+              </Link>
+
+              {/* Carrito */}
+              <Link
+                to="/carrito"
+                onClick={() => setMenuOpen(false)}
+                className="w-full py-4 text-center text-white text-lg hover:text-[#2ecc71] transition-colors border-b border-gray-800 flex items-center justify-center gap-2"
+              >
+                🛒 Carrito
+                {totalItems > 0 && (
+                  <span className="bg-[#2ecc71] text-black text-xs px-2 py-0.5 rounded-full">
+                    {totalItems}
+                  </span>
+                )}
               </Link>
             </div>
           </motion.div>

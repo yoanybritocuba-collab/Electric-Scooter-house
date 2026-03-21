@@ -32,7 +32,7 @@ const MobileHero = () => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
       setTextIndex((prev) => (prev + 1) % texts.length);
-    }, 6000); // Cambia cada 6 segundos
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 
@@ -103,7 +103,7 @@ const MobileHero = () => {
       style={{ 
         position: 'relative',
         width: '100%',
-        height: 'calc(100vh - 80px)', // Altura total menos navbar
+        height: 'calc(100vh - 80px)',
         backgroundColor: '#000000',
         overflow: 'hidden',
         top: 0,
@@ -131,7 +131,7 @@ const MobileHero = () => {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover', // Ajusta la imagen al ancho sin cortar
+              objectFit: 'cover',
               display: 'block',
             }}
             onLoad={() => setImageLoaded(true)}
@@ -238,7 +238,7 @@ const MobileHero = () => {
             key={i}
             onClick={() => {
               setCurrentImage(i);
-              setTextIndex(i % texts.length); // Sincronizar texto al hacer clic
+              setTextIndex(i % texts.length);
             }}
             style={{
               width: i === currentImage ? '30px' : '8px',

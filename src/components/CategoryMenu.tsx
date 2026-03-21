@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bike, Wrench, Settings, Baby, Accessibility, Zap } from "lucide-react";
+import { X, Bike, Wrench, Settings, Baby, Accessibility } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CategoryMenuProps {
@@ -8,8 +8,33 @@ interface CategoryMenuProps {
   onClose: () => void;
 }
 
-// Ícono de moto personalizado - versión mejorada y más visible
-const MotorcycleIcon = ({ size = 22, color = "#8b5cf6" }: { size?: number; color?: string }) => (
+// Ícono de moto personalizado
+const MotorcycleIcon = ({ size = 22, color = "#a855f7" }: { size?: number; color?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="6" cy="16" r="3" fill="none" stroke={color} />
+    <circle cx="18" cy="16" r="3" fill="none" stroke={color} />
+    <path d="M6 16h12" stroke={color} />
+    <path d="M12 6v10" stroke={color} />
+    <path d="M8 10h8" stroke={color} />
+    <rect x="10" y="8" width="4" height="4" rx="1" fill="none" stroke={color} />
+    <path d="M7 10L5 12" stroke={color} />
+    <path d="M17 10L19 12" stroke={color} />
+    <path d="M8 13h8" stroke={color} strokeWidth="1.5" />
+  </svg>
+);
+
+// Ícono de patinete eléctrico - MÁS ESPECÍFICO
+const ScooterIcon = ({ size = 22, color = "#a855f7" }: { size?: number; color?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
@@ -22,29 +47,35 @@ const MotorcycleIcon = ({ size = 22, color = "#8b5cf6" }: { size?: number; color
     strokeLinejoin="round"
   >
     {/* Ruedas */}
-    <circle cx="6" cy="16" r="3" fill="none" stroke={color} />
-    <circle cx="18" cy="16" r="3" fill="none" stroke={color} />
+    <circle cx="7" cy="16" r="2.5" fill="none" stroke={color} />
+    <circle cx="17" cy="16" r="2.5" fill="none" stroke={color} />
     
-    {/* Chasis principal */}
-    <path d="M6 16h12" stroke={color} />
-    <path d="M12 6v10" stroke={color} />
+    {/* Base/plataforma del patinete */}
+    <path d="M7 16h10" stroke={color} strokeWidth="2" />
+    <path d="M9 13h6" stroke={color} />
     <path d="M8 10h8" stroke={color} />
     
-    {/* Motor */}
-    <rect x="10" y="8" width="4" height="4" rx="1" fill="none" stroke={color} />
-    
     {/* Manillar */}
-    <path d="M7 10L5 12" stroke={color} />
-    <path d="M17 10L19 12" stroke={color} />
+    <path d="M16 7l-2-2" stroke={color} />
+    <path d="M16 7l-2 2" stroke={color} />
+    <path d="M14 7h-4" stroke={color} />
+    <path d="M10 7L8 9" stroke={color} />
     
-    {/* Asiento */}
-    <path d="M8 13h8" stroke={color} strokeWidth="1.5" />
+    {/* Detalle de dirección */}
+    <path d="M10 10L8 12" stroke={color} strokeWidth="1.5" />
+    <path d="M14 10L16 12" stroke={color} strokeWidth="1.5" />
+    
+    {/* Rayo eléctrico (para indicar eléctrico) */}
+    <path d="M19 4l-2 3h3l-2 3" stroke={color} strokeWidth="1.8" />
+    
+    {/* Detalle de patinete */}
+    <rect x="11" y="13" width="2" height="3" fill="none" stroke={color} strokeWidth="1.5" />
   </svg>
 );
 
 // Categorías con íconos
 const categories = [
-  { id: "patinetes", icon: Zap, label: "Patinetes", isCustom: false },
+  { id: "patinetes", icon: ScooterIcon, label: "Patinetes", isCustom: true },
   { id: "bicicletas", icon: Bike, label: "Bicicletas", isCustom: false },
   { id: "motos", icon: MotorcycleIcon, label: "Motos", isCustom: true },
   { id: "accesorios", icon: Wrench, label: "Accesorios", isCustom: false },
@@ -74,6 +105,11 @@ const CategoryMenu = ({ open, onClose }: CategoryMenuProps) => {
     if (lang === 'gr') return cat.gr;
     return cat.es;
   };
+
+  // Color morado fuerte
+  const moradoFuerte = "#a855f7";
+  // Color verde del nombre de la web
+  const verdeWeb = "#2ecc71";
 
   return (
     <AnimatePresence>
@@ -120,19 +156,20 @@ const CategoryMenu = ({ open, onClose }: CategoryMenuProps) => {
                     to={`/categoria/${cat.id}`}
                     onClick={onClose}
                     className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-                    style={{ backgroundColor: '#2ecc71' }}
+                    style={{ backgroundColor: verdeWeb }}
                   >
                     <div className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                       {cat.isCustom ? (
-                        <IconComponent size={22} color="#8b5cf6" />
+                        <IconComponent size={22} color={moradoFuerte} />
                       ) : (
                         <IconComponent 
                           size={22} 
-                          style={{ color: '#8b5cf6', strokeWidth: 1.8 }}
+                          style={{ color: moradoFuerte, strokeWidth: 1.8 }}
                         />
                       )}
                     </div>
-                    <span className="text-[10px] text-center text-white font-medium leading-tight">
+                    {/* TEXTO TAMBIÉN EN COLOR MORADO */}
+                    <span className="text-[10px] text-center font-medium leading-tight" style={{ color: moradoFuerte }}>
                       {getCategoryName(cat.id)}
                     </span>
                   </Link>

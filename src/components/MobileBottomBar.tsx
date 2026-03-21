@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid, Search, ShoppingCart, User, MessageCircle } from "lucide-react";
+import { Home, Grid, Search, ShoppingCart, User } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -12,9 +12,6 @@ const MobileBottomBar = () => {
   const { totalItems } = useCart();
   const [showSearch, setShowSearch] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
-
-  const viberNumber = "306993185757";
-  const viberLink = `https://msng.link/vi/${viberNumber}`;
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -43,7 +40,7 @@ const MobileBottomBar = () => {
 
   return (
     <>
-      {/* BARRA INFERIOR - CON VIBER */}
+      {/* BARRA INFERIOR - SIN VIBER */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 md:hidden z-50 h-16">
         <div className="flex items-center justify-around h-full">
           {/* 1. INICIO */}
@@ -67,18 +64,7 @@ const MobileBottomBar = () => {
             <Search size={22} className="text-gray-400" />
           </button>
 
-          {/* 4. VIBER - NUEVO ICONO IMPORTANTE */}
-          <a
-            href={viberLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center flex-1 group"
-          >
-            <MessageCircle size={22} className="text-purple-500 group-hover:text-purple-400 transition-colors" />
-            <span className="text-[9px] text-purple-500 mt-0.5">Viber</span>
-          </a>
-
-          {/* 5. USUARIO */}
+          {/* 4. USUARIO */}
           <Link
             to={user ? "/perfil" : "/login"}
             className="flex flex-col items-center justify-center flex-1 group"
@@ -99,7 +85,7 @@ const MobileBottomBar = () => {
             )}
           </Link>
 
-          {/* 6. CARRITO */}
+          {/* 5. CARRITO */}
           <Link to="/carrito" className="flex items-center justify-center flex-1 relative">
             <ShoppingCart size={22} className={getIconColor('/carrito')} />
             {totalItems > 0 && (

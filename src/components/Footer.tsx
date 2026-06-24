@@ -1,0 +1,195 @@
+import { Link } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getHorarioOrDefault } from "@/services/horarioService";
+
+const Footer = () => {
+  const { t } = useLanguage();
+  const [horario, setHorario] = useState<{ lunesViernes: string; sabado: string; domingo: string } | null>(null);
+
+  useEffect(() => {
+    const loadHorario = async () => {
+      const data = await getHorarioOrDefault();
+      setHorario(data);
+    };
+    loadHorario();
+  }, []);
+
+  const handlePhoneClick = () => {
+    window.location.href = 'tel:+302102799443';
+  };
+
+  const handleEmailClick = () => {
+    window.location.href = 'mailto:electrichousescooters@gmail.com';
+  };
+
+  const handleAddressClick = () => {
+    window.open('https://maps.google.com/?q=Καρολίδου+10+Νέα+Ιωνία+14231', '_blank');
+  };
+
+  const handleWhatsAppClick = () => {
+    window.open('https://wa.me/306993185757', '_blank');
+  };
+
+  return (
+    <footer className="bg-black border-t border-border mt-16">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Logo y descripción */}
+          <div>
+            <Link to="/" className="inline-block mb-4">
+              <img
+                src="/images/logo/logo.png"
+                alt="Electric Scooter House"
+                className="h-16 w-auto"
+              />
+            </Link>
+            <p className="text-gray-400 text-sm">
+              {t("footer.description")}
+            </p>
+          </div>
+
+          {/* Contacto */}
+          <div>
+            <h3 className="font-display font-bold text-primary mb-4">{t("footer.contact")}</h3>
+            <ul className="space-y-3">
+              <li>
+                <button
+                  onClick={handleAddressClick}
+                  className="flex items-start gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left"
+                >
+                  <MapPin size={16} className="flex-shrink-0 mt-0.5 text-primary" />
+                  <span>Καρολίδου 10, Νέα Ιωνία 14231</span>
+                </button>
+              </li>
+              
+              <li>
+                <button
+                  onClick={handlePhoneClick}
+                  className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left"
+                >
+                  <Phone size={16} className="flex-shrink-0 text-primary" />
+                  <span>21 0279 9443</span>
+                </button>
+              </li>
+              
+              <li>
+                <button
+                  onClick={handleEmailClick}
+                  className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left"
+                >
+                  <Mail size={16} className="flex-shrink-0 text-primary" />
+                  <span>electrichousescooters@gmail.com</span>
+                </button>
+              </li>
+              
+              <li>
+                <button
+                  onClick={handleWhatsAppClick}
+                  className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm w-full text-left group"
+                >
+                  <div className="relative">
+                    <MessageCircle size={16} className="flex-shrink-0 relative z-10 text-[#25D366]" />
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="absolute inline-flex h-8 w-8 rounded-full bg-[#25D366]/20 opacity-75 animate-ping"></span>
+                      <span className="absolute inline-flex h-6 w-6 rounded-full bg-[#25D366]/10 opacity-50 animate-ping animation-delay-300"></span>
+                      <span className="absolute inline-flex h-4 w-4 rounded-full bg-[#25D366]/5 opacity-25 animate-ping animation-delay-600"></span>
+                    </span>
+                  </div>
+                  <span>WhatsApp: +30 6993 185 757</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Horario - CON DATOS DE FIREBASE */}
+          <div>
+            <h3 className="font-display font-bold text-primary mb-4">{t("footer.hours")}</h3>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li className="flex items-start gap-2">
+                <Clock size={16} className="flex-shrink-0 mt-0.5 text-primary" />
+                <div>
+                  <p>{t("contact.weekdays")}: {horario?.lunesViernes || "Cargando..."}</p>
+                  <p>{t("contact.saturday")}: {horario?.sabado || "Cargando..."}</p>
+                  <p>{t("contact.sunday")}: {horario?.domingo || "Cargando..."}</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          {/* Redes Sociales */}
+          <div>
+            <h3 className="font-display font-bold text-primary mb-4">{t("footer.follow_us")}</h3>
+            <div className="flex gap-4">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors group"
+                title={t("social.facebook")}
+              >
+                <Facebook size={18} />
+                <span className="sr-only">{t("social.facebook")}</span>
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors group"
+                title={t("social.instagram")}
+              >
+                <Instagram size={18} />
+                <span className="sr-only">{t("social.instagram")}</span>
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors group"
+                title={t("social.twitter")}
+              >
+                <Twitter size={18} />
+                <span className="sr-only">{t("social.twitter")}</span>
+              </a>
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-800 transition-colors group"
+                title={t("social.youtube")}
+              >
+                <Youtube size={18} />
+                <span className="sr-only">{t("social.youtube")}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
+          <p>© 2024 Electric Scooter House. {t("footer.rights")}</p>
+        </div>
+
+        <div className="flex justify-center mt-6">
+          <img
+            src="/images/qr/qr.png"
+            alt="Código QR"
+            className="w-16 h-16 object-contain opacity-90 hover:opacity-100 transition-opacity duration-300"
+          />
+        </div>
+      </div>
+
+      <style>{`
+        .animation-delay-300 {
+          animation-delay: 300ms;
+        }
+        .animation-delay-600 {
+          animation-delay: 600ms;
+        }
+      `}</style>
+    </footer>
+  );
+};
+
+export default Footer;

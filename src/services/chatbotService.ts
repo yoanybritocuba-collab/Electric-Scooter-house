@@ -1,7 +1,9 @@
-﻿const API_URL = import.meta.env.VITE_CHATBOT_API_URL || '/api/chat';
+﻿// src/services/chatbotService.ts
+const API_URL = 'http://localhost:3001/api/chat';
 
 export const sendMessage = async (messages: any[], language: string) => {
   try {
+    console.log('📤 Enviando a:', API_URL);
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9,13 +11,15 @@ export const sendMessage = async (messages: any[], language: string) => {
     });
 
     if (!response.ok) {
-      throw new Error('Error en el servidor');
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('✅ Respuesta:', data.reply?.substring(0, 30));
     return data.reply;
   } catch (error) {
-    console.error('Error en servicio de chat:', error);
+    console.error('❌ Error:', error);
     throw error;
   }
 };

@@ -175,7 +175,10 @@ export default function Chatbot() {
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="fixed bottom-4 right-3 sm:bottom-5 sm:right-6 z-[99999] bg-transparent border-0 cursor-pointer p-0 outline-none focus:outline-none"
+          // ✅ CORREGIDO: Sube el botón en móviles para que no tape la barra inferior
+          className="fixed right-3 z-[99999] bg-transparent border-0 cursor-pointer p-0 outline-none focus:outline-none
+                     bottom-[calc(76px+env(safe-area-inset-bottom,0px))] 
+                     sm:bottom-5"
           aria-label="Abrir chat"
         >
           <div className="relative flex items-end gap-2 flex-row-reverse">
@@ -279,7 +282,10 @@ export default function Chatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-4 right-3 sm:right-4 z-[99999] w-[90vw] sm:w-[350px] h-[440px] max-w-[350px] rounded-2xl shadow-2xl bg-gradient-to-br from-zinc-900 to-black flex flex-col overflow-hidden border border-zinc-700/30"
+            // ✅ CORREGIDO: La ventana del chat también sube
+            className="fixed right-3 z-[99999] w-[90vw] sm:w-[350px] h-[440px] max-w-[350px] rounded-2xl shadow-2xl bg-gradient-to-br from-zinc-900 to-black flex flex-col overflow-hidden border border-zinc-700/30
+                       bottom-[calc(76px+env(safe-area-inset-bottom,0px))] 
+                       sm:bottom-4"
           >
             {/* HEADER */}
             <div className="bg-gradient-to-r from-zinc-600 to-zinc-500 py-3 px-4 flex justify-between items-center">

@@ -1,4 +1,4 @@
-﻿// src/services/chatbotService.ts - Cliente SOLO TEXTO (sin voz)
+﻿// src/services/chatbotService.ts
 const API_URL = '/api/chat';
 
 export const sendMessage = async (messages: any[], language: string) => {
@@ -17,15 +17,10 @@ export const sendMessage = async (messages: any[], language: string) => {
     }
 
     const data = await response.json();
-    
-    if (!data.reply) {
-      throw new Error('No se recibió respuesta del asistente');
-    }
-    
     console.log('✅ Respuesta recibida');
     return data.reply;
   } catch (error) {
-    console.error('❌ Error en servicio de chat:', error);
+    console.error('❌ Error:', error);
     throw error;
   }
 };

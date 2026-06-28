@@ -1,9 +1,10 @@
-﻿// src/services/chatbotService.ts
-const API_URL = 'http://localhost:3001/api/chat';
+﻿// src/services/chatbotService.ts - Cliente SOLO TEXTO (sin voz)
+const API_URL = '/api/chat';
 
 export const sendMessage = async (messages: any[], language: string) => {
   try {
-    console.log('📤 Enviando a:', API_URL);
+    console.log('📤 Enviando mensaje...');
+    
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -16,10 +17,15 @@ export const sendMessage = async (messages: any[], language: string) => {
     }
 
     const data = await response.json();
-    console.log('✅ Respuesta:', data.reply?.substring(0, 30));
+    
+    if (!data.reply) {
+      throw new Error('No se recibió respuesta del asistente');
+    }
+    
+    console.log('✅ Respuesta recibida');
     return data.reply;
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('❌ Error en servicio de chat:', error);
     throw error;
   }
 };

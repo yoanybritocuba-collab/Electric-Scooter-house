@@ -136,7 +136,7 @@ export default function Chatbot() {
   }, [isOpen]);
 
   // ============================================================
-  // 🔥 ENVIAR MENSAJE
+  // 🔥 ENVIAR MENSAJE (SOLO TEXTO)
   // ============================================================
   const sendMessageHandler = async () => {
     if (!input.trim() || isLoading) return;
@@ -163,7 +163,7 @@ export default function Chatbot() {
   };
 
   // ============================================================
-  // 🔥 RENDER (exactamente la mascota de quantummenu)
+  // 🔥 RENDER - MASCOTA COMPLETA (SIN BOTÓN DE VOZ)
   // ============================================================
   return (
     <>
@@ -175,7 +175,6 @@ export default function Chatbot() {
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          // ✅ CORREGIDO: Sube el botón en móviles para que no tape la barra inferior
           className="fixed right-3 z-[99999] bg-transparent border-0 cursor-pointer p-0 outline-none focus:outline-none
                      bottom-[calc(76px+env(safe-area-inset-bottom,0px))] 
                      sm:bottom-5"
@@ -282,7 +281,6 @@ export default function Chatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            // ✅ CORREGIDO: La ventana del chat también sube
             className="fixed right-3 z-[99999] w-[90vw] sm:w-[350px] h-[440px] max-w-[350px] rounded-2xl shadow-2xl bg-gradient-to-br from-zinc-900 to-black flex flex-col overflow-hidden border border-zinc-700/30
                        bottom-[calc(76px+env(safe-area-inset-bottom,0px))] 
                        sm:bottom-4"
@@ -331,7 +329,7 @@ export default function Chatbot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT */}
+            {/* INPUT - SOLO TEXTO (SIN BOTÓN DE VOZ) */}
             <div className="p-2.5 border-t border-zinc-800 bg-black/30">
               <div className="flex gap-1.5">
                 <input

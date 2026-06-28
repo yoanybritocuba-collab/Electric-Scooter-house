@@ -20,7 +20,7 @@ export const sendMessage = async (messages: any[], language: string) => {
     console.log('✅ Respuesta recibida');
     return data.reply;
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('❌ Error en servicio de chat:', error);
     throw error;
   }
 };

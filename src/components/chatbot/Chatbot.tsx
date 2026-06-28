@@ -78,9 +78,6 @@ export default function Chatbot() {
   const inputRef = useRef<HTMLInputElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
-  // ============================================================
-  // 🔥 CARTELES: saludo 10s, luego ayuda
-  // ============================================================
   useEffect(() => {
     setIsTyping(true);
     setShowBubble(true);
@@ -98,17 +95,11 @@ export default function Chatbot() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [language]);
 
-  // ============================================================
-  // 🔥 MENSAJE DE BIENVENIDA
-  // ============================================================
   useEffect(() => {
     const greeting = getGreeting(language);
     setMessages([{ role: "assistant", content: getWelcomeMessage(language, greeting) }]);
   }, [language]);
 
-  // ============================================================
-  // 🔥 LENGUA (efecto visual)
-  // ============================================================
   useEffect(() => {
     const tongueInterval = setInterval(() => { 
       setTongueOut(true); 
@@ -135,9 +126,6 @@ export default function Chatbot() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // ============================================================
-  // 🔥 ENVIAR MENSAJE (SOLO TEXTO)
-  // ============================================================
   const sendMessageHandler = async () => {
     if (!input.trim() || isLoading) return;
     const userMessage = input.trim();
@@ -162,9 +150,6 @@ export default function Chatbot() {
     }
   };
 
-  // ============================================================
-  // 🔥 RENDER - MASCOTA COMPLETA (SIN BOTÓN DE VOZ)
-  // ============================================================
   return (
     <>
       {!isOpen && (
@@ -181,19 +166,14 @@ export default function Chatbot() {
           aria-label="Abrir chat"
         >
           <div className="relative flex items-end gap-2 flex-row-reverse">
-            {/* ===== PERRO ===== */}
             <motion.div
               animate={{ y: [0, -3, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               className="relative w-8 h-8 sm:w-10 sm:h-10"
             >
-              {/* Orejas */}
               <div className="absolute -top-2.5 left-1 w-2 h-3.5 bg-zinc-400 rounded-t-full" />
               <div className="absolute -top-2.5 right-1 w-2 h-3.5 bg-zinc-400 rounded-t-full" />
-              
-              {/* Cuerpo */}
               <div className="relative w-full h-full bg-gradient-to-br from-zinc-300 via-zinc-400 to-zinc-500 rounded-2xl shadow-md">
-                {/* Ojos */}
                 <div className="absolute top-2.5 left-0 right-0 flex justify-center gap-2.5">
                   <div className="w-2 h-2.5 bg-white rounded-full">
                     <div className="w-1.5 h-2 bg-zinc-800 rounded-full mt-0.5 ml-0.5">
@@ -206,12 +186,8 @@ export default function Chatbot() {
                     </div>
                   </div>
                 </div>
-                
-                {/* Hocico */}
                 <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-3.5 h-2 bg-zinc-200/60 rounded-full" />
                 <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1 bg-zinc-800 rounded-full" />
-                
-                {/* Lengua */}
                 {tongueOut && (
                   <motion.div 
                     initial={{ y: 3, opacity: 0 }} 
@@ -220,19 +196,13 @@ export default function Chatbot() {
                     className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-2.5 bg-pink-400 rounded-full" 
                   />
                 )}
-                
-                {/* Cejas */}
                 <div className="absolute top-1 left-1.5 w-2 h-1 bg-white/30 rounded-full" />
               </div>
-              
-              {/* Cola */}
               <motion.div
                 animate={{ rotate: [15, -15, 15] }}
                 transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute -right-1.5 top-2 w-2.5 h-1.5 bg-zinc-400 rounded-full origin-left"
               />
-              
-              {/* Patas */}
               <div className="absolute -bottom-0.5 left-1.5 flex gap-0.5">
                 <div className="w-1 h-1.5 bg-zinc-400 rounded-full" />
                 <div className="w-1 h-1.5 bg-zinc-400 rounded-full" />
@@ -242,8 +212,6 @@ export default function Chatbot() {
                 <div className="w-1 h-1.5 bg-zinc-400 rounded-full" />
               </div>
             </motion.div>
-
-            {/* ===== BURBUJA ===== */}
             <AnimatePresence>
               {showBubble && (
                 <motion.div
@@ -272,8 +240,6 @@ export default function Chatbot() {
           </div>
         </motion.button>
       )}
-
-      {/* ===== VENTANA DEL CHAT ===== */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -285,7 +251,6 @@ export default function Chatbot() {
                        bottom-[calc(76px+env(safe-area-inset-bottom,0px))] 
                        sm:bottom-4"
           >
-            {/* HEADER */}
             <div className="bg-gradient-to-r from-zinc-600 to-zinc-500 py-3 px-4 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <span className="text-base">🐶</span>
@@ -303,8 +268,6 @@ export default function Chatbot() {
                 ✕
               </button>
             </div>
-
-            {/* MENSAJES */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -328,8 +291,6 @@ export default function Chatbot() {
               )}
               <div ref={messagesEndRef} />
             </div>
-
-            {/* INPUT - SOLO TEXTO (SIN BOTÓN DE VOZ) */}
             <div className="p-2.5 border-t border-zinc-800 bg-black/30">
               <div className="flex gap-1.5">
                 <input

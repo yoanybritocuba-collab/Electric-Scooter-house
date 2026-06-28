@@ -1,9 +1,9 @@
-// api/chat.js - VERSIÓN DEFINITIVA PARA VERCEL (CORREGIDA)
+// api/chat.js - VERSIÓN DEFINITIVA CON IA INTELIGENTE
 import admin from 'firebase-admin';
 import Groq from 'groq-sdk';
 
 // ============================================================
-// 🔥 FIREBASE - CONEXIÓN CON VARIABLES DE ENTORNO
+// 🔥 FIREBASE
 // ============================================================
 let db = null;
 try {
@@ -24,42 +24,137 @@ try {
       })
     });
     db = admin.firestore();
-    console.log('✅ Firebase conectado correctamente');
+    console.log('✅ Firebase conectado');
   }
 } catch (error) {
-  console.error('❌ Error iniciando Firebase:', error.message);
+  console.error('❌ Error:', error.message);
 }
 
 // ============================================================
-// 📦 OBTENER PRODUCTOS - CON LOGS DETALLADOS
+// 🔍 CORRECCIÓN DE ORTOGRAFÍA
+// ============================================================
+const normalizarTexto = (texto) => {
+  const correcciones = {
+    'paticnete': 'patinete',
+    'patinetes': 'patinete',
+    'bicicleta': 'bicicleta',
+    'bicis': 'bicicleta',
+    'moto': 'moto',
+    'motos': 'moto',
+    'accesorio': 'accesorio',
+    'accesorios': 'accesorio',
+    'pieza': 'pieza',
+    'piezas': 'pieza',
+    'repuesto': 'pieza',
+    'bateria': 'batería',
+    'cargador': 'cargador',
+    'cargadores': 'cargador',
+    'timon': 'timón',
+    'manilla': 'manilla',
+    'manillas': 'manilla',
+    'casco': 'casco',
+    'cascos': 'casco',
+    'colores': 'colores',
+    'color': 'color',
+    'precio': 'precio',
+    'precios': 'precio',
+    'stock': 'stock',
+    'garantia': 'garantía',
+    'garantías': 'garantía',
+    'envio': 'envío',
+    'envios': 'envíos',
+    'informacion': 'información',
+    'información': 'información',
+    'disponible': 'disponible',
+    'disponibles': 'disponible',
+    'modelo': 'modelo',
+    'modelos': 'modelo',
+    'marca': 'marca',
+    'marcas': 'marca',
+    'negro': 'negro',
+    'blanco': 'blanco',
+    'rojo': 'rojo',
+    'azul': 'azul',
+    'verde': 'verde',
+    'amarillo': 'amarillo',
+    'gris': 'gris',
+    'plateado': 'plateado',
+    'dorado': 'dorado',
+    'rosa': 'rosa'
+  };
+  
+  let normalized = texto.toLowerCase().trim();
+  for (const wrong in correcciones) {
+    if (normalized.includes(wrong)) {
+      normalized = normalized.replace(new RegExp(wrong, 'g'), correcciones[wrong]);
+    }
+  }
+  return normalized;
+};
+
+// ============================================================
+// 📦 OBTENER TODOS LOS DATOS DE LOS PRODUCTOS
 // ============================================================
 const getProducts = async () => {
-  if (!db) {
-    console.log('⚠️ Firebase no disponible');
-    return [];
-  }
+  if (!db) return [];
   
   try {
-    console.log('🔍 Consultando productos en Firestore...');
-    const snapshot = await db.collection('productos').limit(50).get();
-    console.log(`📊 Snapshot obtenido, tamaño: ${snapshot.size}`);
-    
+    const snapshot = await db.collection('productos').limit(100).get();
     const productos = [];
+    
     snapshot.forEach(doc => {
       const d = doc.data();
+      
+      // Extraer todos los datos disponibles
+      const nombre = d.nombre || 'Sin nombre';
+      const precio = d.precio || 0;
+      const categoria = d.categoria || 'General';
+      const stock = d.stock || 0;
+      const descripcion = d.descripcion || '';
+      const descuento = d.descuento || 0;
+      const rebaja = d.rebaja || false;
+      const nuevo = d.nuevo || false;
+      const masVendido = d.masVendido || false;
+      
+      // Colores
+      let colores = [];
+      if (d.opciones && d.opciones.colores && Array.isArray(d.opciones.colores)) {
+        colores = d.opciones.colores.map(c => ({
+          nombre: c.nombre || 'Sin color',
+          codigo: c.codigoColor || '#000000',
+          precioExtra: c.precioExtra || 0,
+          stock: c.stock || 0,
+          imagenes: c.imagenes || []
+        }));
+      }
+      
+      const especificaciones = d.especificaciones || {};
+      const imagenes = d.imagenes || [];
+      const opciones = d.opciones || {};
+      const stockCombinaciones = d.stockCombinaciones || [];
+      const updatedAt = d.updatedAt || null;
+      
       productos.push({
-        nombre: d.nombre || 'Sin nombre',
-        precio: d.precio || 0,
-        categoria: d.categoria || 'General',
-        stock: d.stock || 0,
-        descripcion: d.descripcion || ''
+        id: doc.id,
+        nombre,
+        precio,
+        categoria,
+        stock,
+        descripcion,
+        descuento,
+        rebaja,
+        nuevo,
+        masVendido,
+        colores,
+        especificaciones,
+        imagenes,
+        opciones,
+        stockCombinaciones,
+        updatedAt
       });
     });
     
-    console.log(`📦 ${productos.length} productos obtenidos de Firebase`);
-    if (productos.length > 0) {
-      console.log('📋 Primer producto:', productos[0].nombre);
-    }
+    console.log(`📦 ${productos.length} productos obtenidos`);
     return productos;
   } catch (error) {
     console.error('❌ Error obteniendo productos:', error.message);
@@ -68,93 +163,129 @@ const getProducts = async () => {
 };
 
 // ============================================================
-// 💬 ENDPOINT DEL CHAT - CON LOGS DETALLADOS
+// 📝 GENERAR CONTEXTO COMPLETO
+// ============================================================
+const generarContextoCompleto = (productos) => {
+  if (!productos || productos.length === 0) {
+    return 'No hay productos disponibles en la tienda.';
+  }
+  
+  let contexto = '📋 **CATÁLOGO DE PRODUCTOS:**\n\n';
+  
+  for (let i = 0; i < productos.length; i++) {
+    const p = productos[i];
+    
+    contexto += `**${i+1}. ${p.nombre}**\n`;
+    contexto += `   💰 Precio: ${p.precio}€\n`;
+    contexto += `   📂 Categoría: ${p.categoria}\n`;
+    
+    if (p.descripcion) {
+      contexto += `   📝 ${p.descripcion}\n`;
+    }
+    
+    if (p.stock > 0) {
+      contexto += `   📦 Stock: ${p.stock} unidades\n`;
+    }
+    
+    if (p.descuento > 0) {
+      contexto += `   🔥 OFERTA: -${p.descuento}%\n`;
+    }
+    
+    if (p.rebaja) contexto += `   🏷️ EN REBAJA\n`;
+    if (p.nuevo) contexto += `   ✨ NUEVO\n`;
+    if (p.masVendido) contexto += `   ⭐ MÁS VENDIDO\n`;
+    
+    if (p.colores && p.colores.length > 0) {
+      const nombresColores = p.colores.map(c => c.nombre).filter(n => n && n !== 'Sin color');
+      if (nombresColores.length > 0) {
+        contexto += `   🎨 Colores: ${nombresColores.join(', ')}\n`;
+      }
+    }
+    
+    if (p.especificaciones && Object.keys(p.especificaciones).length > 0) {
+      contexto += `   ⚙️ Especificaciones:\n`;
+      for (const [key, value] of Object.entries(p.especificaciones)) {
+        if (value) {
+          contexto += `      - ${key}: ${value}\n`;
+        }
+      }
+    }
+    
+    contexto += '\n';
+  }
+  
+  return contexto;
+};
+
+// ============================================================
+// 💬 ENDPOINT DEL CHAT
 // ============================================================
 export default async function handler(req, res) {
-  // Solo permitir POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
   try {
     const { messages, language = 'es' } = req.body;
-    
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ 
-        reply: 'No recibí tu mensaje. ¿Puedes repetirlo?' 
-      });
-    }
-    
     const userMessage = messages[messages.length - 1]?.content || '';
     console.log(`\n💬 Usuario: "${userMessage}"`);
     
-    // 🔥 OBTENER PRODUCTOS
-    const productos = await getProducts();
-    console.log(`📊 Productos encontrados: ${productos.length}`);
-    
-    // 📝 CONSTRUIR LISTA DE PRODUCTOS
-    let listaProductos = 'No hay productos disponibles en este momento.';
-    if (productos.length > 0) {
-      listaProductos = 'PRODUCTOS EN STOCK:\n';
-      for (let i = 0; i < productos.length; i++) {
-        const p = productos[i];
-        listaProductos += `${i+1}. ${p.nombre} - ${p.precio}€ (${p.categoria})`;
-        if (p.stock > 0) {
-          listaProductos += ` - Stock: ${p.stock}`;
-        }
-        listaProductos += '\n';
-      }
+    // 🔍 CORREGIR ORTOGRAFÍA
+    const userMessageCorregido = normalizarTexto(userMessage);
+    if (userMessageCorregido !== userMessage) {
+      console.log(`🔍 Texto corregido: "${userMessageCorregido}"`);
     }
     
-    console.log('📝 Contexto enviado a Groq:');
-    console.log(listaProductos);
+    // Obtener productos
+    const productos = await getProducts();
+    console.log(`📊 Productos: ${productos.length}`);
     
-    // 🤖 CONFIGURAR GROQ
+    // Generar contexto
+    const contexto = generarContextoCompleto(productos);
+    
+    // Configurar Groq
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      console.error('❌ GROQ_API_KEY no configurada');
-      return res.status(500).json({ 
-        reply: 'Asistente no disponible. Contacta por WhatsApp +30 699 318 5757' 
-      });
+      return res.status(500).json({ reply: 'Error: Groq no configurado' });
     }
     
-    console.log('🧠 Llamando a Groq...');
     const groq = new Groq({ apiKey });
     
-    // 🧠 SYSTEM PROMPT
-    const systemPrompt = `Eres "Scooter", el asistente virtual de Electric Scooter House. Usa 🐶.
+    // 🧠 SYSTEM PROMPT INTELIGENTE
+    const systemPrompt = `Eres "Scooter", un asistente virtual INTELIGENTE y AMABLE de Electric Scooter House. Usa 🐶.
 
-${listaProductos}
+${contexto}
 
-REGLAS IMPORTANTES:
-1. SIEMPRE usa la lista de productos para responder sobre precios, disponibilidad y características.
-2. Cuando te pregunten "qué venden" o "qué productos tienen", MUESTRA la lista completa con nombres y precios.
-3. Si la lista tiene productos, NUNCA digas que no hay productos.
-4. Responde en español, breve y amable.
-5. Contacto de la tienda: WhatsApp +30 699 318 5757`;
+⚠️ IMPORTANTE: TIENES ACCESO A TODA ESTA INFORMACIÓN:
+- Productos: nombres, precios, categorías, stock, descripciones, descuentos, colores, especificaciones técnicas.
+- También eres un asistente general: puedes responder preguntas sobre tecnología, movilidad eléctrica, consejos de compra, etc.
 
-    // 🚀 LLAMAR A GROQ
+REGLAS:
+1. SIEMPRE usa la información de los productos para responder sobre la tienda.
+2. Si te preguntan por colores, MUESTRA los colores disponibles.
+3. Si te preguntan por especificaciones, MUESTRA las especificaciones técnicas.
+4. Si la pregunta NO es sobre la tienda, RESPONDE igual (eres un asistente general).
+5. Responde en español, breve pero completo.
+6. Contacto: WhatsApp +30 699 318 5757
+7. Sé amable y cercano.`;
+
+    // Llamar a Groq
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages.slice(-10)
       ],
-      temperature: 0.7,
-      max_tokens: 600
+      temperature: 0.8,
+      max_tokens: 800
     });
     
     const reply = completion.choices[0]?.message?.content || 'No pude procesar tu consulta.';
-    console.log(`✅ Respuesta generada (${reply.length} caracteres)`);
-    console.log(`📝 Respuesta: "${reply.substring(0, 100)}..."`);
-    
+    console.log(`✅ Respuesta: ${reply.substring(0, 50)}...`);
     res.status(200).json({ reply });
     
   } catch (error) {
-    console.error('❌ Error en el chat:', error.message);
-    console.error('📋 Stack:', error.stack);
-    res.status(500).json({ 
-      reply: 'Error. Contáctanos por WhatsApp +30 699 318 5757' 
-    });
+    console.error('❌ Error:', error.message);
+    res.status(500).json({ reply: 'Error. Contacta WhatsApp +30 699 318 5757' });
   }
 }

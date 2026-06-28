@@ -1,4 +1,4 @@
-// api/chat.js - VERSIÓN DEFINITIVA CON IA INTELIGENTE
+// api/chat.js - VERSIÓN DEFINITIVA Y CORREGIDA (SOLO ESTE ARCHIVO)
 import admin from 'firebase-admin';
 import Groq from 'groq-sdk';
 
@@ -93,7 +93,7 @@ const normalizarTexto = (texto) => {
 };
 
 // ============================================================
-// 📦 OBTENER TODOS LOS DATOS DE LOS PRODUCTOS
+// 📦 OBTENER PRODUCTOS (VERSIÓN SIMPLE Y SEGURA)
 // ============================================================
 const getProducts = async () => {
   if (!db) return [];
@@ -105,52 +105,19 @@ const getProducts = async () => {
     snapshot.forEach(doc => {
       const d = doc.data();
       
-      // Extraer todos los datos disponibles
-      const nombre = d.nombre || 'Sin nombre';
-      const precio = d.precio || 0;
-      const categoria = d.categoria || 'General';
-      const stock = d.stock || 0;
-      const descripcion = d.descripcion || '';
-      const descuento = d.descuento || 0;
-      const rebaja = d.rebaja || false;
-      const nuevo = d.nuevo || false;
-      const masVendido = d.masVendido || false;
-      
-      // Colores
+      // Leer colores (si existen)
       let colores = [];
       if (d.opciones && d.opciones.colores && Array.isArray(d.opciones.colores)) {
-        colores = d.opciones.colores.map(c => ({
-          nombre: c.nombre || 'Sin color',
-          codigo: c.codigoColor || '#000000',
-          precioExtra: c.precioExtra || 0,
-          stock: c.stock || 0,
-          imagenes: c.imagenes || []
-        }));
+        colores = d.opciones.colores.map(c => c.nombre || 'Sin color').filter(c => c && c !== 'Sin color');
       }
       
-      const especificaciones = d.especificaciones || {};
-      const imagenes = d.imagenes || [];
-      const opciones = d.opciones || {};
-      const stockCombinaciones = d.stockCombinaciones || [];
-      const updatedAt = d.updatedAt || null;
-      
       productos.push({
-        id: doc.id,
-        nombre,
-        precio,
-        categoria,
-        stock,
-        descripcion,
-        descuento,
-        rebaja,
-        nuevo,
-        masVendido,
-        colores,
-        especificaciones,
-        imagenes,
-        opciones,
-        stockCombinaciones,
-        updatedAt
+        nombre: d.nombre || 'Sin nombre',
+        precio: d.precio || 0,
+        categoria: d.categoria || 'General',
+        stock: d.stock || 0,
+        descripcion: d.descripcion || '',
+        colores: colores,
       });
     });
     
@@ -163,9 +130,9 @@ const getProducts = async () => {
 };
 
 // ============================================================
-// 📝 GENERAR CONTEXTO COMPLETO
+// 📝 GENERAR CONTEXTO (SIMPLE Y CLARO)
 // ============================================================
-const generarContextoCompleto = (productos) => {
+const generarContexto = (productos) => {
   if (!productos || productos.length === 0) {
     return 'No hay productos disponibles en la tienda.';
   }
@@ -187,28 +154,8 @@ const generarContextoCompleto = (productos) => {
       contexto += `   📦 Stock: ${p.stock} unidades\n`;
     }
     
-    if (p.descuento > 0) {
-      contexto += `   🔥 OFERTA: -${p.descuento}%\n`;
-    }
-    
-    if (p.rebaja) contexto += `   🏷️ EN REBAJA\n`;
-    if (p.nuevo) contexto += `   ✨ NUEVO\n`;
-    if (p.masVendido) contexto += `   ⭐ MÁS VENDIDO\n`;
-    
     if (p.colores && p.colores.length > 0) {
-      const nombresColores = p.colores.map(c => c.nombre).filter(n => n && n !== 'Sin color');
-      if (nombresColores.length > 0) {
-        contexto += `   🎨 Colores: ${nombresColores.join(', ')}\n`;
-      }
-    }
-    
-    if (p.especificaciones && Object.keys(p.especificaciones).length > 0) {
-      contexto += `   ⚙️ Especificaciones:\n`;
-      for (const [key, value] of Object.entries(p.especificaciones)) {
-        if (value) {
-          contexto += `      - ${key}: ${value}\n`;
-        }
-      }
+      contexto += `   🎨 Colores: ${p.colores.join(', ')}\n`;
     }
     
     contexto += '\n';
@@ -238,10 +185,10 @@ export default async function handler(req, res) {
     
     // Obtener productos
     const productos = await getProducts();
-    console.log(`📊 Productos: ${productos.length}`);
+    console.log(`📊 Productos encontrados: ${productos.length}`);
     
     // Generar contexto
-    const contexto = generarContextoCompleto(productos);
+    const contexto = generarContexto(productos);
     
     // Configurar Groq
     const apiKey = process.env.GROQ_API_KEY;
@@ -251,23 +198,17 @@ export default async function handler(req, res) {
     
     const groq = new Groq({ apiKey });
     
-    // 🧠 SYSTEM PROMPT INTELIGENTE
+    // 🧠 SYSTEM PROMPT
     const systemPrompt = `Eres "Scooter", un asistente virtual INTELIGENTE y AMABLE de Electric Scooter House. Usa 🐶.
 
 ${contexto}
 
-⚠️ IMPORTANTE: TIENES ACCESO A TODA ESTA INFORMACIÓN:
-- Productos: nombres, precios, categorías, stock, descripciones, descuentos, colores, especificaciones técnicas.
-- También eres un asistente general: puedes responder preguntas sobre tecnología, movilidad eléctrica, consejos de compra, etc.
-
 REGLAS:
 1. SIEMPRE usa la información de los productos para responder sobre la tienda.
 2. Si te preguntan por colores, MUESTRA los colores disponibles.
-3. Si te preguntan por especificaciones, MUESTRA las especificaciones técnicas.
-4. Si la pregunta NO es sobre la tienda, RESPONDE igual (eres un asistente general).
-5. Responde en español, breve pero completo.
-6. Contacto: WhatsApp +30 699 318 5757
-7. Sé amable y cercano.`;
+3. Si la pregunta NO es sobre la tienda, RESPONDE igual (eres un asistente general).
+4. Responde en español, breve y amable.
+5. Contacto: WhatsApp +30 699 318 5757`;
 
     // Llamar a Groq
     const completion = await groq.chat.completions.create({
@@ -276,8 +217,8 @@ REGLAS:
         { role: 'system', content: systemPrompt },
         ...messages.slice(-10)
       ],
-      temperature: 0.8,
-      max_tokens: 800
+      temperature: 0.7,
+      max_tokens: 600
     });
     
     const reply = completion.choices[0]?.message?.content || 'No pude procesar tu consulta.';

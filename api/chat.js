@@ -1,4 +1,4 @@
-// api/chat.js - PARA VERCEL (SIN dotenv)
+// api/chat.js - VERSIÓN DEFINITIVA PARA VERCEL
 import admin from 'firebase-admin';
 import Groq from 'groq-sdk';
 

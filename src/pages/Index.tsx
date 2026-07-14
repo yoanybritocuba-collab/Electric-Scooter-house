@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
-import { collection, getDocs, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { useState, useEffect, useMemo } from "react";
+import { collection, getDocs, query, limit, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Link, useLocation } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import CategoryCard from "@/components/CategoryCard";
 import MobileBottomBar from "@/components/MobileBottomBar";
 import ViberButton from "@/components/ViberAppButton";
 import MainSlider from "@/components/MainSlider";
 import MobileHero from "@/components/MobileHero";
-import { motion } from "framer-motion";
 import { 
   Star, Percent, Baby, Accessibility, Sparkles,
   Gauge, Bike, Wrench, Settings, Package,
@@ -97,14 +95,13 @@ interface OfertaConfig {
 
 const Index = () => {
   const { t, lang } = useLanguage();
-  const location = useLocation();
   const [products, setProducts] = useState<Product[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [masVendidos, setMasVendidos] = useState<string[]>([]);
   const [ofertas, setOfertas] = useState<OfertaConfig>({});
   const [nuevosIds, setNuevosIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const getText = (es: string, en: string, gr: string) => {
     if (lang === 'en') return en;
@@ -127,28 +124,25 @@ const Index = () => {
     return cat.nombre;
   };
 
-  // ✅ FUNCIÓN MEJORADA PARA OBTENER IMAGEN DE CATEGORÍA
+  // 🔥 FUNCIÓN PARA OBTENER IMAGEN DE CATEGORÍA (RECUPERADA)
   const getCategoryImage = (categoriaId: string): string | null => {
     const productsInCategory = products.filter(p => 
       p.categoria?.toLowerCase() === categoriaId?.toLowerCase()
     );
     
     for (const product of productsInCategory) {
-      // 1. Buscar en opciones.colores
       if (product.opciones?.colores && product.opciones.colores.length > 0) {
         const primerColor = product.opciones.colores[0];
         if (primerColor.imagenes && primerColor.imagenes.length > 0) {
           return primerColor.imagenes[0];
         }
       }
-      // 2. Buscar en variantesUnificadas
       if (product.variantesUnificadas && product.variantesUnificadas.length > 0) {
         const primeraVariante = product.variantesUnificadas[0];
         if (primeraVariante?.imagen && !primeraVariante.imagen.includes("placehold.co")) {
           return primeraVariante.imagen;
         }
       }
-      // 3. Buscar en imágenes generales
       if (product.imagenes && product.imagenes.length > 0 && product.imagenes[0]) {
         return product.imagenes[0];
       }
@@ -156,19 +150,23 @@ const Index = () => {
     return null;
   };
 
-  // Escucha en tiempo real
-  useEffect(() => {
-    const unsubscribeProducts = onSnapshot(collection(db, "productos"), (snapshot) => {
+  // 🔥 CARGAR PRODUCTOS
+  const cargarProductos = async () => {
+    try {
+      const productsQuery = query(collection(db, "productos"), limit(30));
+      const snapshot = await getDocs(productsQuery);
       const productos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
       setProducts(productos);
-      console.log(`✅ Productos actualizados en tiempo real: ${productos.length}`);
-      setLoading(false);
-    }, (error) => {
-      console.error("❌ Error en tiempo real productos:", error);
-      setLoading(false);
-    });
+      console.log(`✅ Productos cargados: ${productos.length}`);
+    } catch (error) {
+      console.error("❌ Error cargando productos:", error);
+    }
+  };
 
-    const unsubscribeCategorias = onSnapshot(collection(db, "categorias"), (snapshot) => {
+  // 🔥 CARGAR CATEGORÍAS
+  const cargarCategorias = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "categorias"));
       const cats = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Categoria));
       if (cats.length === 0) {
         const defaultCats = [
@@ -184,101 +182,114 @@ const Index = () => {
       } else {
         setCategorias(cats.sort((a, b) => a.orden - b.orden));
       }
-    });
-
-    const unsubscribeConfig = onSnapshot(collection(db, "configuracion"), (snapshot) => {
-      const masVendidosConfig = snapshot.docs.find(d => d.id === "masVendidos");
-      if (masVendidosConfig?.exists()) {
-        setMasVendidos(masVendidosConfig.data().productos || []);
-      }
-
-      const ofertasConfig = snapshot.docs.find(d => d.id === "ofertas");
-      if (ofertasConfig?.exists()) {
-        const data = ofertasConfig.data();
-        setOfertas(data.productos || data);
-      }
-
-      const nuevosConfig = snapshot.docs.find(d => d.id === "nuevos");
-      if (nuevosConfig?.exists()) {
-        const nuevosData = nuevosConfig.data().productos || {};
-        const ahora = new Date();
-        ahora.setHours(0, 0, 0, 0);
-        
-        const activos = Object.keys(nuevosData).filter(id => {
-          const prod = nuevosData[id];
-          if (!prod.activo) return false;
-          
-          let inicio, fin;
-          if (prod.fechaInicio?.toDate) {
-            inicio = prod.fechaInicio.toDate();
-          } else if (prod.fechaInicio) {
-            inicio = new Date(prod.fechaInicio);
-          } else {
-            return false;
-          }
-          
-          if (prod.fechaFin?.toDate) {
-            fin = prod.fechaFin.toDate();
-          } else if (prod.fechaFin) {
-            fin = new Date(prod.fechaFin);
-          } else {
-            return false;
-          }
-          
-          inicio.setHours(0, 0, 0, 0);
-          fin.setHours(23, 59, 59, 999);
-          
-          return inicio <= ahora && fin >= ahora;
-        });
-        
-        console.log("✅ Productos nuevos activos:", activos);
-        setNuevosIds(activos);
-      }
-    });
-
-    return () => {
-      unsubscribeProducts();
-      unsubscribeCategorias();
-      unsubscribeConfig();
-    };
-  }, []);
-
-  // Restaurar scroll
-  useEffect(() => {
-    const savedScroll = sessionStorage.getItem('homeScrollPosition');
-    if (savedScroll && !loading) {
-      const scrollPos = parseInt(savedScroll);
-      console.log("🔄 [Index] Restaurando scroll a:", scrollPos);
-      
-      setTimeout(() => {
-        window.scrollTo(0, scrollPos);
-        sessionStorage.removeItem('homeScrollPosition');
-        console.log("✅ Scroll restaurado a:", window.scrollY);
-      }, 150);
+    } catch (error) {
+      console.error("❌ Error cargando categorías:", error);
     }
-  }, [loading]);
-
-  const categories = categorias.filter(c => c.activo);
-  
-  const masVendidosList = products.filter(p => 
-    masVendidos.includes(p.id) && p.id !== "aPMG8JBnCm9cRsLNnFJ6"
-  );
-  
-  const ofertasList = products.filter(p => 
-    ofertas[p.id]?.activo && p.id !== "aPMG8JBnCm9cRsLNnFJ6"
-  );
-  
-  const nuevosList = products.filter(p => 
-    nuevosIds.includes(p.id) && p.id !== "aPMG8JBnCm9cRsLNnFJ6"
-  );
-
-  const handleProductClick = (productId: string) => {
-    const scrollPosition = window.scrollY;
-    console.log("📌 [Index] Guardando scroll:", scrollPosition);
-    sessionStorage.setItem('homeScrollPosition', scrollPosition.toString());
   };
 
-  // Función para verificar si una categoría tiene productos en oferta
+  // 🔥 CARGAR CONFIGURACIÓN
+  const cargarConfiguracion = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "configuracion"));
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (doc.id === "masVendidos") {
+          setMasVendidos(data.productos || []);
+        } else if (doc.id === "ofertas") {
+          setOfertas(data.productos || data);
+        } else if (doc.id === "nuevos") {
+          const nuevosData = data.productos || {};
+          const ahora = new Date();
+          ahora.setHours(0, 0, 0, 0);
+          
+          const activos = Object.keys(nuevosData).filter(id => {
+            const prod = nuevosData[id];
+            if (!prod.activo) return false;
+            
+            let inicio, fin;
+            if (prod.fechaInicio?.toDate) {
+              inicio = prod.fechaInicio.toDate();
+            } else if (prod.fechaInicio) {
+              inicio = new Date(prod.fechaInicio);
+            } else {
+              return false;
+            }
+            
+            if (prod.fechaFin?.toDate) {
+              fin = prod.fechaFin.toDate();
+            } else if (prod.fechaFin) {
+              fin = new Date(prod.fechaFin);
+            } else {
+              return false;
+            }
+            
+            inicio.setHours(0, 0, 0, 0);
+            fin.setHours(23, 59, 59, 999);
+            
+            return inicio <= ahora && fin >= ahora;
+          });
+          
+          console.log("✅ Productos nuevos activos:", activos);
+          setNuevosIds(activos);
+        }
+      });
+    } catch (error) {
+      console.error("❌ Error cargando configuración:", error);
+    }
+  };
+
+  // 🔥 CARGAR TODOS LOS DATOS
+  useEffect(() => {
+    const cargarTodo = async () => {
+      setLoading(true);
+      await Promise.all([
+        cargarProductos(),
+        cargarCategorias(),
+        cargarConfiguracion()
+      ]);
+      setLoading(false);
+    };
+    
+    cargarTodo();
+  }, []);
+
+  // 🔥 LISTENER PARA TIEMPO REAL
+  useEffect(() => {
+    if (products.length === 0) return;
+    
+    const unsubscribe = onSnapshot(
+      query(collection(db, "productos"), limit(30)),
+      (snapshot) => {
+        const productos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
+        setProducts(productos);
+        console.log(`✅ Productos actualizados en tiempo real: ${productos.length}`);
+      },
+      (error) => {
+        console.error("❌ Error en tiempo real productos:", error);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, []);
+
+  const categories = useMemo(() => categorias.filter(c => c.activo), [categorias]);
+  
+  const masVendidosList = useMemo(() => 
+    products.filter(p => masVendidos.includes(p.id) && p.id !== "aPMG8JBnCm9cRsLNnFJ6"),
+    [products, masVendidos]
+  );
+  
+  const ofertasList = useMemo(() => 
+    products.filter(p => ofertas[p.id]?.activo && p.id !== "aPMG8JBnCm9cRsLNnFJ6"),
+    [products, ofertas]
+  );
+  
+  const nuevosList = useMemo(() => 
+    products.filter(p => nuevosIds.includes(p.id) && p.id !== "aPMG8JBnCm9cRsLNnFJ6"),
+    [products, nuevosIds]
+  );
+
   const getCategoryBadges = (categoriaId: string) => {
     const productsInCategory = products.filter(p => p.categoria?.toLowerCase() === categoriaId?.toLowerCase());
     
@@ -305,11 +316,7 @@ const Index = () => {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">     
           {items.slice(0, 4).map((p) => (
-            <div 
-              key={p.id}
-              onClick={() => handleProductClick(p.id)}
-              className="cursor-pointer"
-            >
+            <div key={p.id} className="cursor-pointer">
               <ProductCard
                 id={p.id}
                 nombre={p.nombre}
@@ -335,10 +342,10 @@ const Index = () => {
 
   if (loading && products.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">{t("messages.loading") || "Cargando..."}</p>
+          <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400 text-sm">Cargando...</p>
         </div>
       </div>
     );
@@ -350,7 +357,6 @@ const Index = () => {
 
       <div className="relative z-10 bg-black">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          {/* SECCIÓN DE CATEGORÍAS */}
           <section className="py-16">
             <h2 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-white mb-8">
               {t("home.categories") || "Categorías"}
@@ -359,6 +365,7 @@ const Index = () => {
               {categories.map((cat) => {
                 const Icon = categoryIcons[cat.id] || Package;
                 const nombreCategoria = getNombreCategoria(cat);
+                // 🔥 RECUPERADA LA IMAGEN
                 const categoryImage = getCategoryImage(cat.id);
                 const productCount = products.filter(p => p.categoria?.toLowerCase() === cat.id?.toLowerCase()).length;
                 const { tieneTop, tieneNuevo, tieneOferta, descuento } = getCategoryBadges(cat.id);

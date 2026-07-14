@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -19,3 +19,8 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 export const facebookProvider = new FacebookAuthProvider();
+
+// 🔥 HABILITAR CACHÉ (guarda productos en el navegador para que carguen más rápido)
+enableIndexedDbPersistence(db).catch((err) => {
+  console.warn('⚠️ Firebase cache error:', err);
+});

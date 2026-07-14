@@ -57,7 +57,6 @@ const getSafeArray = (arr: any): any[] => {
 
 // ========== DICCIONARIO LOCAL DE TRADUCCIONES (PALABRAS FIJAS) ==========
 const traduccionesEspecificacionesLocal: Record<string, Record<string, string>> = {
-  // Especificaciones básicas
   'Batería': { en: 'Battery', gr: 'Μπαταρία' },
   'Autonomía': { en: 'Range', gr: 'Αυτονομία' },
   'Potencia': { en: 'Power', gr: 'Ισχύς' },
@@ -94,22 +93,15 @@ const traduccionesEspecificacionesLocal: Record<string, Record<string, string>> 
   'Peso bruto (G.W.)': { en: 'Gross Weight (G.W.)', gr: 'Μικτό Βάρος (G.W.)' },
 };
 
-// ========== FUNCIÓN PARA TRADUCIR ETIQUETAS (HÍBRIDA) ==========
+// ========== FUNCIÓN PARA TRADUCIR ETIQUETAS ==========
 const traducirEtiqueta = async (key: string, lang: string): Promise<string> => {
-  // Si el idioma es español, devolver la clave original
-  if (lang === 'es') {
-    return key;
-  }
-
-  // 1. PRIMERO: Buscar en el diccionario local (palabras fijas)
+  if (lang === 'es') return key;
   if (lang === 'en' && traduccionesEspecificacionesLocal[key]?.en) {
     return traduccionesEspecificacionesLocal[key].en;
   }
   if (lang === 'gr' && traduccionesEspecificacionesLocal[key]?.gr) {
     return traduccionesEspecificacionesLocal[key].gr;
   }
-
-  // 2. SEGUNDO: Usar Google Translate para el resto
   const targetLang = lang === 'en' ? 'en' : 'el';
   try {
     const result = await translateText(key, targetLang);
@@ -119,8 +111,6 @@ const traducirEtiqueta = async (key: string, lang: string): Promise<string> => {
   } catch (error) {
     console.error('Error traduciendo con Google:', error);
   }
-
-  // 3. Si todo falla, devolver la clave original
   return key;
 };
 
@@ -146,9 +136,6 @@ const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  
-  // Especificaciones desplegables
-  const [showAllSpecs, setShowAllSpecs] = useState(false);
   
   // Especificaciones
   const [specItems, setSpecItems] = useState<any[]>([]);
@@ -184,8 +171,11 @@ const ProductDetail = () => {
     colors: { es: "Colores", en: "Colors", gr: "Χρώματα" },
     amperios: { es: "Amperios", en: "Amps", gr: "Αμπέρ" },
     specsTitle: { es: "Especificaciones", en: "Specifications", gr: "Προδιαγραφές" },
-    showMore: { es: "Ver más", en: "Show more", gr: "Δείτε περισσότερα" },
-    showLess: { es: "Ver menos", en: "Show less", gr: "Δείτε λιγότερα" },
+    // 🔥 NUEVAS TRADUCCIONES PARA STOCK
+    stockAvailable: { es: "Disponible", en: "Available", gr: "Διαθέσιμο" },
+    stockSoldOut: { es: "AGOTADO", en: "SOLD OUT", gr: "ΕΞΑΝΤΛΗΘΗΚΕ" },
+    stockLastUnits: { es: "¡ÚLTIMAS UNIDADES!", en: "LAST UNITS!", gr: "ΤΕΛΕΥΤΑΙΕΣ ΜΟΝΑΔΕΣ!" },
+    stockFewLeft: { es: "Quedan pocas unidades", en: "Few units left", gr: "Λίγες μονάδες έμειναν" },
   };
 
   const getFixedText = (key: keyof typeof translations): string => {
@@ -347,27 +337,15 @@ const ProductDetail = () => {
     }
   }, [lang]);
 
-  // ========== RESTAURAR SCROLL ==========
+  // ========== SCROLL AL PRINCIPIO DEL PRODUCTO ==========
   useEffect(() => {
-    const savedScroll = sessionStorage.getItem(`product_scroll_${id}`);
-    if (savedScroll && !loading && scrollDoneRef.current === false) {
-      const scrollPos = parseInt(savedScroll);
+    if (!loading && product) {
       setTimeout(() => {
-        window.scrollTo(0, scrollPos);
-        sessionStorage.removeItem(`product_scroll_${id}`);
+        window.scrollTo({ top: 0, behavior: 'instant' });
         scrollDoneRef.current = true;
-      }, 150);
+      }, 100);
     }
-  }, [loading, id]);
-
-  useEffect(() => {
-    const saveScroll = () => {
-      const currentScroll = window.scrollY;
-      sessionStorage.setItem(`product_scroll_${id}`, currentScroll.toString());
-    };
-    window.addEventListener('beforeunload', saveScroll);
-    return () => window.removeEventListener('beforeunload', saveScroll);
-  }, [id]);
+  }, [loading, product]);
 
   // ========== FUNCIONES ==========
   const goBack = () => navigate(-1);
@@ -396,13 +374,13 @@ const ProductDetail = () => {
 
   const obtenerMensajeStock = (stock: number): { texto: string; color: string; icon: any } => {
     if (stock === 0) {
-      return { texto: 'AGOTADO', color: 'text-red-500', icon: AlertCircle };
+      return { texto: getFixedText('stockSoldOut'), color: 'text-red-500', icon: AlertCircle };
     } else if (stock >= 1 && stock <= 3) {
-      return { texto: '🔥 ¡ÚLTIMAS UNIDADES!', color: 'text-orange-500', icon: AlertCircle };
+      return { texto: getFixedText('stockLastUnits'), color: 'text-orange-500', icon: AlertCircle };
     } else if (stock >= 4 && stock <= 5) {
-      return { texto: '⚠️ Quedan pocas unidades', color: 'text-yellow-500', icon: AlertCircle };
+      return { texto: getFixedText('stockFewLeft'), color: 'text-yellow-500', icon: AlertCircle };
     } else {
-      return { texto: 'Disponible', color: 'text-green-500', icon: null };
+      return { texto: getFixedText('stockAvailable'), color: 'text-green-500', icon: null };
     }
   };
 
@@ -584,7 +562,7 @@ const ProductDetail = () => {
   // ========== LOADING ==========
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center pt-[90px] md:pt-24">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#2ecc71] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">{getFixedText('loading')}</p>
@@ -595,14 +573,11 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center pt-[90px] md:pt-24">
         <p className="text-gray-400">{getFixedText('notFound')}</p>
       </div>
     );
   }
-
-  const visibleSpecs = specItems.slice(0, 3);
-  const hiddenSpecs = specItems.slice(3);
 
   // ========== RENDER ==========
   return (
@@ -620,9 +595,6 @@ const ProductDetail = () => {
           </button>
         </div>
 
-        {/* ========================================================= */}
-        {/* ===== MÓVIL: LAYOUT ===== */}
-        {/* ========================================================= */}
         {isMobile ? (
           <div className="space-y-3">
             
@@ -678,138 +650,139 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 2. FILA: PRECIO + ESPECIFICACIONES ===== */}
-            <div className="grid grid-cols-5 gap-3">
-              
-              {/* COLUMNA IZQUIERDA: PRECIO */}
-              <div className="col-span-2">
-                <h1 className="text-lg font-bold text-white leading-tight line-clamp-2">
+            {/* ===== 2. NOMBRE + PRECIO + STOCK (IZQUIERDA) + OPCIONES (DERECHA) ===== */}
+            <div className="grid grid-cols-5 gap-2">
+              {/* COLUMNA IZQUIERDA (3 columnas): NOMBRE + PRECIO + STOCK */}
+              <div className="col-span-3">
+                <h1 className="text-base font-bold text-white leading-tight line-clamp-2">
                   {product.nombre}
                 </h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[#2ecc71] font-bold text-2xl">
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[#2ecc71] font-bold text-xl">
                     {precioFinal.toFixed(2)}€
                   </p>
                   {product.descuento && product.descuento > 0 ? (
-                    <p className="text-gray-500 line-through text-sm">{product.precio}€</p>
+                    <p className="text-gray-500 line-through text-xs">{product.precio}€</p>
                   ) : null}
                 </div>
                 {stockActual > 0 && (
-                  <div className={`flex items-center gap-1.5 mt-1 text-xs ${mensajeStock.color}`}>
+                  <div className={`flex items-center gap-1 mt-0.5 text-xs ${mensajeStock.color}`}>
                     <span>{mensajeStock.texto}</span>
-                    <span className="text-gray-500 text-[10px]">({stockActual})</span>
+                    <span className="text-gray-500 text-[9px]">({stockActual})</span>
                   </div>
                 )}
                 {stockActual === 0 && (
-                  <div className="flex items-center gap-1.5 mt-1 text-xs text-red-500">
-                    <AlertCircle size={14} />
-                    <span>AGOTADO</span>
+                  <div className="flex items-center gap-1 mt-0.5 text-xs text-red-500">
+                    <AlertCircle size={12} />
+                    <span>{getFixedText('stockSoldOut')}</span>
                   </div>
                 )}
               </div>
 
-              {/* COLUMNA DERECHA: ESPECIFICACIONES */}
-              <div className="col-span-3 bg-gray-900/40 rounded-xl p-3 border border-gray-700/30 flex flex-col min-h-[120px]">
-                <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-2 flex-shrink-0">
-                  <Settings size={12} className="text-purple-500" />
-                  {getFixedText('specsTitle')}
+              {/* COLUMNA DERECHA (2 columnas): OPCIONES (Voltajes, Potencias, Amperios) */}
+              <div className="col-span-2 space-y-1.5">
+                {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
+                  <OpcionSelector
+                    titulo={getFixedText('voltajes')}
+                    icon={Battery}
+                    opciones={product.opciones.voltajes}
+                    selected={selectedVoltaje}
+                    onSelect={setSelectedVoltaje}
+                    compact={true}
+                  />
+                )}
+
+                {product.opciones?.potencias && product.opciones.potencias.length > 0 && (
+                  <OpcionSelector
+                    titulo={getFixedText('potencias')}
+                    icon={Gauge}
+                    opciones={product.opciones.potencias}
+                    selected={selectedPotencia}
+                    onSelect={setSelectedPotencia}
+                    compact={true}
+                  />
+                )}
+
+                {product.opciones?.amperios && product.opciones.amperios.length > 0 && (
+                  <OpcionSelector
+                    titulo={getFixedText('amperios')}
+                    icon={Zap}
+                    opciones={product.opciones.amperios}
+                    selected={selectedAmperio}
+                    onSelect={setSelectedAmperio}
+                    compact={true}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* ===== 3. COLORES (DEBAJO) ===== */}
+            {product.opciones?.colores && product.opciones.colores.length > 0 && (
+              <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
+                <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                  <Palette size={12} className="text-purple-500" />
+                  {getFixedText('colors')}
                 </p>
-                
-                <div className="space-y-1.5 flex-1">
-                  {visibleSpecs.length > 0 ? (
-                    visibleSpecs.map(({ key, displayTitle, finalValue }) => (
-                      <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
-                        <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
-                        <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-[10px]">Sin especificaciones</p>
-                  )}
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {product.opciones.colores.map((color: OpcionItem) => {
+                    const isSelected = selectedColor?.id === color.id;
+                    const isOutOfStock = color.stock === 0;
+                    const nombre = getText(color.nombre, color.nombre_en, color.nombre_gr);
+                    
+                    return (
+                      <button
+                        key={color.id}
+                        onClick={() => !isOutOfStock && handleColorSelect(color)}
+                        disabled={isOutOfStock}
+                        className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs transition-all ${
+                          isSelected
+                            ? 'border-purple-500 bg-purple-500/20'
+                            : isOutOfStock
+                              ? 'border-gray-700 bg-gray-800/30 opacity-50 cursor-not-allowed'
+                              : 'border-gray-700 bg-gray-800/50 hover:border-gray-500'
+                        }`}
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full border border-gray-600 flex-shrink-0"
+                          style={{ backgroundColor: color.codigoColor || '#888' }}
+                        />
+                        <span className={isSelected ? 'text-purple-400' : 'text-white'}>
+                          {nombre}
+                        </span>
+                        {color.precioExtra > 0 && (
+                          <span className="text-gray-400 text-[8px]">+{color.precioExtra}€</span>
+                        )}
+                        {isSelected && <Check size={10} className="text-purple-500" />}
+                        {isOutOfStock && <span className="text-[8px] text-red-500">Agotado</span>}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
 
-                {hiddenSpecs.length > 0 && (
-                  <button
-                    onClick={() => setShowAllSpecs(!showAllSpecs)}
-                    className="flex items-center justify-center gap-1 mt-2 text-[10px] text-purple-400 hover:text-purple-300 transition-colors pt-1 border-t border-gray-700/50 flex-shrink-0"
-                  >
-                    {showAllSpecs ? (
-                      <>
-                        <ChevronUp size={14} />
-                        {getFixedText('showLess')}
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown size={14} />
-                        {getFixedText('showMore')} ({hiddenSpecs.length})
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {showAllSpecs && hiddenSpecs.length > 0 && (
-                  <div className="space-y-1.5 mt-1.5 pt-1.5 border-t border-gray-700/30">
-                    {hiddenSpecs.map(({ key, displayTitle, finalValue }) => (
-                      <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
-                        <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
-                        <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
-                      </div>
-                    ))}
-                  </div>
+            {/* ===== 4. ESPECIFICACIONES COMPLETAS ===== */}
+            <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
+              <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Settings size={12} className="text-purple-500" />
+                {getFixedText('specsTitle')}
+              </p>
+              
+              <div className="space-y-1.5">
+                {specItems.length > 0 ? (
+                  specItems.map(({ key, displayTitle, finalValue }) => (
+                    <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
+                      <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
+                      <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-[10px]">Sin especificaciones</p>
                 )}
               </div>
             </div>
 
-            {/* ===== 3. OPCIONES ===== */}
-            <div className="space-y-2">
-              {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
-                <OpcionSelector
-                  titulo={getFixedText('voltajes')}
-                  icon={Battery}
-                  opciones={product.opciones.voltajes}
-                  selected={selectedVoltaje}
-                  onSelect={setSelectedVoltaje}
-                  compact={true}
-                />
-              )}
-
-              {product.opciones?.potencias && product.opciones.potencias.length > 0 && (
-                <OpcionSelector
-                  titulo={getFixedText('potencias')}
-                  icon={Gauge}
-                  opciones={product.opciones.potencias}
-                  selected={selectedPotencia}
-                  onSelect={setSelectedPotencia}
-                  compact={true}
-                />
-              )}
-
-              {product.opciones?.amperios && product.opciones.amperios.length > 0 && (
-                <OpcionSelector
-                  titulo={getFixedText('amperios')}
-                  icon={Zap}
-                  opciones={product.opciones.amperios}
-                  selected={selectedAmperio}
-                  onSelect={setSelectedAmperio}
-                  compact={true}
-                />
-              )}
-
-              {product.opciones?.colores && product.opciones.colores.length > 0 && (
-                <OpcionSelector
-                  titulo={getFixedText('colors')}
-                  icon={Palette}
-                  opciones={product.opciones.colores}
-                  selected={selectedColor}
-                  onSelect={handleColorSelect}
-                  showColor={true}
-                  colorKey="codigoColor"
-                  compact={true}
-                />
-              )}
-            </div>
-
-            {/* ===== 4. BOTONES ===== */}
+            {/* ===== 5. BOTONES ===== */}
             <div className="flex flex-col gap-2 pt-1">
               <button
                 onClick={handleAddToCart}
@@ -832,7 +805,7 @@ const ProductDetail = () => {
                 }`}
               >
                 {addedToCart ? <Check size={16} /> : <ShoppingCart size={16} />}
-                {stockActual === 0 ? 'AGOTADO' : getFixedText('addToCart')} · {precioFinal.toFixed(2)}€
+                {stockActual === 0 ? getFixedText('stockSoldOut') : getFixedText('addToCart')} · {precioFinal.toFixed(2)}€
               </button>
               <a
                 href={`viber://contact?number=${viberNumber}`}
@@ -845,7 +818,7 @@ const ProductDetail = () => {
             </div>
           </div>
         ) : (
-          // ======== LAYOUT ESCRITORIO ========
+          // ======== LAYOUT ESCRITORIO (sin cambios) ========
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             
             {/* COLUMNA IZQUIERDA: GALERÍA */}
@@ -924,29 +897,26 @@ const ProductDetail = () => {
 
             {/* COLUMNA DERECHA: INFORMACIÓN */}
             <div className="md:col-span-1 space-y-3 md:space-y-4">
-              
-              {/* PRECIO Y STOCK */}
               <div>
-                <h1 className={`font-bold text-white ${isMobile ? 'text-lg' : 'text-xl md:text-2xl'} leading-tight`}>
+                <h1 className="font-bold text-white text-xl md:text-2xl leading-tight">
                   {product.nombre}
                 </h1>
                 <div className="flex items-center gap-2 md:gap-3 mt-1">
-                  <p className={`text-[#2ecc71] font-bold ${isMobile ? 'text-2xl' : 'text-2xl md:text-3xl'}`}>
+                  <p className="text-[#2ecc71] font-bold text-2xl md:text-3xl">
                     {precioFinal.toFixed(2)}€
                   </p>
                   {product.descuento && product.descuento > 0 ? (
                     <p className="text-gray-500 line-through text-sm md:text-base">{product.precio}€</p>
                   ) : null}
                 </div>
-                <div className={`flex items-center gap-1.5 mt-1 text-xs ${mensajeStock.color}`}>
-                  <span>{mensajeStock.texto}</span>
+                <div className="flex items-center gap-1.5 mt-1 text-xs">
+                  <span className={mensajeStock.color}>{mensajeStock.texto}</span>
                   {stockActual > 0 && (
                     <span className="text-gray-500 text-[10px]">({stockActual})</span>
                   )}
                 </div>
               </div>
 
-              {/* OPCIONES */}
               {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
                 <OpcionSelector
                   titulo={getFixedText('voltajes')}
@@ -993,46 +963,29 @@ const ProductDetail = () => {
                 />
               )}
 
-              {/* BOTONES */}
               <div className="flex flex-col sm:flex-row gap-2 md:gap-3 pt-1 md:pt-2">
                 <button
                   onClick={handleAddToCart}
-                  disabled={
-                    stockActual === 0 ||
-                    (product.opciones?.voltajes?.length > 0 && !selectedVoltaje) ||
-                    (product.opciones?.potencias?.length > 0 && !selectedPotencia) ||
-                    (product.opciones?.amperios?.length > 0 && !selectedAmperio) ||
-                    (product.opciones?.colores?.length > 0 && !selectedColor)
-                  }
-                  className={`flex-1 py-3 md:py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
-                    isMobile ? 'text-sm' : 'text-sm md:text-base'
-                  } ${
-                    stockActual === 0
+                  disabled={stockActual === 0 || (product.opciones?.voltajes?.length > 0 && !selectedVoltaje) || (product.opciones?.potencias?.length > 0 && !selectedPotencia) || (product.opciones?.amperios?.length > 0 && !selectedAmperio) || (product.opciones?.colores?.length > 0 && !selectedColor)}
+                  className={`flex-1 py-3 md:py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm md:text-base ${
+                    stockActual === 0 || (product.opciones?.voltajes?.length > 0 && !selectedVoltaje) || (product.opciones?.potencias?.length > 0 && !selectedPotencia) || (product.opciones?.amperios?.length > 0 && !selectedAmperio) || (product.opciones?.colores?.length > 0 && !selectedColor)
                       ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                      : (product.opciones?.voltajes?.length > 0 && !selectedVoltaje) ||
-                        (product.opciones?.potencias?.length > 0 && !selectedPotencia) ||
-                        (product.opciones?.amperios?.length > 0 && !selectedAmperio) ||
-                        (product.opciones?.colores?.length > 0 && !selectedColor)
-                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                        : addedToCart ? 'bg-green-500 text-white' : 'bg-[#2ecc71] text-black hover:bg-[#27ae60] shadow-[0_0_30px_rgba(46,204,113,0.2)]'
+                      : addedToCart ? 'bg-green-500 text-white' : 'bg-[#2ecc71] text-black hover:bg-[#27ae60] shadow-[0_0_30px_rgba(46,204,113,0.2)]'
                   }`}
                 >
                   {addedToCart ? <Check size={isMobile ? 16 : 20} /> : <ShoppingCart size={isMobile ? 16 : 20} />}
-                  {stockActual === 0 ? 'AGOTADO' : getFixedText('addToCart')} · {precioFinal.toFixed(2)}€
+                  {stockActual === 0 ? getFixedText('stockSoldOut') : getFixedText('addToCart')} · {precioFinal.toFixed(2)}€
                 </button>
                 <a
                   href={`viber://contact?number=${viberNumber}`}
                   onClick={(e) => { e.preventDefault(); window.open(`https://msng.link/vi/${viberNumber}`, '_blank'); }}
-                  className={`px-4 md:px-6 py-3 md:py-3.5 bg-[#7360f2] hover:bg-[#5e4ad9] text-white rounded-xl flex items-center justify-center gap-2 font-medium ${
-                    isMobile ? 'text-xs' : 'text-sm'
-                  }`}
+                  className="px-4 md:px-6 py-3 md:py-3.5 bg-[#7360f2] hover:bg-[#5e4ad9] text-white rounded-xl flex items-center justify-center gap-2 font-medium text-xs md:text-sm"
                 >
                   <MessageCircle size={isMobile ? 16 : 18} />
                   <span className="hidden sm:inline">{getFixedText('viberConsult')}</span>
                 </a>
               </div>
 
-              {/* ESPECIFICACIONES (escritorio) */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
                   <div className="flex flex-wrap gap-1 md:gap-1.5">

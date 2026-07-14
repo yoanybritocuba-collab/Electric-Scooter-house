@@ -7,7 +7,6 @@ const MainSlider = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [textIndex, setTextIndex] = useState(0);
 
-  // Imagen fija para PC
   const image = '/images/hero/hero.avif';
 
   const texts = [
@@ -21,7 +20,6 @@ const MainSlider = () => {
     t("hero.smart")
   ];
 
-  // Texto cambia cada 6 segundos con animación estilo móvil
   useEffect(() => {
     const interval = setInterval(() => {
       setTextIndex((prev) => (prev + 1) % texts.length);
@@ -29,7 +27,6 @@ const MainSlider = () => {
     return () => clearInterval(interval);
   }, [texts.length]);
 
-  // MISMO ESTILO DE ANIMACIÓN QUE MobileHero
   const textVariants = {
     initial: { 
       x: '-100vw', 
@@ -105,7 +102,7 @@ const MainSlider = () => {
         top: 0
       }}
     >
-      {/* IMAGEN FIJA */}
+      {/* IMAGEN FIJA SIN LAZY LOADING (carga inmediata) */}
       <div className="absolute inset-0">
         <img
           src={image}
@@ -119,17 +116,14 @@ const MainSlider = () => {
         />
       </div>
       
-      {/* Loader mientras carga */}
       {!imageLoaded && (
         <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
           <div className="w-16 h-16 border-4 border-[#2ecc71] border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       
-      {/* Overlay degradado */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-5" />
       
-      {/* Contenido con animación - MISMO ESTILO QUE MÓVIL */}
       <div className="absolute inset-0 flex items-center justify-center px-4 overflow-hidden z-10">
         <AnimatePresence mode="wait">
           <motion.div
@@ -140,7 +134,6 @@ const MainSlider = () => {
             exit="exit"
             className="text-center max-w-6xl"
           >
-            {/* Texto superior - MISMO ESTILO VERDE NEÓN */}
             <motion.div
               variants={subTextVariants}
               initial="initial"
@@ -157,7 +150,6 @@ const MainSlider = () => {
               </span>
             </motion.div>
             
-            {/* TEXTO PRINCIPAL - MISMO ESTILO NARANJA QUE MÓVIL */}
             <motion.h1
               className="font-black text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-[1.1] tracking-tight px-2"
               style={{
@@ -170,7 +162,6 @@ const MainSlider = () => {
               {texts[textIndex]}
             </motion.h1>
             
-            {/* Línea decorativa */}
             <motion.div 
               className="w-16 sm:w-20 md:w-24 lg:w-32 h-0.5 sm:h-[3px] md:h-1 bg-gradient-to-r from-[#FF6B35] via-[#2ecc71] to-[#FF6B35] mx-auto my-4 md:my-6 rounded-full shadow-lg"
               variants={lineVariants}

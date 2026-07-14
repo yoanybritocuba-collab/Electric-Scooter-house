@@ -150,6 +150,33 @@ export default function Chatbot() {
     }
   };
 
+  // ============================================================
+  // 🎯 ANIMACIÓN DE "TEMBLOR" PARA LA BURBUJA DE SALUDO
+  // ============================================================
+  const shakeVariants = {
+    initial: { 
+      x: 0,
+      rotate: 0,
+      scale: 1
+    },
+    animate: {
+      x: [0, -4, 4, -3, 3, -2, 2, 0],
+      rotate: [0, -2, 2, -1.5, 1.5, -1, 1, 0],
+      scale: [1, 1.02, 0.98, 1.01, 0.99, 1],
+      transition: {
+        duration: 0.8,
+        ease: "easeInOut",
+        times: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1]
+      }
+    },
+    idle: {
+      x: 0,
+      rotate: 0,
+      scale: 1,
+      transition: { duration: 0.3 }
+    }
+  };
+
   return (
     <>
       {!isOpen && (
@@ -215,9 +242,10 @@ export default function Chatbot() {
             <AnimatePresence>
               {showBubble && (
                 <motion.div
-                  initial={{ opacity: 0, x: -5 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -5 }}
+                  variants={shakeVariants}
+                  initial="initial"
+                  animate={bubblePhase === "greeting" ? "animate" : "idle"}
+                  exit="idle"
                   className="bg-white text-zinc-700 px-2.5 py-1.5 rounded-2xl text-[10px] sm:text-[11px] font-medium shadow-md whitespace-nowrap"
                 >
                   {isTyping ? (
@@ -306,9 +334,22 @@ export default function Chatbot() {
                 <button
                   onClick={sendMessageHandler}
                   disabled={isLoading || !input.trim()}
-                  className="bg-zinc-600 text-white px-2.5 py-2 rounded-xl disabled:opacity-50 text-xs"
+                  className="bg-zinc-600 text-white px-2.5 py-2 rounded-xl disabled:opacity-50 text-xs flex items-center justify-center"
                 >
-                  📤
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M22 2L11 13" />
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                  </svg>
                 </button>
               </div>
             </div>

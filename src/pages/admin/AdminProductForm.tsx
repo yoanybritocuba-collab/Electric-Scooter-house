@@ -461,12 +461,33 @@ const AdminProductForm = () => {
     return nuevasEspecificaciones;
   };
 
-  // ========== GUARDAR PRODUCTO ==========
+  // ========== 🔥 NUEVA FUNCIÓN PARA TRADUCIR DESCRIPCIÓN ==========
+  const traducirDescripcion = async (descripcion: string) => {
+    if (!descripcion) return { en: '', gr: '' };
+    
+    try {
+      const trans = await translateToAll(descripcion, 'es');
+      return {
+        en: trans.en || descripcion,
+        gr: trans.gr || descripcion,
+      };
+    } catch (error) {
+      console.error('Error traduciendo descripción:', error);
+      return { en: descripcion, gr: descripcion };
+    }
+  };
+
+  // ========== GUARDAR PRODUCTO (CORREGIDO CON TRADUCCIÓN DE DESCRIPCIÓN) ==========
   const handleSave = async () => {
     setSaving(true);
     try {
+      // 🔥 TRADUCIR ESPECIFICACIONES
       const especificacionesTraducidas = await traducirEspecificaciones(form.especificaciones);
       
+      // 🔥 TRADUCIR DESCRIPCIÓN
+      const descripcionTraducida = await traducirDescripcion(form.descripcion);
+      
+      // 🔥 TRADUCIR VOLTAJES, POTENCIAS, COLORES, AMPERIOS
       const voltajesTraducidos = await Promise.all(
         form.opciones.voltajes.map(async (v) => {
           if (v.nombre && !v.nombre_en) {
@@ -507,13 +528,17 @@ const AdminProductForm = () => {
         })
       );
       
+      // 📦 CONSTRUIR DATOS DEL PRODUCTO CON TRADUCCIONES
       const productData = {
         nombre: form.nombre,
         nombre_en: form.nombre_en || "",
         nombre_gr: form.nombre_gr || "",
+        
+        // 🔥 DESCRIPCIÓN TRADUCIDA AUTOMÁTICAMENTE
         descripcion: form.descripcion,
-        descripcion_en: form.descripcion_en || "",
-        descripcion_gr: form.descripcion_gr || "",
+        descripcion_en: descripcionTraducida.en || form.descripcion_en || "",
+        descripcion_gr: descripcionTraducida.gr || form.descripcion_gr || "",
+        
         precio: form.precio,
         categoria: form.categoria,
         imagenes: form.imagenes,
@@ -521,13 +546,18 @@ const AdminProductForm = () => {
         nuevo: form.nuevo === true,
         rebaja: form.rebaja === true,
         descuento: form.descuento || 0,
+        
+        // 🔥 ESPECIFICACIONES TRADUCIDAS
         especificaciones: especificacionesTraducidas,
+        
+        // 🔥 OPCIONES TRADUCIDAS
         opciones: {
           voltajes: voltajesTraducidos,
           potencias: potenciasTraducidas,
           colores: coloresTraducidos,
           amperios: amperiosTraducidos,
         },
+        
         stockCombinaciones: form.stockCombinaciones,
         updatedAt: new Date(),
       };

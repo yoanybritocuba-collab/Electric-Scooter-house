@@ -178,7 +178,7 @@ const ProductDetail = () => {
     potencias: { es: "Potencias", en: "Powers", gr: "Ισχύς" },
     colors: { es: "Colores", en: "Colors", gr: "Χρώματα" },
     amperios: { es: "Amperios", en: "Amps", gr: "Αμπέρ" },
-    specsTitle: { es: "Especificaciones", en: "Specifications", gr: "Προδιαγραφές" },
+    specsTitle: { es: "Especificaciones técnicas", en: "Technical Specifications", gr: "Τεχνικές Προδιαγραφές" },
     stockAvailable: { es: "Disponible", en: "Available", gr: "Διαθέσιμο" },
     stockSoldOut: { es: "AGOTADO", en: "SOLD OUT", gr: "ΕΞΑΝΤΛΗΘΗΚΕ" },
     stockLastUnits: { es: "¡ÚLTIMAS UNIDADES!", en: "LAST UNITS!", gr: "ΤΕΛΕΥΤΑΙΕΣ ΜΟΝΑΔΕΣ!" },
@@ -816,26 +816,29 @@ const ProductDetail = () => {
               <div className="space-y-1.5">
                 {specItems.length > 0 ? (
                   <>
-                    {specItems.slice(0, showAllSpecs ? specItems.length : 3).map(({ key, displayTitle, finalValue }) => (
+                    {/* 🔥 MOSTRAR TODAS O SOLO LAS PRIMERAS 3 */}
+                    {(showAllSpecs ? specItems : specItems.slice(0, 3)).map(({ key, displayTitle, finalValue }) => (
                       <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
                         <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
                         <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
                       </div>
                     ))}
+                    
+                    {/* 🔥 BOTÓN "VER MÁS / VER MENOS" SOLO SI HAY MÁS DE 3 */}
                     {specItems.length > 3 && (
                       <button
                         onClick={() => setShowAllSpecs(!showAllSpecs)}
-                        className="mt-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                        className="mt-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 w-full justify-center py-1 border-t border-gray-700/50 pt-2"
                       >
                         {showAllSpecs ? (
                           <>
                             <ChevronUp size={12} />
-                            {getFixedText('showLess')}
+                            {getFixedText('showLess')} ({specItems.length})
                           </>
                         ) : (
                           <>
                             <ChevronDown size={12} />
-                            {getFixedText('showMore')}
+                            {getFixedText('showMore')} ({specItems.length - 3})
                           </>
                         )}
                       </button>
@@ -1099,28 +1102,29 @@ const ProductDetail = () => {
                       {getFixedText('specsTitle')}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-1 md:gap-1.5">
-                    {specItems.slice(0, showAllSpecs ? specItems.length : 3).map(({ key, displayTitle, finalValue }) => (
-                      <span key={key} className={`bg-gray-800/50 px-1.5 md:px-2 py-0.5 rounded-full text-gray-400 border border-gray-700/50 ${
-                        isMobile ? 'text-[8px]' : 'text-[10px]'
-                      }`}>
-                        • <span className="text-white">{displayTitle}: {finalValue}</span>
-                      </span>
+                  
+                  <div className="space-y-1">
+                    {(showAllSpecs ? specItems : specItems.slice(0, 3)).map(({ key, displayTitle, finalValue }) => (
+                      <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0 text-sm">
+                        <span className="text-gray-400">{displayTitle}</span>
+                        <span className="text-white font-medium">{finalValue}</span>
+                      </div>
                     ))}
+                    
                     {specItems.length > 3 && (
                       <button
                         onClick={() => setShowAllSpecs(!showAllSpecs)}
-                        className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                        className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 w-full justify-center py-1 border-t border-gray-700/50 pt-2"
                       >
                         {showAllSpecs ? (
                           <>
-                            <ChevronUp size={12} />
-                            {getFixedText('showLess')}
+                            <ChevronUp size={14} />
+                            {getFixedText('showLess')} ({specItems.length})
                           </>
                         ) : (
                           <>
-                            <ChevronDown size={12} />
-                            {getFixedText('showMore')}
+                            <ChevronDown size={14} />
+                            {getFixedText('showMore')} ({specItems.length - 3})
                           </>
                         )}
                       </button>

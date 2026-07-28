@@ -32,9 +32,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [lang, setLang] = useState<Lang>(() => {
     try {
       const saved = localStorage.getItem("esh-lang") as Lang;
-      return saved && translations[saved] ? saved : "es";
+      // 🔥 CAMBIADO: Ahora el idioma predeterminado es GRIEGO (gr)
+      return saved && translations[saved] ? saved : "gr";
     } catch {
-      return "es";
+      return "gr"; // También cambiado aquí
     }
   });
 

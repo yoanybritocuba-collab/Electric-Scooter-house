@@ -1,11 +1,20 @@
 // Servicio de traducción usando Google Cloud Translation API
-// 🔑 NUEVA API KEY
-const API_KEY = "AIzaSyA0bF1RCZIUeLVf9VpBEZI7FdJdJ0lav9s";
+// 🔑 La API Key se toma desde variables de entorno
 
 interface TranslationResult {
   texto: string;
   error?: string;
 }
+
+// ============================================================
+// 🔥 OBTENER API KEY DESDE VARIABLES DE ENTORNO
+// ============================================================
+const getApiKey = (): string => {
+  // Prioridad: 1. Vercel (producción), 2. Local (.env)
+  return import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY || 
+         process.env.GOOGLE_TRANSLATE_API_KEY || 
+         '';
+};
 
 /**
  * Traduce un texto usando la API REST de Google Translate
@@ -18,6 +27,12 @@ export const translateText = async (
 ): Promise<TranslationResult> => {
   try {
     if (!text.trim()) return { texto: '' };
+
+    const API_KEY = getApiKey();
+    if (!API_KEY) {
+      console.warn('⚠️ No hay API Key de Google Translate, usando MyMemory');
+      return await fallbackTranslate(text, targetLang);
+    }
 
     const url = `https://translation.googleapis.com/language/translate/v2?key=${API_KEY}`;
     
@@ -104,6 +119,17 @@ export const translateToAll = async (
   };
 
   try {
+    const API_KEY = getApiKey();
+    if (!API_KEY) {
+      console.warn('⚠️ No hay API Key, usando MyMemory para translateToAll');
+      // Fallback con MyMemory
+      const enResult = await fallbackTranslate(text, 'en');
+      const grResult = await fallbackTranslate(text, 'el');
+      result.en = enResult.texto;
+      result.gr = grResult.texto;
+      return result;
+    }
+
     if (sourceLang === 'es') {
       const [en, gr] = await Promise.all([
         translateText(text, 'en'),

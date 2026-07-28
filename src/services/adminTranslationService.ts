@@ -1,5 +1,5 @@
 // Servicio de traducción para el panel admin usando Google Cloud Translation API
-const API_KEY = "AIzaSyCS-PgbLLJpam7U0Kxm8vZgpw3GvEl7d_U";
+// 🔑 La API Key se toma desde variables de entorno
 
 interface TranslationResponse {
   data: {
@@ -8,6 +8,15 @@ interface TranslationResponse {
     }[];
   };
 }
+
+// ============================================================
+// 🔥 OBTENER API KEY DESDE VARIABLES DE ENTORNO
+// ============================================================
+const getApiKey = (): string => {
+  return import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY || 
+         process.env.GOOGLE_TRANSLATE_API_KEY || 
+         '';
+};
 
 // Diccionario de traducciones predefinidas para el panel admin
 const adminTranslations: Record<string, Record<string, string>> = {
@@ -150,6 +159,12 @@ export const translateText = async (
   targetLang: string
 ): Promise<string> => {
   if (!text || text.trim() === "") return "";
+
+  const API_KEY = getApiKey();
+  if (!API_KEY) {
+    console.warn('⚠️ No hay API Key de Google Translate, usando texto original');
+    return text;
+  }
 
   try {
     const target = targetLang === 'gr' ? 'el' : targetLang;

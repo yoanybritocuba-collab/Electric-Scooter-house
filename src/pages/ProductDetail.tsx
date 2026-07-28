@@ -5,7 +5,7 @@ import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
 import ProductCard from "@/components/ProductCard";
-import { ArrowLeft, MessageCircle, Check, ShoppingCart, Palette, Zap, Gauge, Battery, Star, ZoomIn, AlertCircle, Settings } from "lucide-react";
+import { ArrowLeft, MessageCircle, Check, ShoppingCart, Palette, Zap, Gauge, Battery, Star, ZoomIn, AlertCircle, Settings, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { translateText } from "@/services/translationService";
 
@@ -140,6 +140,10 @@ const ProductDetail = () => {
   // Especificaciones
   const [specItems, setSpecItems] = useState<any[]>([]);
   
+  // 🔥 NUEVOS ESTADOS PARA "VER MÁS / VER MENOS"
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showAllSpecs, setShowAllSpecs] = useState(false);
+  
   // Zoom
   const [isZooming, setIsZooming] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -175,6 +179,8 @@ const ProductDetail = () => {
     stockSoldOut: { es: "AGOTADO", en: "SOLD OUT", gr: "ΕΞΑΝΤΛΗΘΗΚΕ" },
     stockLastUnits: { es: "¡ÚLTIMAS UNIDADES!", en: "LAST UNITS!", gr: "ΤΕΛΕΥΤΑΙΕΣ ΜΟΝΑΔΕΣ!" },
     stockFewLeft: { es: "Quedan pocas unidades", en: "Few units left", gr: "Λίγες μονάδες έμειναν" },
+    showMore: { es: "Ver más", en: "Show more", gr: "Δείτε περισσότερα" },
+    showLess: { es: "Ver menos", en: "Show less", gr: "Δείτε λιγότερα" },
   };
 
   const getFixedText = (key: keyof typeof translations): string => {
@@ -649,7 +655,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 2. NOMBRE + PRECIO + STOCK + DESCRIPCIÓN ===== */}
+            {/* ===== 2. NOMBRE + PRECIO + STOCK ===== */}
             <div>
               <h1 className="text-base font-bold text-white leading-tight line-clamp-2">
                 {product.nombre}
@@ -674,20 +680,46 @@ const ProductDetail = () => {
                   <span>{getFixedText('stockSoldOut')}</span>
                 </div>
               )}
-              
-              {/* ===== 🔥 DESCRIPCIÓN DEL PRODUCTO ===== */}
-              {product.descripcion && (
-                <div className="mt-2 text-gray-400 text-xs leading-relaxed">
-                  {getText(
-                    product.descripcion,
-                    product.descripcion_en,
-                    product.descripcion_gr
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* ===== 3. OPCIONES (Voltajes, Potencias, Amperios) ===== */}
+            {/* ===== 🔥 3. DESCRIPCIÓN CON "VER MÁS / VER MENOS" ===== */}
+            {product.descripcion && (
+              <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
+                <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                  <FileText size={12} className="text-blue-500" />
+                  {getFixedText('description')}
+                </p>
+                <div className="text-gray-300 text-xs leading-relaxed">
+                  <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-12'}`}>
+                    {getText(
+                      product.descripcion,
+                      product.descripcion_en,
+                      product.descripcion_gr
+                    )}
+                  </div>
+                  {product.descripcion.length > 80 && (
+                    <button
+                      onClick={() => setShowFullDescription(!showFullDescription)}
+                      className="mt-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                    >
+                      {showFullDescription ? (
+                        <>
+                          <ChevronUp size={12} />
+                          {getFixedText('showLess')}
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={12} />
+                          {getFixedText('showMore')}
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ===== 4. OPCIONES (Voltajes, Potencias, Amperios) ===== */}
             <div className="space-y-1.5">
               {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
                 <OpcionSelector
@@ -723,7 +755,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 4. COLORES ===== */}
+            {/* ===== 5. COLORES ===== */}
             {product.opciones?.colores && product.opciones.colores.length > 0 && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
                 <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
@@ -768,7 +800,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 5. ESPECIFICACIONES COMPLETAS ===== */}
+            {/* ===== 🔥 6. ESPECIFICACIONES CON "VER MÁS / VER MENOS" ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
               <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
@@ -777,19 +809,39 @@ const ProductDetail = () => {
               
               <div className="space-y-1.5">
                 {specItems.length > 0 ? (
-                  specItems.map(({ key, displayTitle, finalValue }) => (
-                    <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
-                      <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
-                      <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
-                    </div>
-                  ))
+                  <>
+                    {specItems.slice(0, showAllSpecs ? specItems.length : 3).map(({ key, displayTitle, finalValue }) => (
+                      <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
+                        <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
+                        <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
+                      </div>
+                    ))}
+                    {specItems.length > 3 && (
+                      <button
+                        onClick={() => setShowAllSpecs(!showAllSpecs)}
+                        className="mt-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                      >
+                        {showAllSpecs ? (
+                          <>
+                            <ChevronUp size={12} />
+                            {getFixedText('showLess')}
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={12} />
+                            {getFixedText('showMore')}
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <p className="text-gray-500 text-[10px]">Sin especificaciones</p>
                 )}
               </div>
             </div>
 
-            {/* ===== 6. BOTONES ===== */}
+            {/* ===== 7. BOTONES ===== */}
             <div className="flex flex-col gap-2 pt-1">
               <button
                 onClick={handleAddToCart}
@@ -922,18 +974,44 @@ const ProductDetail = () => {
                     <span className="text-gray-500 text-[10px]">({stockActual})</span>
                   )}
                 </div>
-                
-                {/* ===== 🔥 DESCRIPCIÓN DEL PRODUCTO ===== */}
-                {product.descripcion && (
-                  <div className="mt-3 text-gray-400 text-sm leading-relaxed max-w-lg">
-                    {getText(
-                      product.descripcion,
-                      product.descripcion_en,
-                      product.descripcion_gr
+              </div>
+
+              {/* ===== 🔥 DESCRIPCIÓN CON "VER MÁS / VER MENOS" (escritorio) ===== */}
+              {product.descripcion && (
+                <div className="mt-2">
+                  <p className="text-gray-400 text-xs uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                    <FileText size={12} className="text-blue-500" />
+                    {getFixedText('description')}
+                  </p>
+                  <div className="text-gray-300 text-sm leading-relaxed max-w-lg">
+                    <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-12'}`}>
+                      {getText(
+                        product.descripcion,
+                        product.descripcion_en,
+                        product.descripcion_gr
+                      )}
+                    </div>
+                    {product.descripcion.length > 80 && (
+                      <button
+                        onClick={() => setShowFullDescription(!showFullDescription)}
+                        className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                      >
+                        {showFullDescription ? (
+                          <>
+                            <ChevronUp size={14} />
+                            {getFixedText('showLess')}
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={14} />
+                            {getFixedText('showMore')}
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
                 <OpcionSelector
@@ -1004,16 +1082,39 @@ const ProductDetail = () => {
                 </a>
               </div>
 
+              {/* ===== 🔥 ESPECIFICACIONES CON "VER MÁS / VER MENOS" (escritorio) ===== */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
+                  <p className="text-gray-400 text-xs uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <Settings size={14} className="text-purple-500" />
+                    {getFixedText('specsTitle')}
+                  </p>
                   <div className="flex flex-wrap gap-1 md:gap-1.5">
-                    {specItems.map(({ key, displayTitle, finalValue }) => (
+                    {specItems.slice(0, showAllSpecs ? specItems.length : 3).map(({ key, displayTitle, finalValue }) => (
                       <span key={key} className={`bg-gray-800/50 px-1.5 md:px-2 py-0.5 rounded-full text-gray-400 border border-gray-700/50 ${
                         isMobile ? 'text-[8px]' : 'text-[10px]'
                       }`}>
                         • <span className="text-white">{displayTitle}: {finalValue}</span>
                       </span>
                     ))}
+                    {specItems.length > 3 && (
+                      <button
+                        onClick={() => setShowAllSpecs(!showAllSpecs)}
+                        className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                      >
+                        {showAllSpecs ? (
+                          <>
+                            <ChevronUp size={12} />
+                            {getFixedText('showLess')}
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={12} />
+                            {getFixedText('showMore')}
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

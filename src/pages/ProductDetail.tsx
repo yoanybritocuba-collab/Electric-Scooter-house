@@ -5,7 +5,7 @@ import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
 import ProductCard from "@/components/ProductCard";
-import { ArrowLeft, MessageCircle, Check, ShoppingCart, Palette, Zap, Gauge, Battery, Star, ZoomIn, AlertCircle, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, MessageCircle, Check, ShoppingCart, Palette, Zap, Gauge, Battery, Star, ZoomIn, AlertCircle, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { translateText } from "@/services/translationService";
 
@@ -55,7 +55,7 @@ const getSafeArray = (arr: any): any[] => {
   return Array.isArray(arr) ? arr : [];
 };
 
-// ========== DICCIONARIO LOCAL DE TRADUCCIONES (PALABRAS FIJAS) ==========
+// ========== DICCIONARIO LOCAL DE TRADUCCIONES ==========
 const traduccionesEspecificacionesLocal: Record<string, Record<string, string>> = {
   'Batería': { en: 'Battery', gr: 'Μπαταρία' },
   'Autonomía': { en: 'Range', gr: 'Αυτονομία' },
@@ -171,7 +171,6 @@ const ProductDetail = () => {
     colors: { es: "Colores", en: "Colors", gr: "Χρώματα" },
     amperios: { es: "Amperios", en: "Amps", gr: "Αμπέρ" },
     specsTitle: { es: "Especificaciones", en: "Specifications", gr: "Προδιαγραφές" },
-    // 🔥 NUEVAS TRADUCCIONES PARA STOCK
     stockAvailable: { es: "Disponible", en: "Available", gr: "Διαθέσιμο" },
     stockSoldOut: { es: "AGOTADO", en: "SOLD OUT", gr: "ΕΞΑΝΤΛΗΘΗΚΕ" },
     stockLastUnits: { es: "¡ÚLTIMAS UNIDADES!", en: "LAST UNITS!", gr: "ΤΕΛΕΥΤΑΙΕΣ ΜΟΝΑΔΕΣ!" },
@@ -337,7 +336,7 @@ const ProductDetail = () => {
     }
   }, [lang]);
 
-  // ========== SCROLL AL PRINCIPIO DEL PRODUCTO ==========
+  // ========== SCROLL AL PRINCIPIO ==========
   useEffect(() => {
     if (!loading && product) {
       setTimeout(() => {
@@ -650,73 +649,81 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 2. NOMBRE + PRECIO + STOCK (IZQUIERDA) + OPCIONES (DERECHA) ===== */}
-            <div className="grid grid-cols-5 gap-2">
-              {/* COLUMNA IZQUIERDA (3 columnas): NOMBRE + PRECIO + STOCK */}
-              <div className="col-span-3">
-                <h1 className="text-base font-bold text-white leading-tight line-clamp-2">
-                  {product.nombre}
-                </h1>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-[#2ecc71] font-bold text-xl">
-                    {precioFinal.toFixed(2)}€
-                  </p>
-                  {product.descuento && product.descuento > 0 ? (
-                    <p className="text-gray-500 line-through text-xs">{product.precio}€</p>
-                  ) : null}
+            {/* ===== 2. NOMBRE + PRECIO + STOCK + DESCRIPCIÓN ===== */}
+            <div>
+              <h1 className="text-base font-bold text-white leading-tight line-clamp-2">
+                {product.nombre}
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[#2ecc71] font-bold text-xl">
+                  {precioFinal.toFixed(2)}€
+                </p>
+                {product.descuento && product.descuento > 0 ? (
+                  <p className="text-gray-500 line-through text-xs">{product.precio}€</p>
+                ) : null}
+              </div>
+              {stockActual > 0 && (
+                <div className={`flex items-center gap-1 mt-0.5 text-xs ${mensajeStock.color}`}>
+                  <span>{mensajeStock.texto}</span>
+                  <span className="text-gray-500 text-[9px]">({stockActual})</span>
                 </div>
-                {stockActual > 0 && (
-                  <div className={`flex items-center gap-1 mt-0.5 text-xs ${mensajeStock.color}`}>
-                    <span>{mensajeStock.texto}</span>
-                    <span className="text-gray-500 text-[9px]">({stockActual})</span>
-                  </div>
-                )}
-                {stockActual === 0 && (
-                  <div className="flex items-center gap-1 mt-0.5 text-xs text-red-500">
-                    <AlertCircle size={12} />
-                    <span>{getFixedText('stockSoldOut')}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* COLUMNA DERECHA (2 columnas): OPCIONES (Voltajes, Potencias, Amperios) */}
-              <div className="col-span-2 space-y-1.5">
-                {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
-                  <OpcionSelector
-                    titulo={getFixedText('voltajes')}
-                    icon={Battery}
-                    opciones={product.opciones.voltajes}
-                    selected={selectedVoltaje}
-                    onSelect={setSelectedVoltaje}
-                    compact={true}
-                  />
-                )}
-
-                {product.opciones?.potencias && product.opciones.potencias.length > 0 && (
-                  <OpcionSelector
-                    titulo={getFixedText('potencias')}
-                    icon={Gauge}
-                    opciones={product.opciones.potencias}
-                    selected={selectedPotencia}
-                    onSelect={setSelectedPotencia}
-                    compact={true}
-                  />
-                )}
-
-                {product.opciones?.amperios && product.opciones.amperios.length > 0 && (
-                  <OpcionSelector
-                    titulo={getFixedText('amperios')}
-                    icon={Zap}
-                    opciones={product.opciones.amperios}
-                    selected={selectedAmperio}
-                    onSelect={setSelectedAmperio}
-                    compact={true}
-                  />
-                )}
-              </div>
+              )}
+              {stockActual === 0 && (
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-red-500">
+                  <AlertCircle size={12} />
+                  <span>{getFixedText('stockSoldOut')}</span>
+                </div>
+              )}
+              
+              {/* ===== 🔥 DESCRIPCIÓN DEL PRODUCTO ===== */}
+              {product.descripcion && (
+                <div className="mt-2 text-gray-400 text-xs leading-relaxed">
+                  {getText(
+                    product.descripcion,
+                    product.descripcion_en,
+                    product.descripcion_gr
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* ===== 3. COLORES (DEBAJO) ===== */}
+            {/* ===== 3. OPCIONES (Voltajes, Potencias, Amperios) ===== */}
+            <div className="space-y-1.5">
+              {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
+                <OpcionSelector
+                  titulo={getFixedText('voltajes')}
+                  icon={Battery}
+                  opciones={product.opciones.voltajes}
+                  selected={selectedVoltaje}
+                  onSelect={setSelectedVoltaje}
+                  compact={true}
+                />
+              )}
+
+              {product.opciones?.potencias && product.opciones.potencias.length > 0 && (
+                <OpcionSelector
+                  titulo={getFixedText('potencias')}
+                  icon={Gauge}
+                  opciones={product.opciones.potencias}
+                  selected={selectedPotencia}
+                  onSelect={setSelectedPotencia}
+                  compact={true}
+                />
+              )}
+
+              {product.opciones?.amperios && product.opciones.amperios.length > 0 && (
+                <OpcionSelector
+                  titulo={getFixedText('amperios')}
+                  icon={Zap}
+                  opciones={product.opciones.amperios}
+                  selected={selectedAmperio}
+                  onSelect={setSelectedAmperio}
+                  compact={true}
+                />
+              )}
+            </div>
+
+            {/* ===== 4. COLORES ===== */}
             {product.opciones?.colores && product.opciones.colores.length > 0 && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
                 <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
@@ -761,7 +768,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 4. ESPECIFICACIONES COMPLETAS ===== */}
+            {/* ===== 5. ESPECIFICACIONES COMPLETAS ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
               <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
@@ -782,7 +789,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* ===== 5. BOTONES ===== */}
+            {/* ===== 6. BOTONES ===== */}
             <div className="flex flex-col gap-2 pt-1">
               <button
                 onClick={handleAddToCart}
@@ -818,7 +825,7 @@ const ProductDetail = () => {
             </div>
           </div>
         ) : (
-          // ======== LAYOUT ESCRITORIO (sin cambios) ========
+          // ======== LAYOUT ESCRITORIO ========
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             
             {/* COLUMNA IZQUIERDA: GALERÍA */}
@@ -915,6 +922,17 @@ const ProductDetail = () => {
                     <span className="text-gray-500 text-[10px]">({stockActual})</span>
                   )}
                 </div>
+                
+                {/* ===== 🔥 DESCRIPCIÓN DEL PRODUCTO ===== */}
+                {product.descripcion && (
+                  <div className="mt-3 text-gray-400 text-sm leading-relaxed max-w-lg">
+                    {getText(
+                      product.descripcion,
+                      product.descripcion_en,
+                      product.descripcion_gr
+                    )}
+                  </div>
+                )}
               </div>
 
               {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (

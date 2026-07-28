@@ -11,7 +11,6 @@ import {
   Settings, ChevronDown, ChevronUp, FileText 
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { translateText } from "@/services/translationService";
 
 // ========== INTERFACES ==========
 interface OpcionItem {
@@ -57,65 +56,6 @@ interface Product {
 // ========== FUNCIONES SEGURAS ==========
 const getSafeArray = (arr: any): any[] => {
   return Array.isArray(arr) ? arr : [];
-};
-
-// ========== DICCIONARIO LOCAL DE TRADUCCIONES ==========
-const traduccionesEspecificacionesLocal: Record<string, Record<string, string>> = {
-  'Batería': { en: 'Battery', gr: 'Μπαταρία' },
-  'Autonomía': { en: 'Range', gr: 'Αυτονομία' },
-  'Potencia': { en: 'Power', gr: 'Ισχύς' },
-  'Potencia del motor': { en: 'Motor Power', gr: 'Ισχύς Μοτέρ' },
-  'Velocidad máxima': { en: 'Max Speed', gr: 'Μέγιστη Ταχύτητα' },
-  'Peso': { en: 'Weight', gr: 'Βάρος' },
-  'Peso bruto': { en: 'Gross Weight', gr: 'Μικτό Βάρος' },
-  'Peso neto': { en: 'Net Weight', gr: 'Καθαρό Βάρος' },
-  'Peso máximo soportado': { en: 'Max Supported Weight', gr: 'Μέγιστο Υποστηριζόμενο Βάρος' },
-  'Dimensiones': { en: 'Dimensions', gr: 'Διαστάσεις' },
-  'Dimensiones del embalaje': { en: 'Package Dimensions', gr: 'Διαστάσεις Συσκευασίας' },
-  'Medidas': { en: 'Measurements', gr: 'Μετρήσεις' },
-  'Año': { en: 'Year', gr: 'Έτος' },
-  'Modelo': { en: 'Model', gr: 'Μοντέλο' },
-  'Motor': { en: 'Motor', gr: 'Μοτέρ' },
-  'Frenos': { en: 'Brakes', gr: 'Φρένα' },
-  'Suspensión': { en: 'Suspension', gr: 'Ανάρτηση' },
-  'Neumáticos': { en: 'Tires', gr: 'Ελαστικά' },
-  'Tiempo de carga': { en: 'Charging Time', gr: 'Χρόνος Φόρτισης' },
-  'Tipo de batería': { en: 'Battery Type', gr: 'Τύπος Μπαταρίας' },
-  'Carga máxima soportada': { en: 'Max Load', gr: 'Μέγιστο Φορτίο' },
-  'Rango de velocidad': { en: 'Speed Range', gr: 'Εύρος Ταχύτητας' },
-  'Edad recomendada': { en: 'Recommended Age', gr: 'Συνιστώμενη Ηλικία' },
-  'Especificaciones': { en: 'Specifications', gr: 'Προδιαγραφές' },
-  'Suspensión delantera': { en: 'Front Suspension', gr: 'Μπροστινή Ανάρτηση' },
-  'Suspensión trasera': { en: 'Rear Suspension', gr: 'Πίσω Ανάρτηση' },
-  'Freno delantero': { en: 'Front Brake', gr: 'Μπροστινό Φρένο' },
-  'Freno trasero': { en: 'Rear Brake', gr: 'Πίσω Φρένο' },
-  'Tamaño de rueda': { en: 'Wheel Size', gr: 'Μέγεθος Τροχού' },
-  'Neumático delantero': { en: 'Front Tire', gr: 'Μπροστινό Ελαστικό' },
-  'Neumático trasero': { en: 'Rear Tire', gr: 'Πίσω Ελαστικό' },
-  'Carga máxima': { en: 'Max Load', gr: 'Μέγιστο Φορτίο' },
-  'Peso neto (N.W.)': { en: 'Net Weight (N.W.)', gr: 'Καθαρό Βάρος (N.W.)' },
-  'Peso bruto (G.W.)': { en: 'Gross Weight (G.W.)', gr: 'Μικτό Βάρος (G.W.)' },
-};
-
-// ========== FUNCIÓN PARA TRADUCIR ETIQUETAS ==========
-const traducirEtiqueta = async (key: string, lang: string): Promise<string> => {
-  if (lang === 'es') return key;
-  if (lang === 'en' && traduccionesEspecificacionesLocal[key]?.en) {
-    return traduccionesEspecificacionesLocal[key].en;
-  }
-  if (lang === 'gr' && traduccionesEspecificacionesLocal[key]?.gr) {
-    return traduccionesEspecificacionesLocal[key].gr;
-  }
-  const targetLang = lang === 'en' ? 'en' : 'el';
-  try {
-    const result = await translateText(key, targetLang);
-    if (result.texto && result.texto.trim() !== '') {
-      return result.texto;
-    }
-  } catch (error) {
-    console.error('Error traduciendo con Google:', error);
-  }
-  return key;
 };
 
 // ========== COMPONENTE PRINCIPAL ==========
@@ -274,7 +214,7 @@ const ProductDetail = () => {
           const relatedSnap = await getDocs(q);
           setRelated(relatedSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
           
-          // Cargar especificaciones traducidas
+          // 🔥 CARGAR ESPECIFICACIONES (usando traducciones guardadas)
           await cargarEspecificaciones(productData);
           
         } else {
@@ -299,7 +239,7 @@ const ProductDetail = () => {
     loadProduct();
   }, [id]);
 
-  // ========== CARGAR ESPECIFICACIONES ==========
+  // ========== CARGAR ESPECIFICACIONES (USANDO TRADUCCIONES GUARDADAS) ==========
   const cargarEspecificaciones = async (productData: Product) => {
     if (!productData?.especificaciones) {
       setSpecItems([]);
@@ -317,7 +257,7 @@ const ProductDetail = () => {
     
     const results = [];
     for (const [key, value] of entries) {
-      // 🔥 USAR TRADUCCIÓN DEL ADMIN SI EXISTE
+      // 🔥 USAR TRADUCCIONES GUARDADAS EN FIREBASE
       let displayTitle = key;
       let displayValue = value;
       
@@ -333,20 +273,11 @@ const ProductDetail = () => {
         displayValue = productData.especificaciones[grValueKey] || value;
       }
       
-      // Si no hay traducción, usar la función de respaldo
-      if (displayTitle === key && lang !== 'es') {
-        displayTitle = await traducirEtiqueta(key, lang);
-        if (displayValue === value && lang !== 'es') {
-          try {
-            const result = await translateText(value, lang === 'en' ? 'en' : 'el');
-            if (result.texto && result.texto.trim() !== '') {
-              displayValue = result.texto;
-            }
-          } catch (e) {}
-        }
-      }
-      
-      results.push({ key, displayTitle, finalValue: displayValue || '—' });
+      results.push({ 
+        key, 
+        displayTitle: displayTitle || key, 
+        finalValue: displayValue || '—' 
+      });
     }
     
     setSpecItems(results);
@@ -675,7 +606,7 @@ const ProductDetail = () => {
             {/* ===== 2. NOMBRE + PRECIO + STOCK ===== */}
             <div>
               <h1 className="text-base font-bold text-white leading-tight line-clamp-2">
-                {product.nombre}
+                {getText(product.nombre, product.nombre_en, product.nombre_gr)}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <p className="text-[#2ecc71] font-bold text-xl">
@@ -699,7 +630,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 🔥 3. DESCRIPCIÓN CON "VER MÁS" (MÓVIL) ===== */}
+            {/* ===== 🔥 3. DESCRIPCIÓN CON TRADUCCIÓN GUARDADA ===== */}
             {product.descripcion && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -708,8 +639,6 @@ const ProductDetail = () => {
                     {getFixedText('description')}
                   </p>
                 </div>
-                
-                {/* 🔥 DESCRIPCIÓN COMPLETA CON BOTÓN "VER MÁS" */}
                 <div className="text-gray-300 text-xs leading-relaxed">
                   <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[2000px]' : 'max-h-12'}`}>
                     {getText(
@@ -821,7 +750,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 🔥 6. ESPECIFICACIONES TÉCNICAS CON "VER MÁS" (MÓVIL) ===== */}
+            {/* ===== 🔥 6. ESPECIFICACIONES CON TRADUCCIÓN GUARDADA ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
               <div className="flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
@@ -982,7 +911,7 @@ const ProductDetail = () => {
             <div className="md:col-span-1 space-y-3 md:space-y-4">
               <div>
                 <h1 className="font-bold text-white text-xl md:text-2xl leading-tight">
-                  {product.nombre}
+                  {getText(product.nombre, product.nombre_en, product.nombre_gr)}
                 </h1>
                 <div className="flex items-center gap-2 md:gap-3 mt-1">
                   <p className="text-[#2ecc71] font-bold text-2xl md:text-3xl">
@@ -1000,7 +929,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* ===== 🔥 DESCRIPCIÓN CON "VER MÁS" (ESCRITORIO) ===== */}
+              {/* ===== 🔥 DESCRIPCIÓN CON TRADUCCIÓN GUARDADA ===== */}
               {product.descripcion && (
                 <div className="mt-2">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -1108,7 +1037,7 @@ const ProductDetail = () => {
                 </a>
               </div>
 
-              {/* ===== 🔥 ESPECIFICACIONES CON "VER MÁS" (ESCRITORIO) ===== */}
+              {/* ===== 🔥 ESPECIFICACIONES CON TRADUCCIÓN GUARDADA ===== */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
                   <div className="flex items-center gap-1.5 mb-2">

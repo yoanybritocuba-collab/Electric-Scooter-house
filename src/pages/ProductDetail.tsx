@@ -299,7 +299,7 @@ const ProductDetail = () => {
     loadProduct();
   }, [id]);
 
-  // ========== CARGAR ESPECIFICACIONES (CON TRADUCCIÓN) ==========
+  // ========== CARGAR ESPECIFICACIONES ==========
   const cargarEspecificaciones = async (productData: Product) => {
     if (!productData?.especificaciones) {
       setSpecItems([]);
@@ -617,9 +617,6 @@ const ProductDetail = () => {
           </button>
         </div>
 
-        {/* ========================================================= */}
-        {/* ===== MÓVIL: LAYOUT ===== */}
-        {/* ========================================================= */}
         {isMobile ? (
           <div className="space-y-3">
             
@@ -702,7 +699,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 🔥 3. DESCRIPCIÓN CON TRADUCCIÓN Y "VER MÁS" ===== */}
+            {/* ===== 🔥 3. DESCRIPCIÓN CON "VER MÁS" (MÓVIL) ===== */}
             {product.descripcion && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -711,15 +708,17 @@ const ProductDetail = () => {
                     {getFixedText('description')}
                   </p>
                 </div>
+                
+                {/* 🔥 DESCRIPCIÓN COMPLETA CON BOTÓN "VER MÁS" */}
                 <div className="text-gray-300 text-xs leading-relaxed">
-                  <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-10'}`}>
+                  <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[2000px]' : 'max-h-12'}`}>
                     {getText(
                       product.descripcion,
                       product.descripcion_en,
                       product.descripcion_gr
                     )}
                   </div>
-                  {product.descripcion.length > 60 && (
+                  {(product.descripcion?.length > 60 || product.descripcion_en?.length > 60 || product.descripcion_gr?.length > 60) && (
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
                       className="mt-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
@@ -822,7 +821,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 🔥 6. ESPECIFICACIONES TÉCNICAS CON TRADUCCIÓN Y "VER MÁS" ===== */}
+            {/* ===== 🔥 6. ESPECIFICACIONES TÉCNICAS CON "VER MÁS" (MÓVIL) ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
               <div className="flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
@@ -1001,7 +1000,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* ===== 🔥 DESCRIPCIÓN CON TRADUCCIÓN ===== */}
+              {/* ===== 🔥 DESCRIPCIÓN CON "VER MÁS" (ESCRITORIO) ===== */}
               {product.descripcion && (
                 <div className="mt-2">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -1011,14 +1010,14 @@ const ProductDetail = () => {
                     </p>
                   </div>
                   <div className="text-gray-300 text-sm leading-relaxed max-w-lg">
-                    <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-12'}`}>
+                    <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[2000px]' : 'max-h-12'}`}>
                       {getText(
                         product.descripcion,
                         product.descripcion_en,
                         product.descripcion_gr
                       )}
                     </div>
-                    {product.descripcion.length > 80 && (
+                    {(product.descripcion?.length > 80 || product.descripcion_en?.length > 80 || product.descripcion_gr?.length > 80) && (
                       <button
                         onClick={() => setShowFullDescription(!showFullDescription)}
                         className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
@@ -1109,7 +1108,7 @@ const ProductDetail = () => {
                 </a>
               </div>
 
-              {/* ===== 🔥 ESPECIFICACIONES CON TRADUCCIÓN ===== */}
+              {/* ===== 🔥 ESPECIFICACIONES CON "VER MÁS" (ESCRITORIO) ===== */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
                   <div className="flex items-center gap-1.5 mb-2">

@@ -299,7 +299,7 @@ const ProductDetail = () => {
     loadProduct();
   }, [id]);
 
-  // ========== CARGAR ESPECIFICACIONES ==========
+  // ========== CARGAR ESPECIFICACIONES (CON TRADUCCIÓN) ==========
   const cargarEspecificaciones = async (productData: Product) => {
     if (!productData?.especificaciones) {
       setSpecItems([]);
@@ -317,23 +317,36 @@ const ProductDetail = () => {
     
     const results = [];
     for (const [key, value] of entries) {
-      const displayTitle = await traducirEtiqueta(key, lang);
-      
+      // 🔥 USAR TRADUCCIÓN DEL ADMIN SI EXISTE
+      let displayTitle = key;
       let displayValue = value;
+      
       if (lang === 'en') {
+        const enKey = `${key}_en`;
         const enValueKey = `${key}_en_value`;
-        if (productData.especificaciones[enValueKey]) {
-          displayValue = productData.especificaciones[enValueKey];
-        }
+        displayTitle = productData.especificaciones[enKey] || key;
+        displayValue = productData.especificaciones[enValueKey] || value;
       } else if (lang === 'gr') {
+        const grKey = `${key}_gr`;
         const grValueKey = `${key}_gr_value`;
-        if (productData.especificaciones[grValueKey]) {
-          displayValue = productData.especificaciones[grValueKey];
+        displayTitle = productData.especificaciones[grKey] || key;
+        displayValue = productData.especificaciones[grValueKey] || value;
+      }
+      
+      // Si no hay traducción, usar la función de respaldo
+      if (displayTitle === key && lang !== 'es') {
+        displayTitle = await traducirEtiqueta(key, lang);
+        if (displayValue === value && lang !== 'es') {
+          try {
+            const result = await translateText(value, lang === 'en' ? 'en' : 'el');
+            if (result.texto && result.texto.trim() !== '') {
+              displayValue = result.texto;
+            }
+          } catch (e) {}
         }
       }
       
-      const finalValue = displayValue && displayValue.toString().trim() !== '' ? displayValue : '—';
-      results.push({ key, displayTitle, finalValue });
+      results.push({ key, displayTitle, finalValue: displayValue || '—' });
     }
     
     setSpecItems(results);
@@ -604,6 +617,9 @@ const ProductDetail = () => {
           </button>
         </div>
 
+        {/* ========================================================= */}
+        {/* ===== MÓVIL: LAYOUT ===== */}
+        {/* ========================================================= */}
         {isMobile ? (
           <div className="space-y-3">
             
@@ -686,7 +702,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 🔥 3. DESCRIPCIÓN CON "VER MÁS / VER MENOS" (MÓVIL) ===== */}
+            {/* ===== 🔥 3. DESCRIPCIÓN CON TRADUCCIÓN Y "VER MÁS" ===== */}
             {product.descripcion && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -806,17 +822,18 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 🔥 6. ESPECIFICACIONES CON "VER MÁS / VER MENOS" (MÓVIL) ===== */}
+            {/* ===== 🔥 6. ESPECIFICACIONES TÉCNICAS CON TRADUCCIÓN Y "VER MÁS" ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
-              <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
-                {getFixedText('specsTitle')}
-              </p>
+                <p className="text-gray-400 text-[10px] uppercase tracking-wider">
+                  {getFixedText('specsTitle')}
+                </p>
+              </div>
               
               <div className="space-y-1.5">
                 {specItems.length > 0 ? (
                   <>
-                    {/* 🔥 MOSTRAR TODAS O SOLO LAS PRIMERAS 3 */}
                     {(showAllSpecs ? specItems : specItems.slice(0, 3)).map(({ key, displayTitle, finalValue }) => (
                       <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
                         <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
@@ -824,7 +841,6 @@ const ProductDetail = () => {
                       </div>
                     ))}
                     
-                    {/* 🔥 BOTÓN "VER MÁS / VER MENOS" SOLO SI HAY MÁS DE 3 */}
                     {specItems.length > 3 && (
                       <button
                         onClick={() => setShowAllSpecs(!showAllSpecs)}
@@ -985,7 +1001,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* ===== 🔥 DESCRIPCIÓN CON "VER MÁS / VER MENOS" (ESCRITORIO) ===== */}
+              {/* ===== 🔥 DESCRIPCIÓN CON TRADUCCIÓN ===== */}
               {product.descripcion && (
                 <div className="mt-2">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -1093,7 +1109,7 @@ const ProductDetail = () => {
                 </a>
               </div>
 
-              {/* ===== 🔥 ESPECIFICACIONES CON "VER MÁS / VER MENOS" (ESCRITORIO) ===== */}
+              {/* ===== 🔥 ESPECIFICACIONES CON TRADUCCIÓN ===== */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
                   <div className="flex items-center gap-1.5 mb-2">

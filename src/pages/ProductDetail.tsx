@@ -5,7 +5,11 @@ import { db } from "@/firebase/config";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
 import ProductCard from "@/components/ProductCard";
-import { ArrowLeft, MessageCircle, Check, ShoppingCart, Palette, Zap, Gauge, Battery, Star, ZoomIn, AlertCircle, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { 
+  ArrowLeft, MessageCircle, Check, ShoppingCart, Palette, 
+  Zap, Gauge, Battery, Star, ZoomIn, AlertCircle, 
+  Settings, ChevronDown, ChevronUp, FileText 
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { translateText } from "@/services/translationService";
 
@@ -137,12 +141,12 @@ const ProductDetail = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   
-  // Especificaciones
-  const [specItems, setSpecItems] = useState<any[]>([]);
-  
-  // 🔥 NUEVOS ESTADOS PARA "VER MÁS / VER MENOS"
+  // 🔥 ESTADOS PARA "VER MÁS / VER MENOS"
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showAllSpecs, setShowAllSpecs] = useState(false);
+  
+  // Especificaciones
+  const [specItems, setSpecItems] = useState<any[]>([]);
   
   // Zoom
   const [isZooming, setIsZooming] = useState(false);
@@ -682,22 +686,24 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 🔥 3. DESCRIPCIÓN CON "VER MÁS / VER MENOS" ===== */}
+            {/* ===== 🔥 3. DESCRIPCIÓN CON "VER MÁS / VER MENOS" (MÓVIL) ===== */}
             {product.descripcion && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
-                <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
                   <FileText size={12} className="text-blue-500" />
-                  {getFixedText('description')}
-                </p>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">
+                    {getFixedText('description')}
+                  </p>
+                </div>
                 <div className="text-gray-300 text-xs leading-relaxed">
-                  <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-12'}`}>
+                  <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-10'}`}>
                     {getText(
                       product.descripcion,
                       product.descripcion_en,
                       product.descripcion_gr
                     )}
                   </div>
-                  {product.descripcion.length > 80 && (
+                  {product.descripcion.length > 60 && (
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
                       className="mt-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
@@ -719,7 +725,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 4. OPCIONES (Voltajes, Potencias, Amperios) ===== */}
+            {/* ===== 4. OPCIONES ===== */}
             <div className="space-y-1.5">
               {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
                 <OpcionSelector
@@ -800,7 +806,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 🔥 6. ESPECIFICACIONES CON "VER MÁS / VER MENOS" ===== */}
+            {/* ===== 🔥 6. ESPECIFICACIONES CON "VER MÁS / VER MENOS" (MÓVIL) ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
               <p className="text-gray-400 text-[10px] uppercase tracking-wider flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
@@ -976,13 +982,15 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* ===== 🔥 DESCRIPCIÓN CON "VER MÁS / VER MENOS" (escritorio) ===== */}
+              {/* ===== 🔥 DESCRIPCIÓN CON "VER MÁS / VER MENOS" (ESCRITORIO) ===== */}
               {product.descripcion && (
                 <div className="mt-2">
-                  <p className="text-gray-400 text-xs uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                    <FileText size={12} className="text-blue-500" />
-                    {getFixedText('description')}
-                  </p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <FileText size={14} className="text-blue-500" />
+                    <p className="text-gray-400 text-xs uppercase tracking-wider">
+                      {getFixedText('description')}
+                    </p>
+                  </div>
                   <div className="text-gray-300 text-sm leading-relaxed max-w-lg">
                     <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[1000px]' : 'max-h-12'}`}>
                       {getText(
@@ -1082,13 +1090,15 @@ const ProductDetail = () => {
                 </a>
               </div>
 
-              {/* ===== 🔥 ESPECIFICACIONES CON "VER MÁS / VER MENOS" (escritorio) ===== */}
+              {/* ===== 🔥 ESPECIFICACIONES CON "VER MÁS / VER MENOS" (ESCRITORIO) ===== */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
-                  <p className="text-gray-400 text-xs uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <div className="flex items-center gap-1.5 mb-2">
                     <Settings size={14} className="text-purple-500" />
-                    {getFixedText('specsTitle')}
-                  </p>
+                    <p className="text-gray-400 text-xs uppercase tracking-wider">
+                      {getFixedText('specsTitle')}
+                    </p>
+                  </div>
                   <div className="flex flex-wrap gap-1 md:gap-1.5">
                     {specItems.slice(0, showAllSpecs ? specItems.length : 3).map(({ key, displayTitle, finalValue }) => (
                       <span key={key} className={`bg-gray-800/50 px-1.5 md:px-2 py-0.5 rounded-full text-gray-400 border border-gray-700/50 ${

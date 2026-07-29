@@ -408,22 +408,38 @@ const AdminProductForm = () => {
     return item ? item.nombre : '?';
   };
 
-  // ========== FUNCIONES: IMÁGENES GENERALES ==========
+  // ========== 🔥 FUNCIÓN PARA SUBIR MÚLTIPLES IMÁGENES (HASTA 10) ==========
   const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
+    
+    // 🔥 Limitar a 10 imágenes
+    const maxFiles = 10;
+    const filesArray = Array.from(files).slice(0, maxFiles);
+    
+    if (filesArray.length === 0) return;
+    
     setUploading(true);
     const urls: string[] = [];
     try {
-      for (const file of Array.from(files)) {
+      for (const file of filesArray) {
         const storageRef = ref(storage, `productos/${Date.now()}_${file.name}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         urls.push(url);
       }
       setForm(prev => ({ ...prev, imagenes: [...prev.imagenes, ...urls] }));
-      toast({ title: "✅ Imágenes subidas", description: `${urls.length} imágenes`, className: "bg-green-500 text-white" });
+      toast({ 
+        title: "✅ Imágenes subidas", 
+        description: `${urls.length} imágenes subidas correctamente`, 
+        className: "bg-green-500 text-white" 
+      });
     } catch (error) {
-      toast({ title: "Error", description: "No se pudieron subir las imágenes", variant: "destructive" });
+      console.error("Error subiendo imágenes:", error);
+      toast({ 
+        title: "Error", 
+        description: "No se pudieron subir las imágenes", 
+        variant: "destructive" 
+      });
     }
     setUploading(false);
   };
@@ -1251,15 +1267,15 @@ const AdminProductForm = () => {
           )}
 
           {/* ============================================================
-          SECCIÓN 6: IMÁGENES GENERALES
+          SECCIÓN 6: IMÁGENES GENERALES (CORREGIDO - SUBIR HASTA 10)
           ============================================================ */}
           <div className="border-b border-green-900/20 pb-4">
             <h3 className="text-blue-400 text-sm font-semibold flex items-center gap-2 mb-2">
               <Upload size={16} />
-              📷 6. IMÁGENES GENERALES DEL PRODUCTO
+              📷 6. IMÁGENES GENERALES DEL PRODUCTO (Máximo 10)
             </h3>
             <p className="text-gray-500 text-xs mb-2">
-              Sube imágenes adicionales del producto.
+              Puedes seleccionar hasta 10 imágenes a la vez (Ctrl+clic para seleccionar varias).
             </p>
             <div className="flex flex-wrap gap-2 mb-2">
               {form.imagenes.map((img, i) => (
@@ -1273,11 +1289,20 @@ const AdminProductForm = () => {
                   </button>
                 </div>
               ))}
-              <label className="w-20 h-20 flex flex-col items-center justify-center bg-black/50 border-2 border-dashed border-green-900/30 rounded-lg cursor-pointer hover:border-green-500/50 transition-colors">
-                <Upload size={20} className="text-gray-500" />
-                <span className="text-[8px] text-gray-500 mt-1">Subir</span>
-                <input type="file" multiple accept="image/*" onChange={(e) => handleImageUpload(e.target.files)} className="hidden" />
-              </label>
+              {form.imagenes.length < 10 && (
+                <label className="w-20 h-20 flex flex-col items-center justify-center bg-black/50 border-2 border-dashed border-green-900/30 rounded-lg cursor-pointer hover:border-green-500/50 transition-colors">
+                  <Upload size={20} className="text-gray-500" />
+                  <span className="text-[8px] text-gray-500 mt-1">Subir</span>
+                  <span className="text-[6px] text-gray-600">{form.imagenes.length}/10</span>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload(e.target.files)} 
+                    className="hidden" 
+                  />
+                </label>
+              )}
             </div>
             {uploading && (
               <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -1288,7 +1313,7 @@ const AdminProductForm = () => {
           </div>
 
           {/* ============================================================
-          SECCIÓN 7: ESPECIFICACIONES TÉCNICAS (CORREGIDA)
+          SECCIÓN 7: ESPECIFICACIONES TÉCNICAS
           ============================================================ */}
           <div className="border-b border-green-900/20 pb-4">
             <h3 className="text-cyan-400 text-sm font-semibold flex items-center gap-2 mb-2">

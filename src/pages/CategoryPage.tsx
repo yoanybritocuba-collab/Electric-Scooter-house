@@ -251,7 +251,7 @@ const CategoryPage = () => {
                 >
                   <ProductCard
                     id={product.id}
-                    nombre={product.nombre}
+                    nombre={getText(product.nombre, product.nombre_en, product.nombre_gr)}
                     nombre_en={product.nombre_en}
                     nombre_gr={product.nombre_gr}
                     precio={product.precio}

@@ -1,5 +1,5 @@
 // Servicio de traducción para el panel admin usando Google Cloud Translation API
-// 🔑 La API Key se toma desde variables de entorno
+// 🔑 CLAVE DE API FIJA (SOLUCIÓN DEFINITIVA)
 
 interface TranslationResponse {
   data: {
@@ -10,35 +10,24 @@ interface TranslationResponse {
 }
 
 // ============================================================
-// 🔥 OBTENER API KEY DESDE VARIABLES DE ENTORNO
+// 🔥 CLAVE DE API FIJA (NO depende de Vercel)
 // ============================================================
-const getApiKey = (): string => {
-  return import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY || 
-         process.env.GOOGLE_TRANSLATE_API_KEY || 
-         '';
-};
+const API_KEY = 'AIzaSyBkvvi3-pS_VFraSPMQXutkx9660o6eU9s';
 
 // Diccionario de traducciones predefinidas para el panel admin
 const adminTranslations: Record<string, Record<string, string>> = {
   es: {
-    // Títulos del panel
     "admin.title": "Panel Admin",
     "admin.store": "Ir a tienda",
     "admin.logout": "Cerrar sesión",
     "admin.confirm.delete": "¿Eliminar producto?",
     "admin.error.delete": "Error al eliminar",
-    
-    // Estadísticas
     "admin.stats.total": "Total",
     "admin.stats.featured": "Destacados",
     "admin.stats.new": "Nuevos",
     "admin.stats.sale": "Ofertas",
-    
-    // Productos
     "admin.products.title": "Productos",
     "admin.products.search": "Buscar...",
-    
-    // Menú
     "admin.menu.new_product": "Nuevo Producto",
     "admin.menu.featured": "Destacados",
     "admin.menu.sales": "Ofertas",
@@ -48,12 +37,8 @@ const adminTranslations: Record<string, Record<string, string>> = {
     "admin.menu.info_line": "Línea Informativa",
     "admin.menu.horario": "Horario",
     "admin.menu.password": "Contraseña",
-    
-    // Sidebar
     "admin.sidebar.collapse": "Colapsar",
     "admin.sidebar.expand": "Expandir",
-    
-    // Categorías
     "admin.categories.all": "Todos",
     "admin.categories.scooters": "Patinetes",
     "admin.categories.bikes": "Bicicletas",
@@ -69,15 +54,12 @@ const adminTranslations: Record<string, Record<string, string>> = {
     "admin.logout": "Logout",
     "admin.confirm.delete": "Delete product?",
     "admin.error.delete": "Error deleting",
-    
     "admin.stats.total": "Total",
     "admin.stats.featured": "Featured",
     "admin.stats.new": "New",
     "admin.stats.sale": "On Sale",
-    
     "admin.products.title": "Products",
     "admin.products.search": "Search...",
-    
     "admin.menu.new_product": "New Product",
     "admin.menu.featured": "Featured",
     "admin.menu.sales": "On Sale",
@@ -87,10 +69,8 @@ const adminTranslations: Record<string, Record<string, string>> = {
     "admin.menu.info_line": "Info Line",
     "admin.menu.horario": "Schedule",
     "admin.menu.password": "Password",
-    
     "admin.sidebar.collapse": "Collapse",
     "admin.sidebar.expand": "Expand",
-    
     "admin.categories.all": "All",
     "admin.categories.scooters": "Scooters",
     "admin.categories.bikes": "Bikes",
@@ -106,15 +86,12 @@ const adminTranslations: Record<string, Record<string, string>> = {
     "admin.logout": "Αποσύνδεση",
     "admin.confirm.delete": "Διαγραφή προϊόντος;",
     "admin.error.delete": "Σφάλμα διαγραφής",
-    
     "admin.stats.total": "Σύνολο",
     "admin.stats.featured": "Προτεινόμενα",
     "admin.stats.new": "Νέα",
     "admin.stats.sale": "Προσφορές",
-    
     "admin.products.title": "Προϊόντα",
     "admin.products.search": "Αναζήτηση...",
-    
     "admin.menu.new_product": "Νέο Προϊόν",
     "admin.menu.featured": "Προτεινόμενα",
     "admin.menu.sales": "Προσφορές",
@@ -124,10 +101,8 @@ const adminTranslations: Record<string, Record<string, string>> = {
     "admin.menu.info_line": "Γραμμή Πληροφοριών",
     "admin.menu.horario": "Ωράριο",
     "admin.menu.password": "Κωδικός",
-    
     "admin.sidebar.collapse": "Σύμπτυξη",
     "admin.sidebar.expand": "Επέκταση",
-    
     "admin.categories.all": "Όλα",
     "admin.categories.scooters": "Πατίνια",
     "admin.categories.bikes": "Ποδήλατα",
@@ -139,32 +114,21 @@ const adminTranslations: Record<string, Record<string, string>> = {
   }
 };
 
-// Función de traducción para el admin (usa el diccionario local)
 export const t = (key: string, lang: 'es' | 'en' | 'gr'): string => {
   if (adminTranslations[lang] && adminTranslations[lang][key]) {
     return adminTranslations[lang][key];
   }
-  
-  // Si no encuentra la traducción, devuelve la clave o intenta español
   if (lang !== 'es' && adminTranslations.es[key]) {
     return adminTranslations.es[key];
   }
-  
   return key;
 };
 
-// Función para traducir usando Google Translate (modo automático)
 export const translateText = async (
   text: string,
   targetLang: string
 ): Promise<string> => {
   if (!text || text.trim() === "") return "";
-
-  const API_KEY = getApiKey();
-  if (!API_KEY) {
-    console.warn('⚠️ No hay API Key de Google Translate, usando texto original');
-    return text;
-  }
 
   try {
     const target = targetLang === 'gr' ? 'el' : targetLang;

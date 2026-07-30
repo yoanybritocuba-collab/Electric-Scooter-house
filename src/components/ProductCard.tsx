@@ -26,6 +26,7 @@ interface ProductCardProps {
     colores?: any[];
   };
   variantes?: any[];
+  categoria?: string; // 🔥 AÑADIDO: para saber la categoría del producto
 }
 
 const ProductCard = ({
@@ -44,6 +45,7 @@ const ProductCard = ({
   variantesUnificadas = [],
   opciones,
   variantes = [],
+  categoria = "", // 🔥 AÑADIDO: categoría del producto
 }: ProductCardProps) => {
   const { lang } = useLanguage();
   const { addItem } = useCart();
@@ -52,9 +54,18 @@ const ProductCard = ({
   const [addedToCart, setAddedToCart] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // 🔥 FUNCIÓN PARA OBTENER EL NOMBRE TRADUCIDO SOLO EN PIEZAS Y ACCESORIOS
   const getNombre = () => {
-    if (lang === 'en' && nombre_en) return nombre_en;
-    if (lang === 'gr' && nombre_gr) return nombre_gr;
+    // Categorías que permiten traducción
+    const categoriasTraducibles = ["piezas", "accesorios", "piezas-repuestos"];
+    
+    // Si la categoría es traducible y hay traducción disponible
+    if (categoriasTraducibles.includes(categoria?.toLowerCase())) {
+      if (lang === 'en' && nombre_en) return nombre_en;
+      if (lang === 'gr' && nombre_gr) return nombre_gr;
+    }
+    
+    // En cualquier otro caso, usar el nombre original en español
     return nombre;
   };
 
@@ -260,7 +271,6 @@ const ProductCard = ({
           
           <div className="flex items-center justify-between mt-1 sm:mt-2">
             <div className="flex items-baseline gap-1 sm:gap-1.5">
-              {/* 🔒 CORREGIDO: Mostrar precio solo si es mayor que 0 */}
               {precioFinal > 0 ? (
                 <span className="text-green-500 font-bold text-sm sm:text-base">
                   {precioFinal.toFixed(2)}€
@@ -278,7 +288,6 @@ const ProductCard = ({
             </div>
           </div>
 
-          {/* 🎨 BOLITAS DE COLORES */}
           {coloresUnicos.length > 0 && (
             <div className="flex gap-0.5 sm:gap-1 mt-1 sm:mt-2 flex-wrap">
               {coloresUnicos.map((color, idx) => {

@@ -102,7 +102,6 @@ const Index = () => {
   const [nuevosIds, setNuevosIds] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [loading, setLoading] = useState(true);
-  // 🔥 AÑADIDO: Estado para forzar la actualización
   const [refreshKey, setRefreshKey] = useState(0);
 
   const getText = (es: string, en: string, gr: string) => {
@@ -126,7 +125,6 @@ const Index = () => {
     return cat.nombre;
   };
 
-  // 🔥 FUNCIÓN PARA OBTENER IMAGEN DE CATEGORÍA
   const getCategoryImage = (categoriaId: string): string | null => {
     const productsInCategory = products.filter(p => 
       p.categoria?.toLowerCase() === categoriaId?.toLowerCase()
@@ -152,7 +150,6 @@ const Index = () => {
     return null;
   };
 
-  // 🔥 CARGAR PRODUCTOS
   const cargarProductos = async () => {
     try {
       const productsQuery = query(collection(db, "productos"), limit(50));
@@ -160,14 +157,12 @@ const Index = () => {
       const productos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
       setProducts(productos);
       console.log(`✅ Productos cargados: ${productos.length}`);
-      // 🔥 Forzar actualización del contador
       setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("❌ Error cargando productos:", error);
     }
   };
 
-  // 🔥 CARGAR CATEGORÍAS
   const cargarCategorias = async () => {
     try {
       const snapshot = await getDocs(collection(db, "categorias"));
@@ -191,7 +186,6 @@ const Index = () => {
     }
   };
 
-  // 🔥 CARGAR CONFIGURACIÓN
   const cargarConfiguracion = async () => {
     try {
       const snapshot = await getDocs(collection(db, "configuracion"));
@@ -243,7 +237,6 @@ const Index = () => {
     }
   };
 
-  // 🔥 CARGAR TODOS LOS DATOS
   useEffect(() => {
     const cargarTodo = async () => {
       setLoading(true);
@@ -258,7 +251,6 @@ const Index = () => {
     cargarTodo();
   }, []);
 
-  // 🔥 LISTENER PARA TIEMPO REAL
   useEffect(() => {
     if (products.length === 0) return;
     
@@ -268,7 +260,6 @@ const Index = () => {
         const productos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
         setProducts(productos);
         console.log(`✅ Productos actualizados en tiempo real: ${productos.length}`);
-        // 🔥 Forzar actualización del contador
         setRefreshKey(prev => prev + 1);
       },
       (error) => {
@@ -281,8 +272,6 @@ const Index = () => {
 
   const categories = useMemo(() => categorias.filter(c => c.activo), [categorias]);
   
-  // 🔥 CONTADOR DE PRODUCTOS POR CATEGORÍA (ACTUALIZADO EN TIEMPO REAL)
-  // 🔥 Depende de refreshKey para forzar actualización
   const productCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     categories.forEach(cat => {
@@ -350,6 +339,7 @@ const Index = () => {
                 colores={p.opciones?.colores || p.variantes || []}
                 variantesUnificadas={p.variantesUnificadas || []}
                 opciones={p.opciones}
+                categoria={p.categoria}
               />
             </div>
           ))}

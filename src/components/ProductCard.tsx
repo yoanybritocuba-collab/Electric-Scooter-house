@@ -26,7 +26,7 @@ interface ProductCardProps {
     colores?: any[];
   };
   variantes?: any[];
-  categoria?: string; // 🔥 AÑADIDO: para saber la categoría del producto
+  categoria?: string;
 }
 
 const ProductCard = ({
@@ -45,7 +45,7 @@ const ProductCard = ({
   variantesUnificadas = [],
   opciones,
   variantes = [],
-  categoria = "", // 🔥 AÑADIDO: categoría del producto
+  categoria = "",
 }: ProductCardProps) => {
   const { lang } = useLanguage();
   const { addItem } = useCart();
@@ -54,18 +54,40 @@ const ProductCard = ({
   const [addedToCart, setAddedToCart] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // 🔥 FUNCIÓN PARA OBTENER EL NOMBRE TRADUCIDO SOLO EN PIEZAS Y ACCESORIOS
+  // 🔥 FUNCIÓN CORREGIDA CON LOGS
   const getNombre = () => {
     // Categorías que permiten traducción
     const categoriasTraducibles = ["piezas", "accesorios", "piezas-repuestos"];
     
-    // Si la categoría es traducible y hay traducción disponible
-    if (categoriasTraducibles.includes(categoria?.toLowerCase())) {
-      if (lang === 'en' && nombre_en) return nombre_en;
-      if (lang === 'gr' && nombre_gr) return nombre_gr;
+    // LOG para depurar
+    console.log(`🔍 Producto: ${nombre}, Categoría: "${categoria}", Lang: ${lang}`);
+    
+    // Verificar si la categoría es traducible
+    const esTraducible = categoriasTraducibles.includes(categoria?.toLowerCase());
+    
+    // LOG para saber si es traducible
+    console.log(`🔍 ¿Es traducible? ${esTraducible}`);
+    
+    // Si NO es traducible, devolver el nombre original (sin traducir)
+    if (!esTraducible) {
+      console.log(`❌ NO traducible: ${nombre}`);
+      return nombre;
     }
     
-    // En cualquier otro caso, usar el nombre original en español
+    // Si es traducible y el usuario está en inglés, devolver nombre_en
+    if (lang === 'en' && nombre_en) {
+      console.log(`✅ Traducido a inglés: ${nombre_en}`);
+      return nombre_en;
+    }
+    
+    // Si es traducible y el usuario está en griego, devolver nombre_gr
+    if (lang === 'gr' && nombre_gr) {
+      console.log(`✅ Traducido a griego: ${nombre_gr}`);
+      return nombre_gr;
+    }
+    
+    // En cualquier otro caso, devolver el nombre original
+    console.log(`❌ Sin traducción: ${nombre}`);
     return nombre;
   };
 

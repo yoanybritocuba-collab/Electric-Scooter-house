@@ -102,6 +102,8 @@ const Index = () => {
   const [nuevosIds, setNuevosIds] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [loading, setLoading] = useState(true);
+  // 🔥 AÑADIDO: Estado para forzar la actualización
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const getText = (es: string, en: string, gr: string) => {
     if (lang === 'en') return en;
@@ -124,7 +126,7 @@ const Index = () => {
     return cat.nombre;
   };
 
-  // 🔥 FUNCIÓN PARA OBTENER IMAGEN DE CATEGORÍA (RECUPERADA)
+  // 🔥 FUNCIÓN PARA OBTENER IMAGEN DE CATEGORÍA
   const getCategoryImage = (categoriaId: string): string | null => {
     const productsInCategory = products.filter(p => 
       p.categoria?.toLowerCase() === categoriaId?.toLowerCase()
@@ -153,11 +155,13 @@ const Index = () => {
   // 🔥 CARGAR PRODUCTOS
   const cargarProductos = async () => {
     try {
-      const productsQuery = query(collection(db, "productos"), limit(30));
+      const productsQuery = query(collection(db, "productos"), limit(50));
       const snapshot = await getDocs(productsQuery);
       const productos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
       setProducts(productos);
       console.log(`✅ Productos cargados: ${productos.length}`);
+      // 🔥 Forzar actualización del contador
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("❌ Error cargando productos:", error);
     }
@@ -259,11 +263,13 @@ const Index = () => {
     if (products.length === 0) return;
     
     const unsubscribe = onSnapshot(
-      query(collection(db, "productos"), limit(30)),
+      query(collection(db, "productos"), limit(50)),
       (snapshot) => {
         const productos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
         setProducts(productos);
         console.log(`✅ Productos actualizados en tiempo real: ${productos.length}`);
+        // 🔥 Forzar actualización del contador
+        setRefreshKey(prev => prev + 1);
       },
       (error) => {
         console.error("❌ Error en tiempo real productos:", error);
@@ -276,13 +282,16 @@ const Index = () => {
   const categories = useMemo(() => categorias.filter(c => c.activo), [categorias]);
   
   // 🔥 CONTADOR DE PRODUCTOS POR CATEGORÍA (ACTUALIZADO EN TIEMPO REAL)
+  // 🔥 Depende de refreshKey para forzar actualización
   const productCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     categories.forEach(cat => {
-      counts[cat.id] = products.filter(p => p.categoria?.toLowerCase() === cat.id?.toLowerCase()).length;
+      const count = products.filter(p => p.categoria?.toLowerCase() === cat.id?.toLowerCase()).length;
+      counts[cat.id] = count;
+      console.log(`📊 ${cat.id}: ${count} productos`);
     });
     return counts;
-  }, [products, categories]);
+  }, [products, categories, refreshKey]);
   
   const masVendidosList = useMemo(() => 
     products.filter(p => masVendidos.includes(p.id) && p.id !== "aPMG8JBnCm9cRsLNnFJ6"),
@@ -375,7 +384,6 @@ const Index = () => {
                 const Icon = categoryIcons[cat.id] || Package;
                 const nombreCategoria = getNombreCategoria(cat);
                 const categoryImage = getCategoryImage(cat.id);
-                // 🔥 USO EL CONTADOR EN TIEMPO REAL
                 const productCount = productCounts[cat.id] || 0;
                 const { tieneTop, tieneNuevo, tieneOferta, descuento } = getCategoryBadges(cat.id);
 

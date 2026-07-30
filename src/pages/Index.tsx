@@ -275,6 +275,15 @@ const Index = () => {
 
   const categories = useMemo(() => categorias.filter(c => c.activo), [categorias]);
   
+  // 🔥 CONTADOR DE PRODUCTOS POR CATEGORÍA (ACTUALIZADO EN TIEMPO REAL)
+  const productCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    categories.forEach(cat => {
+      counts[cat.id] = products.filter(p => p.categoria?.toLowerCase() === cat.id?.toLowerCase()).length;
+    });
+    return counts;
+  }, [products, categories]);
+  
   const masVendidosList = useMemo(() => 
     products.filter(p => masVendidos.includes(p.id) && p.id !== "aPMG8JBnCm9cRsLNnFJ6"),
     [products, masVendidos]
@@ -365,9 +374,9 @@ const Index = () => {
               {categories.map((cat) => {
                 const Icon = categoryIcons[cat.id] || Package;
                 const nombreCategoria = getNombreCategoria(cat);
-                // 🔥 RECUPERADA LA IMAGEN
                 const categoryImage = getCategoryImage(cat.id);
-                const productCount = products.filter(p => p.categoria?.toLowerCase() === cat.id?.toLowerCase()).length;
+                // 🔥 USO EL CONTADOR EN TIEMPO REAL
+                const productCount = productCounts[cat.id] || 0;
                 const { tieneTop, tieneNuevo, tieneOferta, descuento } = getCategoryBadges(cat.id);
 
                 return (

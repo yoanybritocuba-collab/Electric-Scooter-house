@@ -416,6 +416,17 @@ const AdminProductForm = () => {
     const maxFiles = 10;
     const filesArray = Array.from(files).slice(0, maxFiles);
     
+    // Verificar que no se exceda el límite total
+    const totalImagenes = form.imagenes.length + filesArray.length;
+    if (totalImagenes > maxFiles) {
+      toast({ 
+        title: "⚠️ Límite excedido", 
+        description: `Solo puedes tener ${maxFiles} imágenes. Actualmente tienes ${form.imagenes.length} y estás subiendo ${filesArray.length}.`, 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     if (filesArray.length === 0) return;
     
     setUploading(true);
@@ -1298,7 +1309,13 @@ const AdminProductForm = () => {
                     type="file" 
                     multiple 
                     accept="image/*" 
-                    onChange={(e) => handleImageUpload(e.target.files)} 
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        handleImageUpload(e.target.files);
+                      }
+                      // 🔥 RESETEAR EL INPUT PARA PERMITIR SUBIR MÁS LUEGO
+                      e.target.value = '';
+                    }} 
                     className="hidden" 
                   />
                 </label>

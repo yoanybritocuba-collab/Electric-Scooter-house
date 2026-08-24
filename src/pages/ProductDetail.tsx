@@ -1020,7 +1020,7 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* ===== PRODUCTOS RELACIONADOS ===== */}
+        {/* ===== PRODUCTOS RELACIONADOS (CORREGIDO) ===== */}
         {related.length > 0 && (
           <div className="mt-8 md:mt-12 pt-4 md:pt-6 border-t border-gray-800">
             <h2 className={`font-display font-bold tracking-tight text-gray-400 mb-3 md:mb-4 uppercase ${
@@ -1042,6 +1042,9 @@ const ProductDetail = () => {
                   nuevo={p.nuevo}
                   rebaja={p.rebaja}
                   descuento={p.descuento}
+                  opciones={p.opciones}
+                  variantes={p.variantes}
+                  variantesUnificadas={p.variantesUnificadas}
                 />
               ))}
             </div>

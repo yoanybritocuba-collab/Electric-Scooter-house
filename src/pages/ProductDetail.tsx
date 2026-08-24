@@ -214,7 +214,6 @@ const ProductDetail = () => {
           const relatedSnap = await getDocs(q);
           setRelated(relatedSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
           
-          // 🔥 CARGAR ESPECIFICACIONES (usando traducciones guardadas)
           await cargarEspecificaciones(productData);
           
         } else {
@@ -239,7 +238,7 @@ const ProductDetail = () => {
     loadProduct();
   }, [id]);
 
-  // ========== CARGAR ESPECIFICACIONES (USANDO TRADUCCIONES GUARDADAS) ==========
+  // ========== CARGAR ESPECIFICACIONES ==========
   const cargarEspecificaciones = async (productData: Product) => {
     if (!productData?.especificaciones) {
       setSpecItems([]);
@@ -257,7 +256,6 @@ const ProductDetail = () => {
     
     const results = [];
     for (const [key, value] of entries) {
-      // 🔥 USAR TRADUCCIONES GUARDADAS EN FIREBASE
       let displayTitle = key;
       let displayValue = value;
       
@@ -630,7 +628,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ===== 🔥 3. DESCRIPCIÓN CON TRADUCCIÓN GUARDADA ===== */}
+            {/* ===== 🔥 3. DESCRIPCIÓN (COMPLETA EN MÓVIL) ===== */}
             {product.descripcion && (
               <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -640,30 +638,10 @@ const ProductDetail = () => {
                   </p>
                 </div>
                 <div className="text-gray-300 text-xs leading-relaxed">
-                  <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[2000px]' : 'max-h-12'}`}>
-                    {getText(
-                      product.descripcion,
-                      product.descripcion_en,
-                      product.descripcion_gr
-                    )}
-                  </div>
-                  {(product.descripcion?.length > 60 || product.descripcion_en?.length > 60 || product.descripcion_gr?.length > 60) && (
-                    <button
-                      onClick={() => setShowFullDescription(!showFullDescription)}
-                      className="mt-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                    >
-                      {showFullDescription ? (
-                        <>
-                          <ChevronUp size={12} />
-                          {getFixedText('showLess')}
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown size={12} />
-                          {getFixedText('showMore')}
-                        </>
-                      )}
-                    </button>
+                  {getText(
+                    product.descripcion,
+                    product.descripcion_en,
+                    product.descripcion_gr
                   )}
                 </div>
               </div>
@@ -750,7 +728,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* ===== 🔥 6. ESPECIFICACIONES CON TRADUCCIÓN GUARDADA ===== */}
+            {/* ===== 🔥 6. ESPECIFICACIONES (COMPLETAS EN MÓVIL) ===== */}
             <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-700/30">
               <div className="flex items-center gap-1.5 mb-2">
                 <Settings size={12} className="text-purple-500" />
@@ -762,31 +740,12 @@ const ProductDetail = () => {
               <div className="space-y-1.5">
                 {specItems.length > 0 ? (
                   <>
-                    {(showAllSpecs ? specItems : specItems.slice(0, 3)).map(({ key, displayTitle, finalValue }) => (
+                    {specItems.map(({ key, displayTitle, finalValue }) => (
                       <div key={key} className="flex justify-between items-center border-b border-gray-800/50 pb-1 last:border-0">
                         <span className="text-gray-400 text-[10px] truncate max-w-[55%]">{displayTitle}</span>
                         <span className="text-white text-[10px] font-medium truncate max-w-[40%] text-right">{finalValue}</span>
                       </div>
                     ))}
-                    
-                    {specItems.length > 3 && (
-                      <button
-                        onClick={() => setShowAllSpecs(!showAllSpecs)}
-                        className="mt-1 text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 w-full justify-center py-1 border-t border-gray-700/50 pt-2"
-                      >
-                        {showAllSpecs ? (
-                          <>
-                            <ChevronUp size={12} />
-                            {getFixedText('showLess')} ({specItems.length})
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown size={12} />
-                            {getFixedText('showMore')} ({specItems.length - 3})
-                          </>
-                        )}
-                      </button>
-                    )}
                   </>
                 ) : (
                   <p className="text-gray-500 text-[10px]">Sin especificaciones</p>
@@ -929,7 +888,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* ===== 🔥 DESCRIPCIÓN CON TRADUCCIÓN GUARDADA ===== */}
+              {/* ===== DESCRIPCIÓN EN ESCRITORIO ===== */}
               {product.descripcion && (
                 <div className="mt-2">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -939,35 +898,16 @@ const ProductDetail = () => {
                     </p>
                   </div>
                   <div className="text-gray-300 text-sm leading-relaxed max-w-lg">
-                    <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-[2000px]' : 'max-h-12'}`}>
-                      {getText(
-                        product.descripcion,
-                        product.descripcion_en,
-                        product.descripcion_gr
-                      )}
-                    </div>
-                    {(product.descripcion?.length > 80 || product.descripcion_en?.length > 80 || product.descripcion_gr?.length > 80) && (
-                      <button
-                        onClick={() => setShowFullDescription(!showFullDescription)}
-                        className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                      >
-                        {showFullDescription ? (
-                          <>
-                            <ChevronUp size={14} />
-                            {getFixedText('showLess')}
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown size={14} />
-                            {getFixedText('showMore')}
-                          </>
-                        )}
-                      </button>
+                    {getText(
+                      product.descripcion,
+                      product.descripcion_en,
+                      product.descripcion_gr
                     )}
                   </div>
                 </div>
               )}
 
+              {/* OPCIONES Y BOTONES (igual que antes) */}
               {product.opciones?.voltajes && product.opciones.voltajes.length > 0 && (
                 <OpcionSelector
                   titulo={getFixedText('voltajes')}
@@ -1037,7 +977,7 @@ const ProductDetail = () => {
                 </a>
               </div>
 
-              {/* ===== 🔥 ESPECIFICACIONES CON TRADUCCIÓN GUARDADA ===== */}
+              {/* ===== ESPECIFICACIONES EN ESCRITORIO ===== */}
               {specItems.length > 0 && (
                 <div className="pt-2 md:pt-3">
                   <div className="flex items-center gap-1.5 mb-2">
